@@ -15,12 +15,16 @@ var renderer: ChunkRenderer
 var sky: WorldSky
 var mining: Mining
 var lighting: Lighting
+var combat: Combat
+var spawner: Spawner
+var entities: Node2D
 var debug_overlay: CanvasLayer
 var player: CharacterBody2D
 
 var _camera: Camera2D
 var _last_centre := Vector2i(-9999, -9999)
 var _web_tick := 0
+var _last_sky_light := -1
 
 ## Set before the node enters the tree to override what BootConfig would give.
 ## Playtest scripts use these to jump straight to what they are inspecting.
@@ -44,12 +48,21 @@ func _ready() -> void:
 	add_child(renderer)
 	renderer.setup(store)
 
+	entities = Node2D.new()
+	entities.name = "Entities"
+	add_child(entities)
+
 	_spawn_player()
 
 	mining = Mining.new()
 	mining.name = "Mining"
 	add_child(mining)
 	mining.setup(self, store, renderer)
+
+	combat = Combat.new()
+	combat.name = "Combat"
+	add_child(combat)
+	combat.setup(self)
 
 	lighting = Lighting.new()
 	lighting.name = "Lighting"
@@ -59,11 +72,17 @@ func _ready() -> void:
 	mining.tile_broken.connect(_on_tile_broken)
 	lighting.update_now(player_tile())
 
+	spawner = Spawner.new()
+	spawner.name = "Spawner"
+	add_child(spawner)
+	spawner.setup(self, store, lighting)
+
 	debug_overlay = preload("res://scenes/ui/debug_overlay.tscn").instantiate()
 	debug_overlay.world = self
 	add_child(debug_overlay)
 
-	sky.update_for_depth(player_tile().y)
+	sky.update_for_depth(player_tile().y, DayClock.daylight())
+	lighting.sky_light = int(lerpf(28.0, float(Lighting.SKY), DayClock.daylight()))
 	Game.zone_name = "Aerenfall"
 	Ui.set_gameplay_visible(true)
 	Ui.announce_zone(store.gen.biome_name(player_tile().x))
@@ -102,7 +121,18 @@ func _process(_delta: float) -> void:
 	if not player or not is_instance_valid(player):
 		return
 	var tile := player_tile()
-	sky.update_for_depth(tile.y)
+	var daylight := DayClock.daylight()
+	sky.update_for_depth(tile.y, daylight)
+
+	# Night is dark because the sun stops giving light, not because a filter is
+	# drawn over the top. Only nudge the lighting when it has actually moved,
+	# or every frame becomes a recompute.
+	var sun := int(lerpf(28.0, float(Lighting.SKY), daylight))
+	if absi(sun - _last_sky_light) >= 6:
+		_last_sky_light = sun
+		lighting.sky_light = sun
+		lighting.mark_dirty()
+
 	lighting.update(tile)
 	_publish_web_stats(tile)
 	var centre := store.chunk_coord(tile.x, tile.y)

@@ -29,6 +29,8 @@ func _ready() -> void:
 	_check_save_load()
 	await _check_traversal()
 	await _check_reach()
+	_check_clock()
+	await _check_night()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -559,3 +561,138 @@ func _check_reach() -> void:
 func store_solid(world: Node2D, at: Vector2i) -> bool:
 	var store: ChunkStore = world.store
 	return store.is_solid(at.x, at.y)
+
+
+# ---------------------------------------------------------------------------
+func _check_clock() -> void:
+	print("\nthe day")
+	DayClock.paused = true
+
+	DayClock.set_time(0.5)
+	_ok("noon is daytime", not DayClock.is_night())
+	_ok("noon is full daylight", is_equal_approx(DayClock.daylight(), 1.0))
+
+	DayClock.set_time(0.95)
+	_ok("late is night", DayClock.is_night())
+	_ok("night has no sun", is_equal_approx(DayClock.daylight(), 0.0))
+
+	DayClock.set_time(DayClock.DUSK + DayClock.TWILIGHT * 0.5)
+	var dusk := DayClock.daylight()
+	_ok("dusk is halfway, not a switch", dusk > 0.05 and dusk < 0.95, "%.2f" % dusk)
+
+	DayClock.set_time(0.99)
+	var was: int = DayClock.day
+	DayClock.advance(DayClock.DAY_SECONDS * 0.02)
+	_ok("the day rolls over", DayClock.day == was + 1, "%d -> %d" % [was, DayClock.day])
+
+	DayClock.set_time(0.5)
+	_ok("clock text reads as a time", DayClock.clock_text() == "12:00",
+		DayClock.clock_text())
+
+
+# ---------------------------------------------------------------------------
+## Night is the point of this milestone: things come out, light keeps them off,
+## and morning clears them away.
+func _check_night() -> void:
+	print("\nnight")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 30:
+		await get_tree().physics_frame
+
+	var spawner = world.spawner
+	var here: Vector2i = world.player_tile()
+
+	# Daylight on the surface: wildlife, nothing hostile.
+	DayClock.paused = true
+	DayClock.set_time(0.5)
+	world.lighting.sky_light = Lighting.SKY
+	world.lighting.mark_dirty()
+	world.lighting.update_now(here)
+	_clear_creatures()
+	for i in 40:
+		spawner._try_spawn()
+	await get_tree().process_frame
+	var day_hostiles := get_tree().get_nodes_in_group("hostile").size()
+	var day_wildlife := get_tree().get_nodes_in_group("critter").size()
+	_ok("nothing hostile comes out in daylight", day_hostiles == 0, "%d" % day_hostiles)
+	_ok("wildlife is about in the day", day_wildlife > 0, "%d" % day_wildlife)
+
+	# Night on the surface, unlit: hostiles.
+	DayClock.set_time(0.92)
+	world.lighting.sky_light = 28
+	world.lighting.mark_dirty()
+	world.lighting.update_now(here)
+	_clear_creatures()
+	for i in 40:
+		spawner._try_spawn()
+	await get_tree().process_frame
+	var night_hostiles := get_tree().get_nodes_in_group("hostile").size()
+	_ok("things come out at night", night_hostiles > 0, "%d" % night_hostiles)
+
+	# Night, but lit: shelter works.
+	_clear_creatures()
+	var lit_before := night_hostiles
+	world.lighting.sky_light = Lighting.SKY   # stand in for a well lit place
+	world.lighting.mark_dirty()
+	world.lighting.update_now(here)
+	for i in 40:
+		spawner._try_spawn()
+	await get_tree().process_frame
+	var lit_hostiles := get_tree().get_nodes_in_group("hostile").size()
+	_ok("a lit place keeps them off", lit_hostiles < lit_before,
+		"%d lit vs %d dark" % [lit_hostiles, lit_before])
+
+	# Dawn clears the night off the surface.
+	_clear_creatures()
+	world.lighting.sky_light = 28
+	world.lighting.mark_dirty()
+	world.lighting.update_now(here)
+	for i in 40:
+		spawner._try_spawn()
+	await get_tree().process_frame
+	var before_dawn := get_tree().get_nodes_in_group("hostile").size()
+	spawner._on_day_broke(2)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var after_dawn := 0
+	for node in get_tree().get_nodes_in_group("hostile"):
+		if is_instance_valid(node) and not node.is_queued_for_deletion():
+			after_dawn += 1
+	_ok("dawn clears the night away", before_dawn > 0 and after_dawn == 0,
+		"%d -> %d" % [before_dawn, after_dawn])
+
+	# You can fight back.
+	_clear_creatures()
+	var crawler: CharacterBody2D = load("res://scenes/actors/crawler.tscn").instantiate()
+	crawler.speed = 0.0
+	crawler.hunts = false
+	crawler.position = world.player.global_position + Vector2(12, 0)
+	world.entities.add_child(crawler)
+	await get_tree().process_frame
+
+	var health_before: int = crawler.health
+	world.combat._swing()
+	_ok("a swing hurts what is in front of you", crawler.health < health_before,
+		"%d -> %d" % [health_before, crawler.health])
+	world.combat._cooldown = 0.0
+	world.combat._swing()
+	_ok("two swings take it to nothing", crawler.health <= 0, "%d" % crawler.health)
+	# Dying plays out over a short tween before the node goes, so give it that.
+	for i in 20:
+		await get_tree().physics_frame
+	_ok("two swings finish a crawler",
+		not is_instance_valid(crawler) or crawler.is_queued_for_deletion())
+
+	_clear_creatures()
+	world.queue_free()
+	await get_tree().process_frame
+
+
+func _clear_creatures() -> void:
+	for group in ["enemy", "critter", "hostile"]:
+		for node in get_tree().get_nodes_in_group(group):
+			if is_instance_valid(node):
+				node.free()

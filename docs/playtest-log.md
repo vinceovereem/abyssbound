@@ -230,3 +230,67 @@ Worst single step is 1.26 ms of a 4.44 ms pass, which is about 7 ms in wasm.
 
 Both of those are checks lying about the game rather than the game being
 wrong, which is the failure mode worth being slowest to believe.
+
+
+---
+
+## Round 8 — 2026-09-10 — the world is alive and dangerous
+
+**Why this milestone happened at all.** Playing milestone 2 the verdict was that
+it was far from Terraria. Two things came out of that: digging was wrong, and
+the world was empty. Digging was fixed first (round 8a below). This is the
+second half.
+
+### 8a — digging
+
+Digging was a cursor with five tiles of reach, which let you break blocks
+across a room you could not touch. It is now aimed with the movement keys and
+reaches exactly one tile: the block you face, or the one under your feet or
+over your head. Breaking a block gives you the material, which floats off the
+tile and lands in a tally on the right, so mining visibly pays instead of just
+leaving a hole.
+
+A check confirms nothing further than one tile can be aimed at, whatever
+combination of keys is held.
+
+### 8b — the day, and what comes out in it
+
+**Played.** `day_night.tscn`, one world stepped through dawn, noon, dusk and
+midnight, and the headless night checks.
+
+**Worked.**
+
+- The sky reads as a time of day: warm at dawn and dusk, blue at noon, nearly
+  black at midnight, with the clock on screen in warm or cold ink to match.
+- **Night is dark because the sun stops giving light**, not because something is
+  drawn over the screen. That one decision is what makes a torch matter after
+  dusk and a lit room read as safe, and it fell out of the lighting built in
+  milestone 2 rather than needing anything new.
+- Wildlife by day, hostiles by night, and morning clears them off the surface.
+- A swing kills a crawler in two hits, aimed with the same keys as digging,
+  because two aiming schemes in one game is how controls stop being learnable.
+
+**Wrong, and fixed.**
+
+- The nearest creature readout said `@CharacterBody2D@15`. Godot renames an
+  instanced scene the moment two of them collide, so the overlay now names
+  things by their group rather than their node name.
+- The first day and night shots showed an empty world. Spawning happens off
+  screen on purpose, and the script did not wait for anything to walk in. The
+  rule was right and the screenshot was lying.
+- Sampling "dawn" at 0.26 gave full daylight, because sunrise finishes *before*
+  dawn. Twilight is 0.20 to 0.25, not 0.25 to 0.30.
+
+**A harness trap worth writing down.** macOS throttles a windowed run that is
+not in front. A twenty second screenshot script took several minutes behind
+another window and looked exactly like a hang. Anything windowed now calls
+`DisplayServer.window_move_to_foreground()` and runs with `--always-on-top`.
+That is the second time the harness has lied about the game rather than the
+other way round.
+
+**Still not right.**
+
+- Dawn and dusk look identical. Sunrise should be cooler than sunset.
+- Hostiles are one crawler with a new flag. Milestone 4 gives them species,
+  habits and hours.
+- Dying is still just losing hearts. There is no consequence worth the name.

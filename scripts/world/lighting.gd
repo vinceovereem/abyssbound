@@ -18,7 +18,11 @@ const REGION_H := 72
 ## How far the player may move before the window is rebuilt around them.
 const MARGIN := 16
 
+## Full daylight. Scaled down at night so the surface goes dark and a torch
+## becomes the difference between seeing and not.
 const SKY := 255
+## What the sun is currently worth. Set from the clock.
+var sky_light := SKY
 const AIR_FALLOFF := 16
 const MIN_SOLID_FALLOFF := 40
 ## Never fully black, or a dark cave becomes an unreadable void.
@@ -227,7 +231,7 @@ func _sunlight() -> void:
 		var wx := _origin.x + lx
 		var sky := 0
 		if _origin.y <= store.gen.surface_height(wx) and not store.gen.in_shaft(wx, _origin.y):
-			sky = SKY
+			sky = sky_light
 		var i := lx
 		for ly in REGION_H:
 			if _solid[i] == 1:

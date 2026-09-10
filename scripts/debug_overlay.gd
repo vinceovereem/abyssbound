@@ -36,6 +36,35 @@ func _unhandled_input(event: InputEvent) -> void:
 		visible = not visible
 
 
+## What is closest, how far, and whether it has noticed you. The single most
+## useful thing to have on a screenshot of something behaving oddly.
+func _nearest_creature() -> String:
+	var here: Vector2 = world.player.global_position
+	var best: Node2D = null
+	var best_distance := INF
+	for group in ["enemy", "critter"]:
+		for node in get_tree().get_nodes_in_group(group):
+			if not is_instance_valid(node):
+				continue
+			var d: float = node.global_position.distance_to(here)
+			if d < best_distance:
+				best_distance = d
+				best = node
+	if best == null:
+		return "none"
+	# Named from its group, not its node name: Godot gives an instanced scene
+	# an auto name like @CharacterBody2D@15 the moment two of them collide.
+	var kind := "creature"
+	var state := "wandering"
+	if best.is_in_group("critter"):
+		kind = "critter"
+		state = "tame" if best.get("tamed") else "shy"
+	elif best.is_in_group("enemy"):
+		kind = "crawler"
+		state = "hunting" if best.get("hunts") else "patrolling"
+	return "%s %s %.0f tiles" % [kind, state, best_distance / 16.0]
+
+
 func _process(delta: float) -> void:
 	if not visible or world == null or world.player == null:
 		return
@@ -56,5 +85,8 @@ func _process(delta: float) -> void:
 		"abyss    %s" % ("layer %d" % layer if layer > 0 else "above"),
 		"light    %d" % world.lighting.light_at(tile.x, tile.y),
 		"place    %s" % world.mining.selected_tile_name(),
-		"clock    %s   creature %s" % [FIELDS_HIDDEN_UNTIL_LATER, FIELDS_HIDDEN_UNTIL_LATER],
+		"clock    %s  day %d  %s" % [DayClock.clock_text(), DayClock.day,
+			"night" if DayClock.is_night() else "day"],
+		"sun      %d   alive %d" % [world.lighting.sky_light, world.spawner.alive()],
+		"nearest  %s" % _nearest_creature(),
 	])

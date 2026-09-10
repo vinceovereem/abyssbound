@@ -7,7 +7,7 @@ current fact.
 
 ## The pitch
 
-A 2D side-view sandbox RPG. A world of 16x16 tiles you can dig through,
+A 2D side-view survival sandbox. A world of 16x16 tiles you can dig through,
 build in, and fall a very long way down. You start with nothing, you craft your
 way up, and the creatures you befriend are what let you go further.
 
@@ -24,6 +24,26 @@ worse copy of something else:
 
 No asset, name, character or exact mechanic gets copied. The style, not the
 content.
+
+## The turn this took
+
+The first version of this document called Aerenfall a sandbox RPG and put
+creature bonding at the centre, with combat as one option among several. Play
+testing said otherwise: it read as a tech demo, not a game.
+
+**The spine is now Terraria's.** Survive, dig, craft better gear, fight what
+comes for you at night, and eventually take on something big. Bosses are part
+of the game. The order of work changed to match: a world that is alive and
+dangerous comes before inventory and crafting, and survival pressure comes
+after both.
+
+What Aerenfall keeps that Terraria does not have is depth on top of that spine,
+not a replacement for it: creatures with real habits you can learn and bond
+with, and the Abyss. Those stay. They stop being the first thing the player
+meets.
+
+The class system and skill trees are the least Terraria-shaped thing in here.
+They move to last, and may not survive contact with the rest.
 
 ## The philosophy
 
@@ -273,6 +293,27 @@ without making the descent itself cheap.
 The deep layers will eventually hold societies that have never seen the sky.
 Leave room for them. Do not build them yet.
 
+### 8. Bosses
+
+Terraria's shape: a handful of fights you choose to start, each one a wall you
+prepare for rather than grind through. Beating one changes what the world does
+next, so a boss is a gate on progression and not a trophy.
+
+Rules for every boss here:
+
+- **Summoned, not stumbled into.** You build or find the thing that calls it
+  and use it when you are ready. Nothing ambushes a player who has not opted in.
+- **An arena you built matters.** The fight rewards having dug, lit and
+  prepared a space, which makes the building half of the game pay off in the
+  fighting half.
+- **It drops the key to somewhere.** Materials for gear that opens a place that
+  was closed: deeper Abyss layers, the ocean floor, the sky.
+- **It belongs to a place.** A boss of the forest, of the desert, of an Abyss
+  layer. Aerenfall does not have a boss queue; it has dangerous residents.
+
+First one to build: a surface boss summoned at night, beatable with the first
+tier of gear, dropping what is needed to survive Abyss layer 1.
+
 ### 8. NPCs, classes and combat
 
 NPCs move in when a condition is met, Terraria-style, and each has a job, a
@@ -282,6 +323,11 @@ buys and sells comes first.
 At the start the player picks a class: Warrior, Ranger, Rogue, Arcanist or
 Beastmaster. Each gives a starting kit and a small skill tree, and skills from
 other trees can be unlocked later. **The class sets your start, not your fate.**
+
+This is the least Terraria-shaped idea in the document and it is now scheduled
+last, on purpose. Terraria has no classes; it has gear that implies a
+playstyle. If the gear ends up doing that job well enough, this should be cut
+rather than built.
 
 Combat is Terraria-style and the companion fights alongside. Fighting is never
 the only answer: running, hiding in tall grass and bushes that break line of

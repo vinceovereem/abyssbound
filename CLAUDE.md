@@ -92,6 +92,31 @@ stops being reproducible, which breaks saves and every seeded test.
 archived zones and are frozen: renumbering them silently repaints
 `levels/legacy/`. Append, never reorder.
 
+## The living world
+
+`DayClock` is an autoload. One day is twenty real minutes, half of it dark.
+Everything that should care what time it is reads it rather than keeping its
+own timer: the sky colour, how much light the sun gives, and what may spawn.
+
+**Night is dark because the sun stops giving light**, not because a filter is
+drawn over the screen. `Lighting.sky_light` is scaled by `DayClock.daylight()`,
+which is why a torch matters after dusk and why a lit room reads as safe.
+
+`scripts/world/spawner.gd` owns where and when. Its rules are the design, not
+an implementation detail:
+
+- hostiles only appear on tiles darker than `DARK_ENOUGH`, so shelter works
+- nothing appears within `MIN_TILES` of the player, so nothing pops in on screen
+- dawn clears the night's hostiles off the surface
+- anything past `FORGET_TILES` is freed
+
+Milestone 4 replaces *what* spawns with real species from `data/creatures/`.
+The where and when should survive that.
+
+`scripts/world/combat.gd` is the player's swing, and it aims with the same keys
+as digging on purpose. Two aiming schemes in one game is how controls stop
+being learnable.
+
 ## Digging
 
 Aimed with the movement keys, not a cursor, and it reaches exactly one tile:
@@ -122,6 +147,11 @@ jump, so nothing is lost.
   is an `Object` virtual. Both shadow silently and fail confusingly.
 - **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
   anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
+- **macOS throttles a windowed run that is not in front.** A screenshot script
+  that takes twenty seconds with the window up takes several minutes behind
+  another window, which looks exactly like a hang. Call
+  `DisplayServer.window_move_to_foreground()` at the start of anything windowed,
+  and pass `--always-on-top`.
 - **Godot drops every held input when the window loses focus.** A windowed
   playtest driven with `Input.action_press` therefore does nothing at all if
   the window never got focus, and reports the ground as impassable rather than

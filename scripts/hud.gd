@@ -16,6 +16,7 @@ const HEART_SIZE := Vector2i(9, 8)
 var _full: AtlasTexture
 var _empty: AtlasTexture
 var _resources: VBoxContainer
+var _clock: Label
 
 
 func _ready() -> void:
@@ -27,6 +28,7 @@ func _ready() -> void:
 	set_gameplay_visible(false)
 
 	_build_resource_list()
+	_build_clock()
 
 	Game.health_changed.connect(_on_health_changed)
 	Game.crystals_changed.connect(_on_crystals_changed)
@@ -68,6 +70,32 @@ func _build_resource_list() -> void:
 	$Root.add_child(_resources)
 
 
+## The time, top centre. Knowing dusk is coming is the whole point of having a
+## clock, and it cannot live only behind a debug key.
+func _build_clock() -> void:
+	_clock = Label.new()
+	_clock.name = "Clock"
+	_clock.anchor_left = 0.5
+	_clock.anchor_right = 0.5
+	_clock.offset_left = -40.0
+	_clock.offset_right = 40.0
+	_clock.offset_top = 4.0
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_clock.add_theme_font_size_override("font_size", 8)
+	_clock.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_clock.add_theme_constant_override("outline_size", 3)
+	$Root.add_child(_clock)
+
+
+func _process(_delta: float) -> void:
+	if _clock == null or not _clock.visible:
+		return
+	_clock.text = DayClock.clock_text()
+	# Cold at night, warm in the day, so a glance at the colour is enough.
+	_clock.add_theme_color_override("font_color",
+		Color(0.62, 0.70, 0.95) if DayClock.is_night() else Color(1.0, 0.93, 0.72))
+
+
 func _on_resource_collected(_resource: String, _amount: int, _total: int) -> void:
 	for child in _resources.get_children():
 		child.queue_free()
@@ -90,6 +118,8 @@ func set_gameplay_visible(shown: bool) -> void:
 	$Root/TopRight.visible = shown
 	if _resources:
 		_resources.visible = shown
+	if _clock:
+		_clock.visible = shown
 
 
 func announce_zone(title: String) -> void:
