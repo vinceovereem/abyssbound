@@ -288,9 +288,35 @@ another window and looked exactly like a hang. Anything windowed now calls
 That is the second time the harness has lied about the game rather than the
 other way round.
 
+### 8c — the screenshot that found two bugs
+
+The last shot of round 8 was meant to be a picture of a crawler arriving. It
+came back showing the player dead, with the words **"You fell too deep."**
+
+Two things wrong in one frame.
+
+- **The death message was a lie.** That text is from the placeholder, when
+  falling down a shaft was the only way to die. Being killed by something and
+  being told you fell is worse than saying nothing.
+- **Dying threw the world away.** `R` reloaded the scene, which built a brand
+  new world from a fresh seed. Everything dug was gone. In a game about digging
+  that is not a death penalty, it is losing the save.
+
+Death now puts you back where you started, in the same world, with your health
+and everything you dug. Checks cover all of it: same seed, same hole, back at
+the spawn column, message cleared.
+
+Neither of these would have shown up in a headless check, because both were
+about what the player is told and what the player keeps. It took a picture of a
+corpse to notice.
+
 **Still not right.**
 
 - Dawn and dusk look identical. Sunrise should be cooler than sunset.
 - Hostiles are one crawler with a new flag. Milestone 4 gives them species,
   habits and hours.
-- Dying is still just losing hearts. There is no consequence worth the name.
+- Death costs nothing yet. Terraria drops some of your coins; there is nothing
+  here to drop until milestone 4 gives you things to carry.
+- Standing still through a night takes five hearts to zero. Whether that is
+  tense or unfair is a judgement for whoever plays a night properly, with the
+  walls and workbench that milestone 4 will provide.

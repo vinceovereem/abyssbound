@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _check_reach()
 	_check_clock()
 	await _check_night()
+	await _check_death()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -696,3 +697,48 @@ func _clear_creatures() -> void:
 		for node in get_tree().get_nodes_in_group(group):
 			if is_instance_valid(node):
 				node.free()
+
+
+# ---------------------------------------------------------------------------
+## Dying used to reload the scene, which built a brand new world from a fresh
+## seed and threw away everything that had been dug. In a game about digging
+## that is not a death penalty, it is losing the save.
+func _check_death() -> void:
+	print("\ndying")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 30:
+		await get_tree().physics_frame
+
+	var store: ChunkStore = world.store
+	var seed_before: int = store.world_seed()
+
+	# Dig something memorable, then die a long way from it.
+	var hole := Vector2i(600, store.gen.surface_height(600) + 2)
+	world.mining._set_tile(hole.x, hole.y, 0)
+	_ok("there is a hole to lose", store.get_fg(hole.x, hole.y) == 0)
+
+	world.teleport(700, store.gen.surface_height(700) - 3)
+	for i in 10:
+		await get_tree().physics_frame
+
+	Game.health = 1
+	Game.damage(1)
+	_ok("running out of health kills you", Game.health == 0)
+
+	# Fading out and back takes about a second.
+	for i in 90:
+		await get_tree().physics_frame
+
+	_ok("you come back with your health", Game.health == Game.MAX_HEALTH,
+		"%d" % Game.health)
+	_ok("you come back in the same world", world.store.world_seed() == seed_before)
+	_ok("the hole you dug is still there", world.store.get_fg(hole.x, hole.y) == 0)
+	_ok("you come back where you started",
+		absi(world.player_tile().x - 560) <= 3, "x=%d" % world.player_tile().x)
+	_ok("the death message is cleared", not Ui.get_node("Root/Message").visible)
+
+	world.queue_free()
+	await get_tree().process_frame

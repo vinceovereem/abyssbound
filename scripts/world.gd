@@ -25,6 +25,8 @@ var _camera: Camera2D
 var _last_centre := Vector2i(-9999, -9999)
 var _web_tick := 0
 var _last_sky_light := -1
+var _respawning := false
+var _spawn_x := 0
 
 ## Set before the node enters the tree to override what BootConfig would give.
 ## Playtest scripts use these to jump straight to what they are inspecting.
@@ -72,6 +74,8 @@ func _ready() -> void:
 	mining.tile_broken.connect(_on_tile_broken)
 	lighting.update_now(player_tile())
 
+	Game.player_died.connect(_on_player_died)
+
 	spawner = Spawner.new()
 	spawner.name = "Spawner"
 	add_child(spawner)
@@ -91,6 +95,7 @@ func _ready() -> void:
 func _spawn_player() -> void:
 	var wanted := spawn_override_x if spawn_override_x >= 0 else BootConfig.spawn_x()
 	var x := clampi(wanted, 8, WorldGen.WIDTH - 8)
+	_spawn_x = x
 	var h := store.gen.surface_height(x)
 
 	# Draw the ground before dropping the player onto it, or the first frames
@@ -194,3 +199,28 @@ func _on_tile_broken(x: int, y: int, drop: String) -> void:
 	tween.tween_property(label, "position:y", label.position.y - 14.0, 0.7)
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.25)
 	tween.tween_callback(label.queue_free)
+
+
+## Dying puts you back where you started, in the same world.
+##
+## It used to reload the scene, which regenerated the world from a fresh seed
+## and threw away everything that had been dug. In a game about digging that is
+## not a death penalty, it is losing the save.
+func _on_player_died() -> void:
+	if _respawning:
+		return
+	_respawning = true
+
+	await Ui.fade_out(0.4)
+
+	Game.health = Game.MAX_HEALTH
+	Game.health_changed.emit(Game.health, Game.MAX_HEALTH)
+	Ui.hide_message()
+
+	var x := clampi(_spawn_x, 8, WorldGen.WIDTH - 8)
+	teleport(x, store.gen.surface_height(x) - 3)
+	lighting.mark_dirty()
+	lighting.update_now(player_tile())
+
+	await Ui.fade_in(0.5)
+	_respawning = false

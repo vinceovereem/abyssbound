@@ -10,6 +10,9 @@ signal crystals_changed(total: int)
 signal zone_changed(zone_name: String)
 ## Something was broken and picked up. total is how many of it you now hold.
 signal resource_collected(resource: String, amount: int, total: int)
+## Health reached zero. Whoever owns the world puts the player back; nothing
+## here reloads a scene, because reloading a generated world throws it away.
+signal player_died
 
 const MAX_HEALTH := 5
 
@@ -67,7 +70,11 @@ func heal(amount: int) -> void:
 
 
 func _on_death() -> void:
-	Ui.show_message("You fell too deep.", "Press R to try again")
+	# The old text said "you fell too deep", from when falling was the only way
+	# to die. Being killed by something and being told you fell is worse than
+	# saying nothing.
+	Ui.show_message("You died.", "Waking up where you started")
+	player_died.emit()
 
 
 ## Reset run state and reload the current zone.
