@@ -33,6 +33,7 @@ Exit code 0 or the change is not done.
 - **Non-resource files are not exported.** `.txt` level maps only reach the packed build because `include_filter` in `export_presets.cfg` lists them. The game worked in the editor and failed in the browser. If you add a data file in a new format, add it to every preset's `include_filter`.
 - **Level geometry has to respect the jump.** The jump clears about 59 px, roughly 3.7 tiles, and reaches about 70 px horizontally. `tools/gen_levels.py` enforces a maximum pit of 3 tiles and a maximum climb of 3 tiles. If you change `jump_velocity` or `gravity` on the player, update the constants and the comment in that script.
 - **Autoloads are not available in `--script` mode.** The smoke test is a scene, not a script, for that reason. Keep it that way.
+- **The macOS export needs ETC2 ASTC turned on.** `rendering/textures/vram_compression/import_etc2_astc=true` in `project.godot` is not optional decoration: Godot refuses to export a universal or arm64 macOS build without it, and the export fails with a configuration error rather than a warning. Nothing here actually uses VRAM compression, every texture imports lossless, so the flag costs nothing. Do not "tidy it away".
 - **Pits are open shafts on purpose.** An earlier version had floors at the bottom of pits and the player could not jump out. Falling costs a heart and respawns you. Do not put a floor in a shaft.
 
 ## Layout
