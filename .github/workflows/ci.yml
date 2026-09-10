@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -74,6 +75,10 @@ jobs:
             out: build/windows/Abyssbound.exe
             artifact: abyssbound-windows
             dir: build/windows
+          - preset: macOS
+            out: build/macos/Abyssbound.zip
+            artifact: abyssbound-macos
+            dir: build/macos
           - preset: Linux
             out: build/linux/Abyssbound.x86_64
             artifact: abyssbound-linux
@@ -110,6 +115,23 @@ jobs:
         run: |
           ~/godot/godot --headless --import --path . || true
           ~/godot/godot --headless --import --path .
+
+      # The macOS preset carries a version number of its own, which is what the
+      # Mac shows in Get Info. Take it from the tag so it cannot drift.
+      - name: Stamp the version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -eu
+          # macOS only accepts digits and periods here, so take the numeric
+          # core of the tag. v1.2.0-beta stamps as 1.2.0 rather than failing.
+          VERSION="$(printf '%s' "${GITHUB_REF_NAME#v}" | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+' || true)"
+          if [ -z "$VERSION" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} has no MAJOR.MINOR.PATCH in it, which the macOS build needs."
+            exit 1
+          fi
+          sed -i "s|^application/short_version=.*|application/short_version=\"${VERSION}\"|" export_presets.cfg
+          sed -i "s|^application/version=.*|application/version=\"${VERSION}\"|" export_presets.cfg
+          grep -n '^application/short_version=\|^application/version=' export_presets.cfg
 
       - name: Export
         run: |
@@ -182,3 +204,69 @@ jobs:
           path: web
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  # Tagging a version publishes the desktop builds as a GitHub Release, which is
+  # the only artifact anyone can download without a GitHub account. Actions
+  # artifacts expire and need a login, so they are no good for sending to
+  # playtesters. Cut one with: git tag v0.1.0 && git push origin v0.1.0
+  release:
+    name: Publish downloadable builds
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-windows
+          path: dist/windows
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-macos
+          path: dist/macos
+
+      - name: Name the files after the tag
+        run: |
+          set -eux
+          mkdir -p release
+          cp dist/windows/Abyssbound.exe "release/Abyssbound-${GITHUB_REF_NAME}-Windows.exe"
+          cp dist/macos/Abyssbound.zip "release/Abyssbound-${GITHUB_REF_NAME}-macOS.zip"
+          ls -la release
+
+      - name: Write the notes
+        run: |
+          cat > notes.md <<'EOF'
+          Download the file for your machine. The game data is inside the
+          download, so there is nothing else to install.
+
+          | Machine | File |
+          | --- | --- |
+          | Windows | `Abyssbound-VERSION-Windows.exe` |
+          | Mac (Intel and Apple Silicon) | `Abyssbound-VERSION-macOS.zip` |
+
+          **Windows.** Double-click the `.exe`. Windows will say it does not
+          recognise the app, because the build is not signed with a paid
+          certificate. Click **More info**, then **Run anyway**.
+
+          **Mac.** Unzip, then **right-click** `Abyssbound.app` and choose
+          **Open**, then **Open** again. Do not double-click it the first time:
+          the build is not notarised, so double-clicking gives you a dead end
+          that says it cannot be opened. Right-click and Open gives you the
+          button that lets it through. You only have to do this once.
+
+          Prefer no download at all? The browser build plays on the web with
+          nothing to install.
+          EOF
+          sed -i "s/VERSION/${GITHUB_REF_NAME}/g" notes.md
+          cat notes.md
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Abyssbound $GITHUB_REF_NAME" \
+            --notes-file notes.md

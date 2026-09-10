@@ -33,6 +33,7 @@ Exit code 0 or the change is not done.
 - **Non-resource files are not exported.** `.txt` level maps only reach the packed build because `include_filter` in `export_presets.cfg` lists them. The game worked in the editor and failed in the browser. If you add a data file in a new format, add it to every preset's `include_filter`.
 - **Level geometry has to respect the jump.** The jump clears about 59 px, roughly 3.7 tiles, and reaches about 70 px horizontally. `tools/gen_levels.py` enforces a maximum pit of 3 tiles and a maximum climb of 3 tiles. If you change `jump_velocity` or `gravity` on the player, update the constants and the comment in that script.
 - **Autoloads are not available in `--script` mode.** The smoke test is a scene, not a script, for that reason. Keep it that way.
+- **The macOS export needs ETC2 ASTC turned on.** `rendering/textures/vram_compression/import_etc2_astc=true` in `project.godot` is not optional decoration: Godot refuses to export a universal or arm64 macOS build without it, and the export fails with a configuration error rather than a warning. Nothing here actually uses VRAM compression, every texture imports lossless, so the flag costs nothing. Do not "tidy it away".
 - **Pits are open shafts on purpose.** An earlier version had floors at the bottom of pits and the player could not jump out. Falling costs a heart and respawns you. Do not put a floor in a shaft.
 
 ## Layout
@@ -60,11 +61,19 @@ Player is layer 2 mask 1. Anything that needs to detect the player masks 2.
 
 ## Deployment
 
-`.github/workflows/ci.yml` runs the smoke test, exports three platforms, then deploys the web build to Vercel with the Vercel CLI. `vercel.json` sets the wasm content type and cache headers, and CI copies it into `build/web` before deploying.
+`.github/workflows/ci.yml` runs the smoke test, exports four platforms, then deploys the web build to Vercel with the Vercel CLI. `vercel.json` sets the wasm content type and cache headers, and CI copies it into `build/web` before deploying.
 
 The deploy needs `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` as repository secrets. If they are missing the step prints an explanation and exits 0 rather than failing, so a fork or a new clone still gets green CI.
 
 Do not add a Vercel build command that installs Godot. The export templates are over a gigabyte and would be downloaded on every deploy. The build happens in Actions, where it is cached, and Vercel only serves the finished files.
+
+Pushing a `v*` tag publishes the Windows `.exe` and the macOS `.zip` as a GitHub
+Release. That is the only build a playtester can download without a GitHub
+account, because Actions artifacts expire and sit behind a login. The desktop
+builds are unsigned, so both operating systems warn on first launch and the
+release notes tell people how to get past it. Do not tell anyone to
+double-click the Mac app the first time: unnotarised apps give a dead-end
+dialog, and only right-click then Open offers the button that lets it through.
 
 ## What is deliberately missing
 
