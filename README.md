@@ -114,6 +114,11 @@ it, no account needed. Send them the release page and they pick their platform:
 | Windows | `Abyssbound-v0.1.0-Windows.exe`, one file, double-click it |
 | Mac | `Abyssbound-v0.1.0-macOS.zip`, unzip and run the app inside |
 
+Tag as `vMAJOR.MINOR.PATCH`. CI stamps that number into the Mac app, which is
+what shows in Get Info, so the version cannot drift from the tag. A tag with no
+`MAJOR.MINOR.PATCH` in it fails the build on purpose rather than shipping a
+build labelled with the wrong version.
+
 Both builds are unsigned, because signing costs money on both platforms: 99 USD
 a year for Apple, a few hundred for a Windows certificate. So both warn on first
 launch, and the release notes spell out the way past it.

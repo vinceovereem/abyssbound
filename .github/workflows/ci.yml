@@ -116,6 +116,23 @@ jobs:
           ~/godot/godot --headless --import --path . || true
           ~/godot/godot --headless --import --path .
 
+      # The macOS preset carries a version number of its own, which is what the
+      # Mac shows in Get Info. Take it from the tag so it cannot drift.
+      - name: Stamp the version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -eu
+          # macOS only accepts digits and periods here, so take the numeric
+          # core of the tag. v1.2.0-beta stamps as 1.2.0 rather than failing.
+          VERSION="$(printf '%s' "${GITHUB_REF_NAME#v}" | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+' || true)"
+          if [ -z "$VERSION" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} has no MAJOR.MINOR.PATCH in it, which the macOS build needs."
+            exit 1
+          fi
+          sed -i "s|^application/short_version=.*|application/short_version=\"${VERSION}\"|" export_presets.cfg
+          sed -i "s|^application/version=.*|application/version=\"${VERSION}\"|" export_presets.cfg
+          grep -n '^application/short_version=\|^application/version=' export_presets.cfg
+
       - name: Export
         run: |
           mkdir -p "${{ matrix.dir }}"
