@@ -86,163 +86,208 @@ def sheet(frames, path):
 
 
 # --------------------------------------------------------------------------
-# Player. 12x16. Torso is shared, legs swap per frame.
+# Player. 20x30, about two tiles tall.
+#
+# Drawn as one base (head, pack, torso, arms) plus a swappable set of legs, so
+# a walk cycle is six small grids rather than six whole characters. Feet sit on
+# the last drawn row; scenes/actors/player.tscn offsets the sprite so that row
+# lands on the collision box's floor.
 # --------------------------------------------------------------------------
-TORSO = [
-    "...111111...".replace("1", "K"),
-    "..KHHHHHHK..",
-    "..KHhhhhHK..",
-    "..KHSSSSHK..",
-    "..KSKSSKSK..",
-    "..KSSssSSK..",
-    "...KSSSSK...",
-    ".KCCCCCCCCK.",
-    ".KSCCCCCCSK.",
-    ".KSCCAACCSK.",
-    ".KScCCCCcSK.",
-    "..KcCCCCcK..",
+PLAYER_BASE = [
+    "....................",
+    "......hhhhhh........",
+    ".....hHHHHHHh.......",
+    "....hHHHHHHHHh......",
+    "....HHHSSSSSHh......",
+    "....HSSSSSSSSh......",
+    "....HSSKSSSKSh......",
+    "....hSSSSSSSSh......",
+    ".....sSSSSSSs.......",
+    "......sSSSSs........",
+    "...AAAcCCCCcAA......",
+    "..AAAAcCCCCcAAA.....",
+    "..AAAncCCCCCcAA.....",
+    "..AAAncCCCCCcAA.....",
+    "..AAAncCCCCCcAA.....",
+    "...AAncCCCCCcA......",
+    "....ScCCCCCCcS......",
+    "....SScCCCCcSS......",
+    ".....SSpPPPpSS......",
+    "......pPPPPPp.......",
 ]
 
-LEGS = {
+PLAYER_LEGS = {
     "idle": [
-        "..KPPPPPPK..",
-        "..KPPPPPPK..",
-        "..KPPKKPPK..",
-        "..KBB..BBK..",
+        "......pPPPPPp.......",
+        "......PP..PP........",
+        "......PP..PP........",
+        "......pP..Pp........",
+        "......pP..Pp........",
+        "......BB..BB........",
+        ".....BBBB.BBB.......",
+        ".....KKKK.KKK.......",
+        "....................",
+        "....................",
     ],
     "run_a": [
-        "..KPPPPPPK..",
-        ".KPPPKPPPK..",
-        ".KPPK..KppK.",
-        ".BBK....KBB.",
+        "......pPPPPPp.......",
+        ".....PPP..PP........",
+        "....PPP...PPp.......",
+        "...pPP.....Pp.......",
+        "...pP......Pp.......",
+        "...BB......BB.......",
+        "..BBBB....BBBB......",
+        "..KKKK....KKKK......",
+        "....................",
+        "....................",
     ],
     "run_b": [
-        "..KPPPPPPK..",
-        "..KPPPPPPK..",
-        "..KPPKKPPK..",
-        "..KBBKKBBK..",
+        "......pPPPPPp.......",
+        "......PPP.PPp.......",
+        "......PPP..Pp.......",
+        ".......PP..Pp.......",
+        ".......PP..Pp.......",
+        ".......BB..BB.......",
+        "......BBBB.BBB......",
+        "......KKKK.KKK......",
+        "....................",
+        "....................",
     ],
     "run_c": [
-        "..KPPPPPPK..",
-        "..KPPPKPPPK.",
-        ".KppK..KPPK.",
-        ".BBK....KBB.",
+        "......pPPPPPp.......",
+        "......PP..PPP.......",
+        "......pP...PPP......",
+        "......pP....PPp.....",
+        "......pP.....Pp.....",
+        "......BB.....BB.....",
+        ".....BBBB...BBBB....",
+        ".....KKKK...KKKK....",
+        "....................",
+        "....................",
     ],
     "jump": [
-        "..KPPPPPPK..",
-        ".KPPPKKPPK..",
-        ".KBBK..KppK.",
-        "..BK....KB..",
+        "......pPPPPPp.......",
+        ".....PPP..PPP.......",
+        "....PPP....PPP......",
+        "...pPP......PPp.....",
+        "...BB........BB.....",
+        "..BBBB......BBBB....",
+        "..KKKK......KKKK....",
+        "....................",
+        "....................",
+        "....................",
     ],
     "fall": [
-        "..KPPPPPPK..",
-        "..KPPPPPPK..",
-        ".KPPK..KPPK.",
-        ".KBBK..KBBK.",
+        "......pPPPPPp.......",
+        "......PPP.PPP.......",
+        "......PP...PP.......",
+        "......pP...Pp.......",
+        "......pP...Pp.......",
+        "......BB...BB.......",
+        ".....BBBB.BBBB......",
+        ".....KKKK.KKKK......",
+        "....................",
+        "....................",
     ],
 }
 
-# Arms raised while airborne, so the jump reads at 16 pixels tall.
-TORSO_AIR = list(TORSO)
-TORSO_AIR[8] = ".SKCCCCCCKS."
-TORSO_AIR[9] = ".SKCCAACCKS."
+
+def player_frame(legs_name):
+    return grid(PLAYER_BASE + PLAYER_LEGS[legs_name], "player-%s" % legs_name)
 
 
 def player():
-    frames = []
-    order = ["idle", "idle", "run_a", "run_b", "run_c", "run_b", "jump", "fall"]
-    for i, key in enumerate(order):
-        torso = TORSO_AIR if key in ("jump", "fall") else TORSO
-        rows = list(torso) + LEGS[key]
-        f = grid(rows, f"player[{key}]")
-        # 1px idle bob on the second idle frame
-        if i == 1:
-            bob = Image.new("RGBA", (12, 16), (0, 0, 0, 0))
-            bob.paste(f.crop((0, 0, 12, 15)), (0, 1), f.crop((0, 0, 12, 15)))
-            f = bob
-        frames.append(f)
+    frames = [
+        player_frame("idle"), player_frame("idle"),
+        player_frame("run_a"), player_frame("run_b"),
+        player_frame("run_c"), player_frame("run_b"),
+        player_frame("jump"), player_frame("fall"),
+    ]
     sheet(frames, "sprites/player.png")
 
 
 # --------------------------------------------------------------------------
-# Crawler. The hostile one. 16x12.
+# Crawler. 24x18. A low, heavy beast: wide silhouette, small eyes, four stumps.
 # --------------------------------------------------------------------------
-CRAWLER_A = [
-    ".....KKKKKK.....",
-    "...KKnnnnnnKK...",
-    "..KnnNNNNNNnnK..",
-    ".KnNNNNNNNNNNnK.",
-    ".KNNKWKNNKWKNNK.",
-    ".KNNNNNNNNNNNNK.",
-    ".KNnNNNNNNNNnNK.",
-    "..KNNNNNNNNNNK..",
-    "..KKnnnnnnnnKK..",
-    "...KWKKWWKKWK...",
-    "..KK..KK..KK....",
-    "................",
+CRAWLER_BODY = [
+    "........................",
+    "........................",
+    ".....KKKK...KKKK........",
+    "....KNNNNKKNNNNK........",
+    "...KNNNNNNNNNNNNK.......",
+    "..KNNNnNNNNNNnNNNK......",
+    "..KNNWKNNNNNNKWNNK......",
+    "..KNNNNNNNNNNNNNNK......",
+    "..KNnNNNNNNNNNNnNK......",
+    "..KNNNNNNNNNNNNNNK......",
+    "...KNNNNNNNNNNNNK.......",
+    "...KNnNNNNNNNNnNK.......",
 ]
-CRAWLER_B = [
-    "................",
-    ".....KKKKKK.....",
-    "...KKnnnnnnKK...",
-    "..KnnNNNNNNnnK..",
-    ".KnNNNNNNNNNNnK.",
-    ".KNNKWKNNKWKNNK.",
-    ".KNNNNNNNNNNNNK.",
-    ".KNnNNNNNNNNnNK.",
-    "..KNNNNNNNNNNK..",
-    "..KKnnnnnnnnKK..",
-    "...KWKKWWKKWK...",
-    "....KK..KK..KK..",
-]
+
+CRAWLER_FEET = {
+    "a": [
+        "....KNNK...KNNK.........",
+        "....KNNK...KNNK.........",
+        "....KnnK...KnnK.........",
+        "....KKKK...KKKK.........",
+        "........................",
+        "........................",
+    ],
+    "b": [
+        "...KNNK.....KNNK........",
+        "...KNNK.....KNNK........",
+        "...KnnK.....KnnK........",
+        "...KKKK.....KKKK........",
+        "........................",
+        "........................",
+    ],
+}
 
 
 def crawler():
-    sheet([grid(CRAWLER_A, "crawler_a"), grid(CRAWLER_B, "crawler_b")],
+    sheet([grid(CRAWLER_BODY + CRAWLER_FEET[k], "crawler-%s" % k) for k in ("a", "b")],
           "sprites/crawler.png")
 
 
 # --------------------------------------------------------------------------
-# Critter. The tameable one, a wolf pup. 16x12.
+# Critter. 20x16. A wild rabbit: tall ears, round body, nothing threatening.
 # --------------------------------------------------------------------------
-CRITTER_A = [
-    "...KK.......KK..",
-    "..KFFK.....KFFK.",
-    "..KFFFKKKKKFFFK.",
-    "...KFFFFFFFFFFK.",
-    "..KFFKWKFFKWKFK.",
-    ".KFFFFFFFFFFFFK.",
-    ".KFffFFFFFFffFK.",
-    ".KFFFFFFFFFFFFKK",
-    "..KffFFFFFFffK.f",
-    "..KFK.KFFK.KFK.f",
-    "..KKK.KKKK.KKK..",
-    "................",
+CRITTER_BODY = [
+    "....................",
+    ".......FF..FF.......",
+    "......FfF..FfF......",
+    "......FFF..FFF......",
+    "......FFF..FFF......",
+    ".....FFFFFFFFF......",
+    "....FFFFFFFFFFF.....",
+    "...FFKFFFFFFKFF.....",
+    "...FFFFFRFFFFFF.....",
+    "...FFFFFFFFFFFF.....",
+    "...fFFFFFFFFFFf.....",
+    "....FFFFFFFFFF......",
 ]
-CRITTER_B = [
-    "................",
-    "...KK.......KK..",
-    "..KFFK.....KFFK.",
-    "..KFFFKKKKKFFFK.",
-    "...KFFFFFFFFFFK.",
-    "..KFFKWKFFKWKFK.",
-    ".KFFFFFFFFFFFFKf",
-    ".KFffFFFFFFffFKf",
-    ".KFFFFFFFFFFFFK.",
-    "..KffFFFFFFffK..",
-    "...KFK.KFFK.KFK.",
-    "...KKK.KKKK.KKK.",
-]
+
+CRITTER_FEET = {
+    "a": [
+        ".....FF....FF.......",
+        ".....ff....ff.......",
+        "....................",
+        "....................",
+    ],
+    "b": [
+        "....FF......FF......",
+        "....ff......ff......",
+        "....................",
+        "....................",
+    ],
+}
 
 
 def critter():
-    sheet([grid(CRITTER_A, "critter_a"), grid(CRITTER_B, "critter_b")],
+    sheet([grid(CRITTER_BODY + CRITTER_FEET[k], "critter-%s" % k) for k in ("a", "b")],
           "sprites/critter.png")
 
 
-# --------------------------------------------------------------------------
-# Crystal pickup. 8x10, four frames of sparkle.
-# --------------------------------------------------------------------------
 def crystal_frames():
     base = [
         "...KK...",

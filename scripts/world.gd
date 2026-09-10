@@ -108,6 +108,10 @@ func _spawn_player() -> void:
 
 	_camera = player.get_node_or_null("Camera") as Camera2D
 	if _camera:
+		# Pulled in from the full 640x360. At 1:1 the character was a speck in
+		# forty tiles of world; this shows about twenty seven, which is roughly
+		# what the concept art frames.
+		_camera.zoom = Vector2(1.5, 1.5)
 		_camera.limit_left = 0
 		_camera.limit_top = 0
 		_camera.limit_right = WorldGen.WIDTH * TILE

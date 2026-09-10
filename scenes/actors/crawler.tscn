@@ -5,11 +5,11 @@
 
 [sub_resource type="AtlasTexture" id="C0"]
 atlas = ExtResource("2_tex")
-region = Rect2(0, 0, 16, 12)
+region = Rect2(0, 0, 24, 18)
 
 [sub_resource type="AtlasTexture" id="C1"]
 atlas = ExtResource("2_tex")
-region = Rect2(16, 0, 16, 12)
+region = Rect2(24, 0, 24, 18)
 
 [sub_resource type="SpriteFrames" id="Frames_crawler"]
 animations = [{
@@ -20,10 +20,10 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="Shape_crawler"]
-size = Vector2(13, 9)
+size = Vector2(14, 12)
 
 [sub_resource type="RectangleShape2D" id="Shape_hit"]
-size = Vector2(15, 11)
+size = Vector2(20, 14)
 
 [node name="Crawler" type="CharacterBody2D"]
 collision_layer = 4
@@ -31,16 +31,17 @@ collision_mask = 1
 script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
+offset = Vector2(0, -2)
 sprite_frames = SubResource("Frames_crawler")
 animation = &"walk"
 autoplay = "walk"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1)
+position = Vector2(0, -1)
 shape = SubResource("Shape_crawler")
 
 [node name="FloorProbe" type="RayCast2D" parent="."]
-position = Vector2(8, 0)
+position = Vector2(10, 0)
 target_position = Vector2(0, 12)
 collision_mask = 1
 
@@ -49,5 +50,5 @@ collision_layer = 4
 collision_mask = 2
 
 [node name="Shape" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(0, 1)
+position = Vector2(0, -1)
 shape = SubResource("Shape_hit")
