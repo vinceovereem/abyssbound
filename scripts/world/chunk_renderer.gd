@@ -9,13 +9,17 @@ extends Node2D
 const SOURCE_ID := 0
 const TILESET := preload("res://assets/tiles/tileset.tres")
 const WATER_ATLAS := 21
+const EDGE_ATLAS := 22
 
 var store: ChunkStore
 var bg_layer: TileMapLayer
 var water_layer: TileMapLayer
 var fg_layer: TileMapLayer
+var edge_layer: TileMapLayer
 
 var _loaded := {}
+var _db: TileDB
+var _grass := 0
 
 
 func setup(chunk_store: ChunkStore) -> void:
@@ -23,6 +27,9 @@ func setup(chunk_store: ChunkStore) -> void:
 	bg_layer = _make_layer("Background", -2)
 	water_layer = _make_layer("Water", -1)
 	fg_layer = _make_layer("Tiles", 0)
+	edge_layer = _make_layer("Edges", 1)
+	_db = TileDB.get_db()
+	_grass = _db.id("grass")
 	# Walls sit behind everything and must never be mistaken for something you
 	# can stand on, so they are drawn darker than the solid tile of the same rock.
 	bg_layer.modulate = Color(0.85, 0.86, 0.92)
@@ -68,6 +75,7 @@ func _draw_chunk(key: Vector2i, chunk: Chunk) -> void:
 			var cell := Vector2i(ox + lx, oy + ly)
 			_put(fg_layer, cell, chunk.fg[i])
 			_put(bg_layer, cell, chunk.bg[i])
+			_edge(cell.x, cell.y, chunk.fg[i])
 			if chunk.water[i] > 0:
 				water_layer.set_cell(cell, SOURCE_ID, Vector2i(WATER_ATLAS, 0))
 			else:
@@ -92,11 +100,25 @@ func _unload(key: Vector2i) -> void:
 			fg_layer.erase_cell(cell)
 			bg_layer.erase_cell(cell)
 			water_layer.erase_cell(cell)
+			edge_layer.erase_cell(cell)
 	_loaded.erase(key)
 
 
-## One tile changed. Redraw just that cell rather than the whole chunk.
+## Whether this tile wears a lit lip: solid, with open air above it. Grass is
+## skipped because it already has a green top of its own and would double up.
+func _edge(x: int, y: int, id: int) -> void:
+	var cell := Vector2i(x, y)
+	if id != 0 and id != _grass and _db.is_solid(id) and not _db.is_solid(store.get_fg(x, y - 1)):
+		edge_layer.set_cell(cell, SOURCE_ID, Vector2i(EDGE_ATLAS, 0))
+	else:
+		edge_layer.erase_cell(cell)
+
+
+## One tile changed. Redraw that cell, and the one under it, whose lip appears
+## or disappears depending on what just happened above it.
 func update_tile(x: int, y: int) -> void:
 	var cell := Vector2i(x, y)
 	_put(fg_layer, cell, store.get_fg(x, y))
 	_put(bg_layer, cell, store.get_bg(x, y))
+	_edge(x, y, store.get_fg(x, y))
+	_edge(x, y + 1, store.get_fg(x, y + 1))

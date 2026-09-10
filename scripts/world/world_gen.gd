@@ -56,6 +56,7 @@ var STONE := 0
 var SAND := 0
 var SNOW := 0
 var WOOD := 0
+var TRUNK := 0
 var LEAVES := 0
 var COPPER := 0
 var IRON := 0
@@ -75,6 +76,7 @@ func _init(seed_value: int = 0) -> void:
 	SAND = _db.id("sand")
 	SNOW = _db.id("snow")
 	WOOD = _db.id("wood")
+	TRUNK = _db.id("tree_trunk")
 	LEAVES = _db.id("leaves")
 	COPPER = _db.id("copper_ore")
 	IRON = _db.id("iron_ore")
@@ -288,7 +290,7 @@ func _canopy_at(x: int, y: int, ci: int, heights: PackedInt32Array, tree_h: Pack
 		var trunk_base := heights[j]
 		var top := trunk_base - th
 		if dx == 0 and y >= top and y < trunk_base:
-			return WOOD
+			return TRUNK
 		var ddy := y - top
 		if dx * dx + ddy * ddy <= 6:
 			return LEAVES

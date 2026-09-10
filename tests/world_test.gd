@@ -27,6 +27,7 @@ func _ready() -> void:
 	await _check_digging()
 	await _check_lighting()
 	_check_save_load()
+	await _check_traversal()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -384,3 +385,73 @@ func _check_save_load() -> void:
 		fresh_size < 4096, "%d bytes for 2 edits" % fresh_size)
 
 	WorldSave.clear()
+
+
+# ---------------------------------------------------------------------------
+## Both of these come from playing the game, not from reading it. The first
+## run walked two tiles east and stopped: the spawn was beside a tree and tree
+## trunks were solid, so the tree was a wall. The fix made trunks walkable, the
+## way they are in the game this borrows from. Then it still needed six jumps
+## to cross ten tiles, because natural ground is all single tile steps.
+func _check_traversal() -> void:
+	print("\ntraversal")
+	var db := TileDB.get_db()
+	_ok("a tree trunk is walked through, not into", not db.is_solid(db.id("tree_trunk")))
+	_ok("wood the building block is still solid", db.is_solid(db.id("wood")))
+
+	# No column of forest should be a wall at head height.
+	var store := ChunkStore.new(20260910)
+	var blocked := 0
+	var trunks := 0
+	for x in range(500, 700):
+		var h := store.gen.surface_height(x)
+		if store.get_fg(x, h - 1) == db.id("tree_trunk"):
+			trunks += 1
+			if store.is_solid(x, h - 1) or store.is_solid(x, h - 2):
+				blocked += 1
+	_ok("a forest can be walked through", blocked == 0,
+		"%d trunks, %d blocking" % [trunks, blocked])
+
+	# A single tile step is walked over, not jumped over.
+	var root := Node2D.new()
+	add_child(root)
+	var ground := StaticBody2D.new()
+	var gshape := CollisionShape2D.new()
+	var grect := RectangleShape2D.new()
+	grect.size = Vector2(400, 48)
+	gshape.shape = grect
+	ground.add_child(gshape)
+	ground.position = Vector2(200, 224)
+	ground.collision_layer = 1
+	root.add_child(ground)
+
+	var step := StaticBody2D.new()
+	var sshape := CollisionShape2D.new()
+	var srect := RectangleShape2D.new()
+	srect.size = Vector2(64, 16)
+	sshape.shape = srect
+	step.add_child(sshape)
+	step.position = Vector2(260, 192)
+	step.collision_layer = 1
+	root.add_child(step)
+
+	var player: CharacterBody2D = load("res://scenes/actors/player.tscn").instantiate()
+	player.position = Vector2(150, 180)
+	root.add_child(player)
+	for i in 40:
+		await get_tree().physics_frame
+
+	var x_before: float = player.global_position.x
+	Input.action_press("move_right")
+	for i in 90:
+		await get_tree().physics_frame
+	Input.action_release("move_right")
+
+	var travelled: float = player.global_position.x - x_before
+	_ok("a one tile step does not need a jump", travelled > 80.0,
+		"%.0f px travelled without pressing jump" % travelled)
+	_ok("stepping up puts the player on top of the step",
+		player.global_position.y < 190.0, "y=%.1f" % player.global_position.y)
+
+	root.queue_free()
+	await get_tree().process_frame

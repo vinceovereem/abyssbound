@@ -147,6 +147,14 @@
       "hardness": 0,
       "opacity": 12,
       "emit": 0
+    },
+    {
+      "id": 23,
+      "name": "tree_trunk",
+      "solid": false,
+      "hardness": 16,
+      "opacity": 40,
+      "emit": 0
     }
   ]
 }

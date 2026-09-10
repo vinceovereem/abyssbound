@@ -134,6 +134,26 @@ milestone summary, not something to quietly ship at 30 fps.
 set resource and every tile the world draws, and the current tile set has no
 terrain data whatsoever.
 
+### What actually shipped
+
+Built: generation, chunks, streaming, biomes, caves, ore, trees, sky islands,
+the Abyss shaft, digging, placing, lighting, save and load, the F3 overlay,
+boot config, and the playtest harness. 63 world checks plus the original 39.
+
+Two items from the task list above did not land as written, both deliberately:
+
+- **Flowing water is not built.** The milestone list in the brief puts water
+  with the oxygen kit in milestone 5, and that is the right place for it: the
+  simulation only matters once drowning does. The ocean is static water placed
+  by the generator, which is enough for the coastline to read.
+- **Tiles do not corner-blend.** They get a lit top lip where they meet open
+  air, which is what makes a dug tunnel look carved rather than stamped. A real
+  terrain set means a 2D atlas and a per-tile bitmask, and it is worth doing
+  properly next to the item icons in milestone 3 rather than rushed here.
+
+Carried forward: the light pass spikes to 13-18 ms while moving. See
+`playtest-log.md` round 4.
+
 ## Milestone 3 — items and crafting
 
 Inventory, hotbar, drops, ores, tool tiers, stations, data-driven recipes, and

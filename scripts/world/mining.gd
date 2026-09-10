@@ -10,6 +10,9 @@ extends Node2D
 const TILE := 16
 const REACH := 5.0          ## tiles, measured centre to centre
 const DIG_POWER := 20.0     ## hardness units per second. Tool tiers scale this.
+## Holding the place button lays a run of tiles, at this interval. One press
+## per tile turns building a wall into a clicking exercise.
+const PLACE_INTERVAL := 0.12
 
 signal tile_changed(x: int, y: int)
 
@@ -20,9 +23,15 @@ var world: Node2D
 var placeable: Array[String] = ["dirt", "stone", "torch"]
 var place_index := 0
 
+## Playtests aim here instead of using the real cursor. Everything downstream
+## of the aim is the same code the player exercises: reach, break time,
+## support rules, overlap.
+var aim_override := Vector2.INF
+
 var _target := Vector2i(-9999, -9999)
 var _progress := 0.0
 var _in_reach := false
+var _place_cooldown := 0.0
 var _db: TileDB
 
 
@@ -47,7 +56,7 @@ func _process(delta: float) -> void:
 	if world == null or world.player == null or not is_instance_valid(world.player):
 		return
 
-	var mouse := get_global_mouse_position()
+	var mouse := aim_override if aim_override != Vector2.INF else get_global_mouse_position()
 	var tile := Vector2i(int(floor(mouse.x / TILE)), int(floor(mouse.y / TILE)))
 	var centre: Vector2 = world.player.global_position / float(TILE)
 	_in_reach = Vector2(tile).distance_to(centre) <= REACH
@@ -56,11 +65,15 @@ func _process(delta: float) -> void:
 		_target = tile
 		_progress = 0.0
 
+	_place_cooldown = maxf(0.0, _place_cooldown - delta)
+
 	if _in_reach:
 		if Input.is_action_pressed("mine"):
 			_dig(delta)
-		elif Input.is_action_just_pressed("place"):
-			_place()
+		elif Input.is_action_pressed("place"):
+			if _place_cooldown <= 0.0:
+				_place_cooldown = PLACE_INTERVAL
+				_place()
 		else:
 			_progress = 0.0
 	else:

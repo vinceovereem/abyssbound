@@ -16,7 +16,9 @@ and the art generator all survive. Zone loading is the part being replaced.
 
 ## What this is
 
-A 2D pixel-art platformer in Godot 4.6, GDScript, GL Compatibility renderer. Target is PC first, mobile possibly later. The current state is a working placeholder: real systems, stand-in art and levels.
+A 2D side-view sandbox RPG in Godot 4.6, GDScript, GL Compatibility renderer. Target is PC first, mobile possibly later. The world is procedural, made of 16x16 tiles, and every tile can be dug. See `docs/design.md`.
+
+The three hand-made zones it started as are archived in `levels/legacy/` and still load, but they are not the game any more. `scenes/world.tscn` is.
 
 Two people work on it. One handles code and tooling. One handles design and art. Neither wants to debug a merge conflict in a scene file.
 
@@ -60,6 +62,53 @@ Exit code 0 or the change is not done.
 | `scripts/critter.gd` | Tameable. Hold interact to build trust, then it follows |
 | `tests/smoke_test.gd` | 39 checks. Zones, physics, pickups, combat, zone links |
 
+## The world
+
+`scenes/world.tscn` is a bare node with `scripts/world.gd` on it. Everything
+else is built in code, because hand-editing a `.tscn` node structure is how
+nodes get silently dropped.
+
+| Piece | What it does |
+| --- | --- |
+| `scripts/world/world_gen.gd` | Seed to tiles. Biomes, caves, ore, trees, the shaft |
+| `scripts/world/chunk.gd` | 32x32 tiles as four byte arrays |
+| `scripts/world/chunk_store.gd` | Generates on demand, keeps everything, applies saved edits |
+| `scripts/world/chunk_renderer.gd` | Streams a window of chunks into shared TileMapLayers |
+| `scripts/world/lighting.gd` | Light over a window around the player, drawn as a darkness texture |
+| `scripts/world/mining.gd` | Dig and place, reach, break time, support rules |
+| `scripts/world/world_save.gd` | Seed plus changed tiles |
+| `scripts/world/sky.gd` | Depth driven backdrop |
+| `scripts/world/boot_config.gd` | Seed and spawn from the command line or the URL |
+
+**A chunk must stay a pure function of the seed and its own coordinates.** Not
+of what was generated before it. Cross-chunk features like trees recompute what
+the neighbouring columns hold rather than writing into each other. There is a
+check for this and it exists because the alternative is a world that quietly
+stops being reproducible, which breaks saves and every seeded test.
+
+**Tile id doubles as the column in the tile sheet.** Ids 0 to 5 are the
+archived zones and are frozen: renumbering them silently repaints
+`levels/legacy/`. Append, never reorder.
+
+## Things that will bite you in the world code
+
+- **A GDScript parse error hangs a headless run, it does not fail it.** The
+  scene loads with no script, `_ready` never runs, and the process sits there
+  looking like a slow test. Run `./tools/lint.sh` before running anything.
+  CI runs it too, and the jobs carry timeouts.
+- **`--check-only --script` reports `Game` and `Ui` as missing.** Autoloads do
+  not exist in script mode. `tools/lint.sh` filters exactly those two.
+- **New global classes need a project scan.** After adding a `class_name`, run
+  `godot --headless --path . --import` or the next script that refers to it
+  fails with "Nonexistent function 'new' in base 'GDScript'".
+- **`Sky` and `_set` are taken.** `Sky` is a built-in Godot resource and `_set`
+  is an `Object` virtual. Both shadow silently and fail confusingly.
+- **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
+  anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
+- **Lighting is the performance budget.** A pass reads every tile in the window
+  once into flat arrays on purpose. Putting a `store.get_fg()` back inside the
+  sweeps costs about 22 ms a pass.
+
 ## Physics layers
 
 | Bit | Value | Used by |
@@ -89,4 +138,11 @@ dialog, and only right-click then Open offers the button that lets it through.
 
 ## What is deliberately missing
 
-No sound, no save system, no menus beyond the title, no real art. Those are the next jobs, not oversights.
+No sound, no menus beyond the title, no real art, no inventory, no creatures,
+no clock. Those are milestones 3 to 7 in `docs/plan.md`, not oversights.
+
+Flowing water is not built. The ocean is static water placed by the generator.
+The simulation belongs with the oxygen kit in milestone 5.
+
+Tiles do not corner-blend. Exposed tiles get a lit top lip, which buys most of
+the look for a fraction of the work; a full terrain set is still owed.

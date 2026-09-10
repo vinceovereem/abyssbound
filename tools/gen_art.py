@@ -337,6 +337,23 @@ def tile_noise(seed, base, light, dark, top_edge=None, accent=None):
     return img
 
 
+def top_edge_overlay():
+    """A lit lip for the top of any exposed tile.
+
+    Cheaper than a full 47 piece terrain set and it buys most of the same
+    thing: a dug tunnel gets a lit rim instead of reading as a rectangle
+    stamped out of flat rock.
+    """
+    rnd = random.Random(41)
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = img.load()
+    for x in range(16):
+        px[x, 0] = (255, 255, 255, 74)
+        px[x, 1] = (255, 255, 255, 40 if rnd.random() > 0.35 else 20)
+        px[x, 2] = (255, 255, 255, 14)
+    return img
+
+
 def water_tile():
     """Translucent so the tiles and walls behind it still read."""
     rnd = random.Random(30)
@@ -425,6 +442,11 @@ def tiles():
         tile_noise(24, (62, 68, 82), (78, 86, 102), (44, 48, 60)),
         # 21 water. Translucent, drawn on its own layer over everything else.
         water_tile(),
+        # 22 top edge highlight, drawn over any solid tile with air above it.
+        top_edge_overlay(),
+        # 23 tree trunk. Looks like wood, but you walk through it the way you
+        # walk through a tree in Terraria. Wood the building block stays solid.
+        tile_noise(15, (120, 86, 50), (146, 108, 66), (88, 62, 36)),
     ]
     sheet(t, "tiles/tiles.png")
 
