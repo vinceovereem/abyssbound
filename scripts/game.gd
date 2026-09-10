@@ -8,12 +8,18 @@ extends Node
 signal health_changed(current: int, maximum: int)
 signal crystals_changed(total: int)
 signal zone_changed(zone_name: String)
+## Something was broken and picked up. total is how many of it you now hold.
+signal resource_collected(resource: String, amount: int, total: int)
 
 const MAX_HEALTH := 5
 
 var health: int = MAX_HEALTH
 var crystals: int = 0
 var zone_name: String = "Surface"
+
+## What breaking blocks has given you. A real inventory replaces this in
+## milestone 3; this is enough to see that mining pays.
+var resources := {}
 
 var _changing_zone := false
 
@@ -33,6 +39,19 @@ func _broadcast() -> void:
 func add_crystals(amount: int) -> void:
 	crystals += amount
 	crystals_changed.emit(crystals)
+
+
+## Picked up from breaking a tile.
+func collect(resource: String, amount: int) -> void:
+	if resource.is_empty() or amount <= 0:
+		return
+	var total: int = int(resources.get(resource, 0)) + amount
+	resources[resource] = total
+	resource_collected.emit(resource, amount, total)
+
+
+func amount_of(resource: String) -> int:
+	return int(resources.get(resource, 0))
 
 
 func damage(amount: int) -> void:
@@ -55,6 +74,7 @@ func _on_death() -> void:
 func restart() -> void:
 	health = MAX_HEALTH
 	crystals = 0
+	resources.clear()
 	_broadcast()
 	Ui.hide_message()
 	change_zone(get_tree().current_scene.scene_file_path, zone_name)

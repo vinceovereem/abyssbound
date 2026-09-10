@@ -78,9 +78,11 @@ variable `ENABLE_PAGES` set to `true`.
 | Key | Action |
 | --- | --- |
 | A / D or arrows | Move. Single tile ledges are walked up, not jumped |
-| Space / W / Up | Jump. Hold for a higher jump |
-| Left mouse | Dig the tile under the cursor, within reach |
-| Right mouse | Place the selected tile. Hold to lay a run of them |
+| Space / W | Jump. Hold for a higher jump. Up now aims the dig |
+| F | Dig. Reaches one tile, aimed with the movement keys |
+| Down + F | Dig the block under your feet |
+| Up + F | Dig the block over your head |
+| G | Place the selected tile, aimed the same way. Hold to lay a run |
 | Q | Cycle what gets placed: dirt, stone, torch |
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |
 | E | Tame a critter (the archived zones only, for now) |

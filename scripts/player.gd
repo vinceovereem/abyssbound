@@ -121,6 +121,11 @@ func _animate() -> void:
 		sprite.play("idle")
 
 
+## Which way the player is looking. Digging aims with this.
+func facing() -> int:
+	return _facing
+
+
 ## Called by an enemy when the player lands on its head.
 func bounce() -> void:
 	velocity.y = bounce_velocity

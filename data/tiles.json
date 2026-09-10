@@ -7,7 +7,8 @@
     "hardness: how long it takes to break, relative. 0 means it cannot be mined.",
     "opacity: how much light this tile blocks, 0 to 255.",
     "emit:    how much light this tile gives off, 0 to 255.",
-    "wall:    true means it only ever draws to the background layer."
+    "wall:    true means it only ever draws to the background layer.",
+    "drop: what breaking this tile gives you. Empty means nothing."
   ],
   "tiles": [
     {
@@ -16,7 +17,8 @@
       "solid": false,
       "hardness": 0,
       "opacity": 0,
-      "emit": 0
+      "emit": 0,
+      "drop": ""
     },
     {
       "id": 6,
@@ -24,7 +26,8 @@
       "solid": true,
       "hardness": 10,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "dirt"
     },
     {
       "id": 7,
@@ -32,7 +35,8 @@
       "solid": true,
       "hardness": 10,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "dirt"
     },
     {
       "id": 8,
@@ -40,7 +44,8 @@
       "solid": true,
       "hardness": 26,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "stone"
     },
     {
       "id": 9,
@@ -48,7 +53,8 @@
       "solid": true,
       "hardness": 8,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "sand"
     },
     {
       "id": 10,
@@ -56,7 +62,8 @@
       "solid": true,
       "hardness": 8,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "snow"
     },
     {
       "id": 11,
@@ -64,7 +71,8 @@
       "solid": true,
       "hardness": 16,
       "opacity": 40,
-      "emit": 0
+      "emit": 0,
+      "drop": "wood"
     },
     {
       "id": 12,
@@ -72,7 +80,8 @@
       "solid": false,
       "hardness": 4,
       "opacity": 28,
-      "emit": 0
+      "emit": 0,
+      "drop": ""
     },
     {
       "id": 13,
@@ -80,7 +89,8 @@
       "solid": true,
       "hardness": 32,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "copper_ore"
     },
     {
       "id": 14,
@@ -88,7 +98,8 @@
       "solid": true,
       "hardness": 42,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "iron_ore"
     },
     {
       "id": 15,
@@ -96,7 +107,8 @@
       "solid": true,
       "hardness": 12,
       "opacity": 40,
-      "emit": 0
+      "emit": 0,
+      "drop": "ice"
     },
     {
       "id": 16,
@@ -104,7 +116,8 @@
       "solid": true,
       "hardness": 64,
       "opacity": 64,
-      "emit": 0
+      "emit": 0,
+      "drop": "abyss_stone"
     },
     {
       "id": 17,
@@ -112,7 +125,8 @@
       "solid": false,
       "hardness": 1,
       "opacity": 0,
-      "emit": 220
+      "emit": 220,
+      "drop": "torch"
     },
     {
       "id": 18,
@@ -120,7 +134,8 @@
       "solid": true,
       "hardness": 26,
       "opacity": 24,
-      "emit": 170
+      "emit": 170,
+      "drop": "glowstone"
     },
     {
       "id": 19,
@@ -129,7 +144,8 @@
       "hardness": 6,
       "opacity": 18,
       "emit": 0,
-      "wall": true
+      "wall": true,
+      "drop": "dirt_wall"
     },
     {
       "id": 20,
@@ -138,7 +154,8 @@
       "hardness": 14,
       "opacity": 18,
       "emit": 0,
-      "wall": true
+      "wall": true,
+      "drop": "stone_wall"
     },
     {
       "id": 21,
@@ -146,7 +163,8 @@
       "solid": false,
       "hardness": 0,
       "opacity": 12,
-      "emit": 0
+      "emit": 0,
+      "drop": ""
     },
     {
       "id": 23,
@@ -154,7 +172,8 @@
       "solid": false,
       "hardness": 16,
       "opacity": 40,
-      "emit": 0
+      "emit": 0,
+      "drop": "wood"
     }
   ]
 }

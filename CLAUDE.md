@@ -77,7 +77,7 @@ nodes get silently dropped.
 | `scripts/world/chunk_store.gd` | Generates on demand, keeps everything, applies saved edits |
 | `scripts/world/chunk_renderer.gd` | Streams a window of chunks into shared TileMapLayers |
 | `scripts/world/lighting.gd` | Light over a window around the player, drawn as a darkness texture |
-| `scripts/world/mining.gd` | Dig and place, reach, break time, support rules |
+| `scripts/world/mining.gd` | Dig and place from the keyboard, one tile of reach |
 | `scripts/world/world_save.gd` | Seed plus changed tiles |
 | `scripts/world/sky.gd` | Depth driven backdrop |
 | `scripts/world/boot_config.gd` | Seed and spawn from the command line or the URL |
@@ -91,6 +91,21 @@ stops being reproducible, which breaks saves and every seeded test.
 **Tile id doubles as the column in the tile sheet.** Ids 0 to 5 are the
 archived zones and are frozen: renumbering them silently repaints
 `levels/legacy/`. Append, never reorder.
+
+## Digging
+
+Aimed with the movement keys, not a cursor, and it reaches exactly one tile:
+the block underfoot, or the one beside or above you. `Mining.target_tile()` is
+the single place that decides which, so anything that needs to know what the
+player is about to hit asks that rather than working it out again.
+
+Breaking a tile pays out whatever `drop` says in `data/tiles.json`, which is
+the tile's own name unless stated otherwise, so grass gives dirt. It goes to
+`Game.collect()`, which is a plain tally standing in until milestone 3 brings a
+real inventory. Do not build anything permanent on `Game.resources`.
+
+The Up arrow is no longer a jump key: it aims the dig upward. Space and W still
+jump, so nothing is lost.
 
 ## Things that will bite you in the world code
 
