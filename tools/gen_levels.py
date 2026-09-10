@@ -26,7 +26,9 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "levels")
+# The three placeholder zones are archived. They are not the game any more,
+# but they still load, so the checks that cover them stay honest.
+OUT = os.path.join(ROOT, "levels", "legacy")
 
 MAX_PIT = 3          # tiles
 MAX_CLIMB = 3        # tiles

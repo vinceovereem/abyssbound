@@ -14,6 +14,8 @@ var store: ChunkStore
 var renderer: ChunkRenderer
 var sky: WorldSky
 var mining: Mining
+var lighting: Lighting
+var debug_overlay: CanvasLayer
 var player: CharacterBody2D
 
 var _camera: Camera2D
@@ -47,6 +49,17 @@ func _ready() -> void:
 	mining.name = "Mining"
 	add_child(mining)
 	mining.setup(self, store, renderer)
+
+	lighting = Lighting.new()
+	lighting.name = "Lighting"
+	add_child(lighting)
+	lighting.setup(store)
+	mining.tile_changed.connect(func(_x: int, _y: int) -> void: lighting.mark_dirty())
+	lighting.update(player_tile())
+
+	debug_overlay = preload("res://scenes/ui/debug_overlay.tscn").instantiate()
+	debug_overlay.world = self
+	add_child(debug_overlay)
 
 	sky.update_for_depth(player_tile().y)
 	Game.zone_name = "Aerenfall"
@@ -88,6 +101,7 @@ func _process(_delta: float) -> void:
 		return
 	var tile := player_tile()
 	sky.update_for_depth(tile.y)
+	lighting.update(tile)
 	var centre := store.chunk_coord(tile.x, tile.y)
 	if centre != _last_centre:
 		_last_centre = centre

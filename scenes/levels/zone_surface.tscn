@@ -6,7 +6,7 @@
 
 [node name="ZoneSurface" type="Node2D"]
 script = ExtResource("1_script")
-map_file = "res://levels/surface.txt"
+map_file = "res://levels/legacy/surface.txt"
 backdrop = ExtResource("3_bg")
 next_zone = "res://scenes/levels/zone_caverns.tscn"
 next_zone_name = "Caverns"

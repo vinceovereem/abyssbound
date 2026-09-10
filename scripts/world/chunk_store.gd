@@ -9,6 +9,11 @@ extends RefCounted
 var gen: WorldGen
 var chunks := {}   ## Vector2i -> Chunk
 
+## Edits read from a save for chunks that have not been generated yet. A chunk
+## is only built when something needs it, which can be long after loading, so
+## the edits wait here and are applied the moment it is.
+var pending_edits := {}
+
 var chunks_x := 0
 var chunks_y := 0
 
@@ -37,6 +42,14 @@ func get_chunk(cx: int, cy: int) -> Chunk:
 	if chunk == null:
 		chunk = Chunk.new(cx, cy)
 		gen.generate_chunk(chunk)
+		if pending_edits.has(key):
+			var edits: Dictionary = pending_edits[key]
+			for index: int in edits.keys():
+				chunk.fg[index] = int(edits[index])
+				chunk.edited[index] = true
+			chunk.dirty_render = true
+			chunk.dirty_light = true
+			pending_edits.erase(key)
 		chunks[key] = chunk
 	return chunk
 

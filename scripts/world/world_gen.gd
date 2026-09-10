@@ -149,6 +149,15 @@ func shaft_half_width(y: int) -> int:
 	return 10 + int(y / 90)
 
 
+## Which Abyss layer a depth belongs to. 0 means "not down there yet".
+## Milestone 6 gives each layer its own tiles and creatures; for now this is
+## what the HUD and the debug overlay read.
+func abyss_layer(y: int) -> int:
+	if y < ABYSS_TOP:
+		return 0
+	return 1 + int(float(y - ABYSS_TOP) / float(HEIGHT - ABYSS_TOP) * 5.0)
+
+
 func in_shaft(x: int, y: int) -> bool:
 	if y < 40:
 		return false

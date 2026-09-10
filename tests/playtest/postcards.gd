@@ -22,6 +22,7 @@ const PLACES := [
 	{ "name": "07_underground", "x": 600,  "y": 200 },
 	{ "name": "08_caverns",     "x": 600,  "y": 380 },
 	{ "name": "09_abyss_deep",  "x": 1000, "y": 600 },
+	{ "name": "10_torch",       "x": 640,  "y": 260, "torch": true },
 ]
 
 var _dir := "user://postcards"
@@ -43,6 +44,9 @@ func _shoot(place: Dictionary) -> void:
 	world.seed_override = SEED
 	world.spawn_override_x = int(place["x"])
 	add_child(world)
+	# Every postcard carries its own seed, position and frame time, so a shot
+	# that shows something odd is a reproducible report rather than a picture.
+	world.debug_overlay.visible = true
 
 	# Let the world build and the player settle onto the ground.
 	for i in 30:
@@ -53,13 +57,27 @@ func _shoot(place: Dictionary) -> void:
 		for i in 20:
 			await get_tree().physics_frame
 
+	if bool(place.get("torch", false)):
+		# Hollow out a small room and light it, which is the only way to see
+		# whether a torch actually does anything.
+		var t: Vector2i = world.player_tile()
+		for dx in range(-6, 7):
+			for dy in range(-4, 3):
+				world.store.set_fg(t.x + dx, t.y + dy, 0)
+		world.store.set_fg(t.x + 3, t.y, TileDB.get_db().id("torch"))
+		world.renderer.refresh(world.store.chunk_coord(t.x, t.y), 2)
+		world.lighting.mark_dirty()
+		world.lighting.update(t)
+		for i in 5:
+			await get_tree().physics_frame
+
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	var path := "%s/%s.png" % [_dir, place["name"]]
 	img.save_png(path)
-	print("  %s  %dx%d  biome=%s  tile=%s" % [
-		place["name"], img.get_width(), img.get_height(),
-		world.store.gen.biome_name(world.player_tile().x), world.player_tile()])
+	print("  %s  biome=%s  tile=%s  light=%.2fms" % [
+		place["name"], world.store.gen.biome_name(world.player_tile().x),
+		world.player_tile(), world.lighting.last_ms])
 
 	world.queue_free()
 	await get_tree().process_frame

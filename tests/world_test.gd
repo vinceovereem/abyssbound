@@ -25,6 +25,8 @@ func _ready() -> void:
 	_check_ores_and_caves()
 	_check_speed()
 	await _check_digging()
+	await _check_lighting()
+	_check_save_load()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -277,3 +279,108 @@ func _check_digging() -> void:
 
 	world.queue_free()
 	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+func _check_lighting() -> void:
+	print("\nlighting")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 300
+	add_child(world)
+	for i in 30:
+		await get_tree().physics_frame
+
+	var store: ChunkStore = world.store
+	var lighting = world.lighting
+	var db := TileDB.get_db()
+
+	var surface := store.gen.surface_height(300)
+	lighting.update(Vector2i(300, surface))
+
+	_ok("open sky is fully lit", lighting.light_at(300, surface - 3) >= 250,
+		"%d" % lighting.light_at(300, surface - 3))
+	_ok("sunlight dies inside rock",
+		lighting.light_at(300, surface + 12) < 120,
+		"%d at 12 tiles down" % lighting.light_at(300, surface + 12))
+
+	# Deep underground with nothing burning: dark, but never so dark the screen
+	# is blank. That reads as a bug, not as a cave.
+	lighting.update(Vector2i(300, 400))
+	var deep: int = lighting.light_at(300, 400)
+	_ok("deep rock is dark", deep < 90, "%d" % deep)
+	_ok("deep rock is never pitch black", deep >= Lighting.AMBIENT, "%d" % deep)
+
+	# A torch has to actually change something.
+	var room := Vector2i(300, 400)
+	for dx in range(-4, 5):
+		for dy in range(-3, 3):
+			store.set_fg(room.x + dx, room.y + dy, 0)
+	lighting.mark_dirty()
+	lighting.update(room)
+	var unlit: int = lighting.light_at(room.x + 2, room.y)
+
+	store.set_fg(room.x, room.y, db.id("torch"))
+	lighting.mark_dirty()
+	lighting.update(room)
+	var lit: int = lighting.light_at(room.x + 2, room.y)
+	_ok("a torch lights the room around it", lit > unlit + 60,
+		"%d -> %d" % [unlit, lit])
+	_ok("torch light falls off with distance",
+		lighting.light_at(room.x + 1, room.y) > lighting.light_at(room.x + 4, room.y))
+
+	_ok("a light pass fits in a frame budget", lighting.last_ms < 16.0,
+		"%.2f ms" % lighting.last_ms)
+
+	world.queue_free()
+	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+func _check_save_load() -> void:
+	print("\nsave and load")
+	WorldSave.clear()
+
+	var store := ChunkStore.new(5150)
+	var db := TileDB.get_db()
+
+	# Find rock, dig it, and put something else somewhere else.
+	var x := 400
+	var y := store.gen.surface_height(x) + 6
+	var original := store.get_fg(x, y)
+	_ok("there is something to dig", original != 0, db.name_of.get(original, "?"))
+
+	store.set_fg(x, y, 0)
+	store.set_fg(x + 1, y - 1, db.id("torch"))
+	var untouched_before := store.get_fg(x + 8, y)
+
+	_ok("saving writes a file", WorldSave.save_world(store, Vector2(x * 16, y * 16)))
+
+	var loaded := WorldSave.load_world()
+	_ok("a save can be loaded", not loaded.is_empty())
+	var reloaded: ChunkStore = loaded["store"]
+
+	_ok("the seed survives", reloaded.world_seed() == 5150)
+	_ok("a dug tile is still dug after save and load",
+		reloaded.get_fg(x, y) == 0, db.name_of.get(reloaded.get_fg(x, y), "?"))
+	_ok("a placed tile is still there after save and load",
+		reloaded.get_fg(x + 1, y - 1) == db.id("torch"))
+	_ok("untouched tiles come back from the seed, not the file",
+		reloaded.get_fg(x + 8, y) == untouched_before)
+
+	# The chunk holding the edit was never generated in the loaded store until
+	# the line above asked for it. Prove the far side of the world still works.
+	var far_y := 300
+	_ok("a chunk generated after loading still matches a fresh world",
+		reloaded.get_fg(1200, far_y) == ChunkStore.new(5150).get_fg(1200, far_y))
+
+	# Round trip twice: edits must survive being re-saved from a loaded world.
+	WorldSave.save_world(reloaded, Vector2.ZERO)
+	var again: ChunkStore = WorldSave.load_world()["store"]
+	_ok("edits survive a second save and load", again.get_fg(x, y) == 0)
+
+	var fresh_size := FileAccess.open(WorldSave.PATH, FileAccess.READ).get_length()
+	_ok("a save is small because it stores changes, not the world",
+		fresh_size < 4096, "%d bytes for 2 edits" % fresh_size)
+
+	WorldSave.clear()
