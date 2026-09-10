@@ -67,7 +67,7 @@ func _shoot(place: Dictionary) -> void:
 		world.store.set_fg(t.x + 3, t.y, TileDB.get_db().id("torch"))
 		world.renderer.refresh(world.store.chunk_coord(t.x, t.y), 2)
 		world.lighting.mark_dirty()
-		world.lighting.update(t)
+		world.lighting.update_now(t)
 		for i in 5:
 			await get_tree().physics_frame
 

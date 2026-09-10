@@ -297,7 +297,7 @@ func _check_lighting() -> void:
 	var db := TileDB.get_db()
 
 	var surface := store.gen.surface_height(300)
-	lighting.update(Vector2i(300, surface))
+	lighting.update_now(Vector2i(300, surface))
 
 	_ok("open sky is fully lit", lighting.light_at(300, surface - 3) >= 250,
 		"%d" % lighting.light_at(300, surface - 3))
@@ -307,7 +307,7 @@ func _check_lighting() -> void:
 
 	# Deep underground with nothing burning: dark, but never so dark the screen
 	# is blank. That reads as a bug, not as a cave.
-	lighting.update(Vector2i(300, 400))
+	lighting.update_now(Vector2i(300, 400))
 	var deep: int = lighting.light_at(300, 400)
 	_ok("deep rock is dark", deep < 90, "%d" % deep)
 	_ok("deep rock is never pitch black", deep >= Lighting.AMBIENT, "%d" % deep)
@@ -318,20 +318,50 @@ func _check_lighting() -> void:
 		for dy in range(-3, 3):
 			store.set_fg(room.x + dx, room.y + dy, 0)
 	lighting.mark_dirty()
-	lighting.update(room)
+	lighting.update_now(room)
 	var unlit: int = lighting.light_at(room.x + 2, room.y)
 
 	store.set_fg(room.x, room.y, db.id("torch"))
 	lighting.mark_dirty()
-	lighting.update(room)
+	lighting.update_now(room)
 	var lit: int = lighting.light_at(room.x + 2, room.y)
 	_ok("a torch lights the room around it", lit > unlit + 60,
 		"%d -> %d" % [unlit, lit])
 	_ok("torch light falls off with distance",
 		lighting.light_at(room.x + 1, room.y) > lighting.light_at(room.x + 4, room.y))
 
-	_ok("a light pass fits in a frame budget", lighting.last_ms < 16.0,
+	_ok("a whole light pass fits in a frame budget", lighting.last_ms < 16.0,
 		"%.2f ms" % lighting.last_ms)
+
+	# The pass is split over two frames, because compiled to wasm the whole
+	# thing costs about 26 ms. Two incremental calls must land on exactly the
+	# same light as doing it in one go, or the split is a rendering bug.
+	var probe := Vector2i(300, 400)
+	lighting.update_now(probe)
+	var expected: Array[int] = []
+	for dx in [-20, -8, 0, 7, 19]:
+		expected.append(lighting.light_at(probe.x + dx, probe.y))
+
+	var split: Node = load("res://scripts/world/lighting.gd").new()
+	world.add_child(split)
+	split.setup(store)
+	split.update(probe)
+	var worst: float = split.last_phase_ms
+	for i in 8:
+		if split.is_idle():
+			break
+		split.update(probe)
+		worst = maxf(worst, split.last_phase_ms)
+	var got: Array[int] = []
+	for dx in [-20, -8, 0, 7, 19]:
+		got.append(split.light_at(probe.x + dx, probe.y))
+
+	_ok("splitting the pass over two frames gives the same light",
+		got == expected, "%s vs %s" % [got, expected])
+	_ok("no single step of a split pass is close to a frame",
+		worst < lighting.last_ms * 0.55,
+		"worst step %.2f ms of a %.2f ms pass" % [worst, lighting.last_ms])
+	split.queue_free()
 
 	world.queue_free()
 	await get_tree().process_frame

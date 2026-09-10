@@ -56,7 +56,7 @@ func _ready() -> void:
 	add_child(lighting)
 	lighting.setup(store)
 	mining.tile_changed.connect(func(_x: int, _y: int) -> void: lighting.mark_dirty())
-	lighting.update(player_tile())
+	lighting.update_now(player_tile())
 
 	debug_overlay = preload("res://scenes/ui/debug_overlay.tscn").instantiate()
 	debug_overlay.world = self

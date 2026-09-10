@@ -47,6 +47,13 @@ var _sprite: Sprite2D
 var _db: TileDB
 var _dirty := true
 var last_ms := 0.0
+## A pass is split across two frames. Compiled to wasm the whole thing costs
+## about 26 ms, which is a dropped frame every time the window drifts or a tile
+## is dug. Half of it comfortably fits instead, and light arriving a frame late
+## is not something anyone can see.
+var _phase := 0
+var last_phase_ms := 0.0
+var _pass_ms := 0.0
 
 
 func setup(chunk_store: ChunkStore) -> void:
@@ -89,11 +96,43 @@ func mark_dirty() -> void:
 ## too far or a tile changed.
 func update(centre: Vector2i) -> void:
 	var wanted := Vector2i(centre.x - REGION_W / 2, centre.y - REGION_H / 2)
-	if not _dirty and absi(wanted.x - _origin.x) < MARGIN and absi(wanted.y - _origin.y) < MARGIN:
+	if _phase == 0 and not _dirty \
+			and absi(wanted.x - _origin.x) < MARGIN and absi(wanted.y - _origin.y) < MARGIN:
 		return
-	_origin = wanted
-	_dirty = false
-	_recompute()
+	if _phase == 0:
+		_origin = wanted
+		_dirty = false
+		_phase = 1
+
+	# Four steps, not two. The sweeps are most of the cost, so splitting them
+	# from the read is not enough on its own: one round of sweeps alone is
+	# still a dropped frame in wasm.
+	var start := Time.get_ticks_usec()
+	match _phase:
+		1:
+			_read_tiles()
+			_sunlight()
+			_phase = 2
+		2:
+			_sweep_round()
+			_phase = 3
+		3:
+			_sweep_round()
+			_phase = 4
+		_:
+			_apply_ambient()
+			_write_image()
+			_phase = 0
+	last_phase_ms = float(Time.get_ticks_usec() - start) / 1000.0
+	_pass_ms += last_phase_ms
+	if _phase == 0:
+		last_ms = _pass_ms
+		_pass_ms = 0.0
+
+
+## True when no pass is part way through. Playtests wait on this.
+func is_idle() -> bool:
+	return _phase == 0
 
 
 func light_at(x: int, y: int) -> int:
@@ -104,24 +143,39 @@ func light_at(x: int, y: int) -> int:
 	return _light[ly * REGION_W + lx]
 
 
-func _recompute() -> void:
+## The whole pass at once. Tests and playtests want the answer immediately
+## rather than on the next frame.
+func update_now(centre: Vector2i) -> void:
+	_origin = Vector2i(centre.x - REGION_W / 2, centre.y - REGION_H / 2)
+	_dirty = false
+	_phase = 0
 	var start := Time.get_ticks_usec()
 	_read_tiles()
 	_sunlight()
-	# Two rounds of four sweeps is enough for a torch to fill a room.
-	for round in 2:
-		_sweep_x(1)
-		_sweep_x(-1)
-		_sweep_y(1)
-		_sweep_y(-1)
+	_spread()
+	_write_image()
+	last_ms = float(Time.get_ticks_usec() - start) / 1000.0
 
+
+## Two rounds of four sweeps is enough for a torch to fill a room.
+func _spread() -> void:
+	_sweep_round()
+	_sweep_round()
+	_apply_ambient()
+
+
+func _sweep_round() -> void:
+	_sweep_x(1)
+	_sweep_x(-1)
+	_sweep_y(1)
+	_sweep_y(-1)
+
+
+func _apply_ambient() -> void:
 	var n := REGION_W * REGION_H
 	for i in n:
 		if _light[i] < AMBIENT:
 			_light[i] = AMBIENT
-
-	_write_image()
-	last_ms = float(Time.get_ticks_usec() - start) / 1000.0
 
 
 ## Copy the window's tiles into flat arrays.

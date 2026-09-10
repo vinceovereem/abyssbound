@@ -182,3 +182,51 @@ that should land near 10 ms and inside a frame.
 actually matters for the stated target. If it turns out to be short there, the
 next move is to split a pass across two frames rather than to make the light
 worse.
+
+
+---
+
+## Round 7 — 2026-09-10 — the browser number, and a lying harness
+
+**Played.** The CI browser check, once it was fixed to actually reach the
+world, and the scripted first run.
+
+**The number that mattered.** The browser check reports a software rendered
+frame rate, which says nothing about real hardware. But it also reports the
+light pass, and that is CPU work in wasm rather than anything the GPU touches:
+
+| Where | A whole light pass |
+| --- | --- |
+| Dev Mac, native | 4.5 ms |
+| CI Linux, native | 8.6 ms |
+| **Browser, wasm** | **26.5 ms** |
+
+So the spike really would drop frames in a browser, on any hardware. That was
+worth knowing before the next milestone stacks creatures on top of it.
+
+**Changed.** The pass is now done in four steps across four frames: read and
+sunlight, a round of sweeps, another round, then ambient and the image. A
+check confirms the split lands on exactly the same light as doing it in one
+go, because a faster light that is a different light is just a rendering bug.
+Worst single step is 1.26 ms of a 4.44 ms pass, which is about 7 ms in wasm.
+
+**Two false alarms, both mine.**
+
+- The browser check reported the build had failed to boot. Its own screenshot
+  showed the title screen rendered perfectly, waiting to be told to descend.
+  The check had never pressed anything. Rather than fight a Godot canvas for
+  keyboard focus, `--start` and `?start` now skip the title, which is useful
+  on its own.
+- The scripted run then reported that the player could not walk east at all,
+  after previously crossing 24 tiles. Headless, the same code walked fine.
+  **Godot releases every held input action when the window loses focus**, and a
+  window launched from a shell often never has it, so `Input.action_press` did
+  nothing and the test blamed the terrain. macOS throttling the unfocused
+  window is also why a run that took 90 seconds started taking minutes.
+
+  Input driven playtests now run headless, where they are fast and do not
+  depend on which window is in front. Screenshots come from `postcards.tscn`,
+  which teleports rather than walks and needs no input at all.
+
+Both of those are checks lying about the game rather than the game being
+wrong, which is the failure mode worth being slowest to believe.

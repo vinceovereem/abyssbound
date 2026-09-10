@@ -60,6 +60,9 @@ jobs:
       - name: Run world test
         run: ~/godot/godot --headless --path . res://tests/world_test.tscn
 
+      - name: Play the first run
+        run: ~/godot/godot --headless --path . res://tests/playtest/first_run.tscn
+
       # Compares pixels rather than file bytes. Two Pillow versions encode the
       # same image to different bytes, and a byte comparison then fails on a
       # machine whose Pillow differs from the one that committed the art,
