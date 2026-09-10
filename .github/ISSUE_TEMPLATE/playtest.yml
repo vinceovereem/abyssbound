@@ -1,0 +1,63 @@
+name: Playtest feedback
+description: You played it and something felt off. Tell us.
+title: "[playtest] "
+labels: ["playtest"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No need to fill in everything. One honest sentence beats a blank form.
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where were you?
+      options:
+        - Surface
+        - Caverns
+        - Abyss
+        - Title screen
+        - Everywhere / not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, and what the game did back.
+      placeholder: I held jump on the second platform and slid off the edge instead of landing.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of thing is this?
+      options:
+        - Broken. It crashed, or I got stuck
+        - Feels wrong. It works, but not how I expected
+        - Looks wrong
+        - Too hard, or too easy
+        - An idea, not a problem
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      description: Skip this if it was obviously just a bug.
+
+  - type: dropdown
+    id: how
+    attributes:
+      label: How were you playing?
+      options:
+        - Browser
+        - Windows download
+        - Mac download
+        - Linux download
+        - In the Godot editor
+    validations:
+      required: true

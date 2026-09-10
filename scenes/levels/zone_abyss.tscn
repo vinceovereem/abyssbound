@@ -6,7 +6,7 @@
 
 [node name="ZoneAbyss" type="Node2D"]
 script = ExtResource("1_script")
-map_file = "res://levels/abyss.txt"
+map_file = "res://levels/legacy/abyss.txt"
 backdrop = ExtResource("3_bg")
 next_zone = ""
 next_zone_name = "Deeper"

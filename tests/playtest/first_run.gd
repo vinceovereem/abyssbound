@@ -1,0 +1,198 @@
+extends Node
+## A scripted play of the first minute: spawn, walk, dig, place, save, reload.
+##
+##   godot --path . res://tests/playtest/first_run.tscn
+##
+## This is the "play it" half of the build loop. It drives the same code a
+## player does, screenshots each beat into user://playtest/, and prints a
+## verdict so it can also run as a check.
+
+const WorldScene := preload("res://scenes/world.tscn")
+const SEED := 20260910
+const SPAWN_X := 940
+
+var _dir := "user://playtest"
+var _passed := 0
+var _failed := 0
+var _fps_samples: Array[float] = []
+var world: Node2D
+
+
+func _ready() -> void:
+	DirAccess.make_dir_recursive_absolute(_dir)
+	print("Abyssbound first run")
+	print("--------------------")
+
+	world = WorldScene.instantiate()
+	world.seed_override = SEED
+	world.spawn_override_x = SPAWN_X
+	add_child(world)
+	world.debug_overlay.visible = true
+	await _settle(30)
+
+	await _spawn()
+	await _walk()
+	await _dig()
+	await _place_torch()
+	await _save_and_reload()
+
+	var avg := 0.0
+	for f in _fps_samples:
+		avg += f
+	avg /= maxf(1.0, float(_fps_samples.size()))
+	print("--------------------")
+	print("average fps over the run: %.0f" % avg)
+	print("%d passed, %d failed" % [_passed, _failed])
+	get_tree().quit(0 if _failed == 0 else 1)
+
+
+func _ok(label: String, condition: bool, detail := "") -> void:
+	if condition:
+		_passed += 1
+		print("  PASS  %s%s" % [label, (" (%s)" % detail) if detail else ""])
+	else:
+		_failed += 1
+		print("  FAIL  %s%s" % [label, (" (%s)" % detail) if detail else ""])
+
+
+func _settle(frames: int) -> void:
+	for i in frames:
+		await get_tree().physics_frame
+		_fps_samples.append(Engine.get_frames_per_second())
+
+
+func _shot(name: String) -> void:
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [_dir, name])
+
+
+func _spawn() -> void:
+	print("\nspawn")
+	_ok("the player is standing on ground, not falling", world.player.is_on_floor(),
+		"tile %s" % world.player_tile())
+	_ok("spawn is in daylight",
+		world.lighting.light_at(world.player_tile().x, world.player_tile().y) > 200)
+	_ok("the Abyss is within walking distance of spawn",
+		absi(WorldGen.ABYSS_CENTER_X - SPAWN_X) < 120,
+		"%d tiles east" % (WorldGen.ABYSS_CENTER_X - SPAWN_X))
+	await _shot("01_spawn")
+
+
+func _walk() -> void:
+	print("\nwalking east toward the Abyss")
+	var start: Vector2i = world.player_tile()
+	Input.action_press("move_right")
+	# Jump when we stop making progress, which is what a player does at a
+	# ledge. Natural terrain has one tile steps all over it and this controller
+	# does not step up on its own.
+	var jumps := 0
+	var last_x: float = world.player.global_position.x
+	for i in 240:
+		await get_tree().physics_frame
+		_fps_samples.append(Engine.get_frames_per_second())
+		if i % 20 == 19:
+			var progress: float = world.player.global_position.x - last_x
+			last_x = world.player.global_position.x
+			if progress < 6.0 and world.player.is_on_floor():
+				Input.action_press("jump")
+				await get_tree().physics_frame
+				await get_tree().physics_frame
+				Input.action_release("jump")
+				jumps += 1
+	Input.action_release("move_right")
+	await _settle(20)
+	var moved: int = world.player_tile().x - start.x
+	_ok("walking east crosses the ground", moved > 8,
+		"%d tiles, %d jumps needed" % [moved, jumps])
+	_ok("the player did not fall out of the world",
+		world.player_tile().y < WorldGen.HEIGHT - 40, "y=%d" % world.player_tile().y)
+	_ok("chunks streamed in as we went", world.renderer.loaded_count() > 0,
+		"%d loaded" % world.renderer.loaded_count())
+	await _shot("02_walked_east")
+
+
+func _dig() -> void:
+	print("\ndigging down")
+	var t: Vector2i = world.player_tile()
+	var target := Vector2i(t.x, t.y + 2)
+	while not world.store.is_solid(target.x, target.y) and target.y < t.y + 8:
+		target.y += 1
+	var before: int = world.store.get_fg(target.x, target.y)
+	_ok("there is ground to dig", before != 0)
+
+	world.mining.aim_override = Vector2(target.x * 16 + 8, target.y * 16 + 8)
+	Input.action_press("mine")
+	var broke := false
+	for i in 240:
+		await get_tree().physics_frame
+		_fps_samples.append(Engine.get_frames_per_second())
+		if world.store.get_fg(target.x, target.y) == 0:
+			broke = true
+			break
+	Input.action_release("mine")
+	_ok("holding the button breaks the tile", broke,
+		TileDB.get_db().name_of.get(before, "?"))
+	await _settle(20)
+	await _shot("03_dug")
+
+
+func _place_torch() -> void:
+	print("\nplacing a torch")
+	var db := TileDB.get_db()
+	# Cycle the selection round to the torch.
+	for i in world.mining.placeable.size():
+		if world.mining.selected_tile_name() == "torch":
+			break
+		world.mining.place_index = (world.mining.place_index + 1) % world.mining.placeable.size()
+	_ok("the torch can be selected", world.mining.selected_tile_name() == "torch")
+
+	# Somewhere empty, with something to attach to.
+	var t: Vector2i = world.player_tile()
+	var spot := Vector2i(t.x + 2, t.y)
+	var found := false
+	for dx in range(1, 6):
+		for dy in range(-1, 2):
+			var c := Vector2i(t.x + dx, t.y + dy)
+			if world.store.get_fg(c.x, c.y) == 0 and world.mining._has_support(c.x, c.y):
+				spot = c
+				found = true
+				break
+		if found:
+			break
+	_ok("there is somewhere to put a torch", found, "%s" % spot)
+	var before_light: int = world.lighting.light_at(spot.x, spot.y)
+
+	world.mining.aim_override = Vector2(spot.x * 16 + 8, spot.y * 16 + 8)
+	Input.action_press("place")
+	await _settle(4)
+	Input.action_release("place")
+	await _settle(10)
+
+	var placed: bool = world.store.get_fg(spot.x, spot.y) == db.id("torch")
+	_ok("right click places the selected tile", placed,
+		db.name_of.get(world.store.get_fg(spot.x, spot.y), "?"))
+	world.lighting.mark_dirty()
+	world.lighting.update(world.player_tile())
+	if placed:
+		_ok("the torch makes the place brighter",
+			world.lighting.light_at(spot.x, spot.y) >= before_light,
+			"%d -> %d" % [before_light, world.lighting.light_at(spot.x, spot.y)])
+	await _shot("04_torch_placed")
+
+
+func _save_and_reload() -> void:
+	print("\nsave and come back")
+	var t: Vector2i = world.player_tile()
+	var dug := Vector2i(t.x, t.y + 2)
+	while world.store.get_fg(dug.x, dug.y) != 0 and dug.y < t.y + 10:
+		dug.y += 1
+	world.mining._set_tile(dug.x, dug.y, 0)
+
+	_ok("the world saves", WorldSave.save_world(world.store, world.player.global_position))
+	var loaded := WorldSave.load_world()
+	_ok("the world loads", not loaded.is_empty())
+	if not loaded.is_empty():
+		var reloaded: ChunkStore = loaded["store"]
+		_ok("the hole we dug is still there after coming back",
+			reloaded.get_fg(dug.x, dug.y) == 0)
+	WorldSave.clear()

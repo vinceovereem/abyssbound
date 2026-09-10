@@ -1,0 +1,160 @@
+{
+  "_comment": [
+    "Every tile in the generated world. Design owns this file.",
+    "id doubles as the column in assets/tiles/tiles.png, so id 6 is the 7th tile",
+    "in the sheet. Ids 1 to 5 are the archived placeholder zones and are not",
+    "used by the world generator. Id 0 is air and never draws.",
+    "hardness: how long it takes to break, relative. 0 means it cannot be mined.",
+    "opacity: how much light this tile blocks, 0 to 255.",
+    "emit:    how much light this tile gives off, 0 to 255.",
+    "wall:    true means it only ever draws to the background layer."
+  ],
+  "tiles": [
+    {
+      "id": 0,
+      "name": "air",
+      "solid": false,
+      "hardness": 0,
+      "opacity": 0,
+      "emit": 0
+    },
+    {
+      "id": 6,
+      "name": "dirt",
+      "solid": true,
+      "hardness": 10,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 7,
+      "name": "grass",
+      "solid": true,
+      "hardness": 10,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 8,
+      "name": "stone",
+      "solid": true,
+      "hardness": 26,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 9,
+      "name": "sand",
+      "solid": true,
+      "hardness": 8,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 10,
+      "name": "snow",
+      "solid": true,
+      "hardness": 8,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 11,
+      "name": "wood",
+      "solid": true,
+      "hardness": 16,
+      "opacity": 40,
+      "emit": 0
+    },
+    {
+      "id": 12,
+      "name": "leaves",
+      "solid": false,
+      "hardness": 4,
+      "opacity": 28,
+      "emit": 0
+    },
+    {
+      "id": 13,
+      "name": "copper_ore",
+      "solid": true,
+      "hardness": 32,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 14,
+      "name": "iron_ore",
+      "solid": true,
+      "hardness": 42,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 15,
+      "name": "ice",
+      "solid": true,
+      "hardness": 12,
+      "opacity": 40,
+      "emit": 0
+    },
+    {
+      "id": 16,
+      "name": "abyss_stone",
+      "solid": true,
+      "hardness": 64,
+      "opacity": 64,
+      "emit": 0
+    },
+    {
+      "id": 17,
+      "name": "torch",
+      "solid": false,
+      "hardness": 1,
+      "opacity": 0,
+      "emit": 220
+    },
+    {
+      "id": 18,
+      "name": "glowstone",
+      "solid": true,
+      "hardness": 26,
+      "opacity": 24,
+      "emit": 170
+    },
+    {
+      "id": 19,
+      "name": "dirt_wall",
+      "solid": false,
+      "hardness": 6,
+      "opacity": 18,
+      "emit": 0,
+      "wall": true
+    },
+    {
+      "id": 20,
+      "name": "stone_wall",
+      "solid": false,
+      "hardness": 14,
+      "opacity": 18,
+      "emit": 0,
+      "wall": true
+    },
+    {
+      "id": 21,
+      "name": "water",
+      "solid": false,
+      "hardness": 0,
+      "opacity": 12,
+      "emit": 0
+    },
+    {
+      "id": 23,
+      "name": "tree_trunk",
+      "solid": false,
+      "hardness": 16,
+      "opacity": 40,
+      "emit": 0
+    }
+  ]
+}

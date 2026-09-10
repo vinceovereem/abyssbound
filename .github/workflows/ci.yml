@@ -19,6 +19,7 @@ jobs:
   test:
     name: Import and smoke test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -48,21 +49,32 @@ jobs:
           ~/godot/godot --headless --import --path . || true
           ~/godot/godot --headless --import --path .
 
+      # Catches a script that fails to parse. Those do not fail a headless run,
+      # they hang it, which looks like a slow test until the job times out.
+      - name: Parse-check every script
+        run: GODOT=~/godot/godot ./tools/lint.sh
+
       - name: Run smoke test
         run: ~/godot/godot --headless --path . res://tests/smoke_test.tscn
 
+      - name: Run world test
+        run: ~/godot/godot --headless --path . res://tests/world_test.tscn
+
+      # Compares pixels rather than file bytes. Two Pillow versions encode the
+      # same image to different bytes, and a byte comparison then fails on a
+      # machine whose Pillow differs from the one that committed the art,
+      # which says nothing about whether the art is right.
       - name: Verify generated content is up to date
         run: |
           python3 -m pip install --quiet pillow
-          python3 tools/gen_art.py
-          python3 tools/gen_levels.py
-          git diff --exit-code -- assets levels \
-            || (echo "::error::assets/ or levels/ differ from what the tools produce. Run the tools and commit the result." && exit 1)
+          python3 tools/verify_generated.py \
+            || (echo "::error::assets/ or levels/ differ from what the tools produce." && exit 1)
 
   build:
     name: Build ${{ matrix.preset }}
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
