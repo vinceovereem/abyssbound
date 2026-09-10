@@ -1,0 +1,64 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/title.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/bg/bg_caverns.png" id="2_bg"]
+
+[node name="Title" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.03, 0.05, 0.55)
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 44.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(0.9, 0.93, 0.96, 1)
+theme_override_font_sizes/font_size = 26
+text = "ABYSSBOUND"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Tagline" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 74.0
+offset_bottom = 88.0
+theme_override_colors/font_color = Color(0.35, 0.85, 0.91, 1)
+theme_override_font_sizes/font_size = 10
+text = "DESCEND   TAME   DISCOVER"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Prompt" type="Label" parent="."]
+anchor_right = 1.0
+offset_top = 120.0
+offset_bottom = 134.0
+theme_override_colors/font_color = Color(0.75, 0.79, 0.84, 1)
+theme_override_font_sizes/font_size = 9
+text = "PRESS SPACE TO DESCEND"
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="Controls" type="Label" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -26.0
+offset_bottom = -8.0
+theme_override_colors/font_color = Color(0.45, 0.5, 0.58, 1)
+theme_override_font_sizes/font_size = 8
+text = "A / D move      SPACE jump      E tame      R restart"
+horizontal_alignment = 1
+mouse_filter = 2

@@ -1,0 +1,81 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/player.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="A0"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A1"]
+atlas = ExtResource("2_tex")
+region = Rect2(12, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A2"]
+atlas = ExtResource("2_tex")
+region = Rect2(24, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A3"]
+atlas = ExtResource("2_tex")
+region = Rect2(36, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A4"]
+atlas = ExtResource("2_tex")
+region = Rect2(48, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A5"]
+atlas = ExtResource("2_tex")
+region = Rect2(60, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A6"]
+atlas = ExtResource("2_tex")
+region = Rect2(72, 0, 12, 16)
+
+[sub_resource type="AtlasTexture" id="A7"]
+atlas = ExtResource("2_tex")
+region = Rect2(84, 0, 12, 16)
+
+[sub_resource type="SpriteFrames" id="Frames_player"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("A0")}, {"duration": 1.0, "texture": SubResource("A1")}],
+"loop": true,
+"name": &"idle",
+"speed": 3.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("A2")}, {"duration": 1.0, "texture": SubResource("A3")}, {"duration": 1.0, "texture": SubResource("A4")}, {"duration": 1.0, "texture": SubResource("A5")}],
+"loop": true,
+"name": &"run",
+"speed": 11.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("A6")}],
+"loop": true,
+"name": &"jump",
+"speed": 5.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("A7")}],
+"loop": true,
+"name": &"fall",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="Shape_player"]
+size = Vector2(8, 14)
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 4.0
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("Frames_player")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 1)
+shape = SubResource("Shape_player")
+
+[node name="Camera" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0

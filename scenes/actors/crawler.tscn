@@ -1,0 +1,53 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/crawler.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/crawler.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="C0"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 16, 12)
+
+[sub_resource type="AtlasTexture" id="C1"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 16, 12)
+
+[sub_resource type="SpriteFrames" id="Frames_crawler"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("C0")}, {"duration": 1.0, "texture": SubResource("C1")}],
+"loop": true,
+"name": &"walk",
+"speed": 6.0
+}]
+
+[sub_resource type="RectangleShape2D" id="Shape_crawler"]
+size = Vector2(13, 9)
+
+[sub_resource type="RectangleShape2D" id="Shape_hit"]
+size = Vector2(15, 11)
+
+[node name="Crawler" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("Frames_crawler")
+animation = &"walk"
+autoplay = "walk"
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 1)
+shape = SubResource("Shape_crawler")
+
+[node name="FloorProbe" type="RayCast2D" parent="."]
+position = Vector2(8, 0)
+target_position = Vector2(0, 12)
+collision_mask = 1
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 2
+
+[node name="Shape" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(0, 1)
+shape = SubResource("Shape_hit")

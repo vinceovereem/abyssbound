@@ -1,0 +1,80 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/critter.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/critter.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="W0"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 16, 12)
+
+[sub_resource type="AtlasTexture" id="W1"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 16, 12)
+
+[sub_resource type="SpriteFrames" id="Frames_critter"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("W0")}],
+"loop": true,
+"name": &"idle",
+"speed": 2.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("W0")}, {"duration": 1.0, "texture": SubResource("W1")}],
+"loop": true,
+"name": &"walk",
+"speed": 8.0
+}]
+
+[sub_resource type="RectangleShape2D" id="Shape_critter"]
+size = Vector2(13, 9)
+
+[sub_resource type="CircleShape2D" id="Shape_trust"]
+radius = 26.0
+
+[sub_resource type="StyleBoxFlat" id="Style_bar"]
+bg_color = Color(0.09, 0.13, 0.19, 0.85)
+
+[sub_resource type="StyleBoxFlat" id="Style_fill"]
+bg_color = Color(0.35, 0.85, 0.91, 1)
+
+[node name="Critter" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("Frames_critter")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 1)
+shape = SubResource("Shape_critter")
+
+[node name="TrustArea" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 2
+monitorable = false
+
+[node name="Shape" type="CollisionShape2D" parent="TrustArea"]
+shape = SubResource("Shape_trust")
+
+[node name="TrustBar" type="ProgressBar" parent="."]
+offset_left = -12.0
+offset_top = -16.0
+offset_right = 12.0
+offset_bottom = -13.0
+theme_override_styles/background = SubResource("Style_bar")
+theme_override_styles/fill = SubResource("Style_fill")
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="Heart" type="Label" parent="."]
+offset_left = -6.0
+offset_top = -26.0
+offset_right = 6.0
+offset_bottom = -14.0
+theme_override_colors/font_color = Color(0.88, 0.25, 0.31, 1)
+theme_override_font_sizes/font_size = 10
+text = "<3"
+horizontal_alignment = 1

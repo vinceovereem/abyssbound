@@ -1,0 +1,25 @@
+# Godot
+.godot/
+/android/
+*.translation
+
+# Exported builds
+build/
+export.cfg
+*.pck
+*.exe
+*.x86_64
+*.zip
+*.apk
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Python tooling
+__pycache__/
+*.pyc
+.venv/

@@ -1,0 +1,17 @@
+# Godot text formats. Keep them diffable.
+*.gd      text eol=lf diff
+*.tscn    text eol=lf diff
+*.tres    text eol=lf diff
+*.godot   text eol=lf diff
+*.cfg     text eol=lf diff
+*.txt     text eol=lf diff
+*.md      text eol=lf diff
+*.yml     text eol=lf diff
+
+# Binary. Never try to merge these.
+*.png     binary
+*.jpg     binary
+*.ogg     binary
+*.wav     binary
+*.ttf     binary
+*.import  text eol=lf

@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/descent.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="Shape_descent"]
+size = Vector2(18, 22)
+
+[node name="Descent" type="Area2D"]
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("1_script")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("Shape_descent")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -32.0
+offset_top = -30.0
+offset_right = 32.0
+offset_bottom = -18.0
+theme_override_colors/font_color = Color(0.35, 0.85, 0.91, 1)
+theme_override_font_sizes/font_size = 8
+text = "DESCEND"
+horizontal_alignment = 1

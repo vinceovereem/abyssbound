@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.6
+  GODOT_RELEASE: stable
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Import and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -eux
+          TAG="${GODOT_VERSION}-${GODOT_RELEASE}"
+          mkdir -p ~/godot
+          curl -fL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${TAG}/Godot_v${TAG}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          chmod +x ~/godot/Godot_v${TAG}_linux.x86_64
+          ln -sf ~/godot/Godot_v${TAG}_linux.x86_64 ~/godot/godot
+
+      - name: Import project
+        run: |
+          # First import can report a non-zero code while still succeeding, so
+          # run it twice and judge by the second pass.
+          ~/godot/godot --headless --import --path . || true
+          ~/godot/godot --headless --import --path .
+
+      - name: Run smoke test
+        run: ~/godot/godot --headless --path . res://tests/smoke_test.tscn
+
+      - name: Verify generated content is up to date
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 tools/gen_art.py
+          python3 tools/gen_levels.py
+          git diff --exit-code -- assets levels \
+            || (echo "::error::assets/ or levels/ differ from what the tools produce. Run the tools and commit the result." && exit 1)
+
+  build:
+    name: Build ${{ matrix.preset }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: Web
+            out: build/web/index.html
+            artifact: abyssbound-web
+            dir: build/web
+          - preset: Windows Desktop
+            out: build/windows/Abyssbound.exe
+            artifact: abyssbound-windows
+            dir: build/windows
+          - preset: Linux
+            out: build/linux/Abyssbound.x86_64
+            artifact: abyssbound-linux
+            dir: build/linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot and export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-export-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}
+
+      - name: Download Godot and export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          set -eux
+          TAG="${GODOT_VERSION}-${GODOT_RELEASE}"
+          mkdir -p ~/godot "$HOME/.local/share/godot/export_templates"
+          curl -fL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${TAG}/Godot_v${TAG}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          chmod +x ~/godot/Godot_v${TAG}_linux.x86_64
+          ln -sf ~/godot/Godot_v${TAG}_linux.x86_64 ~/godot/godot
+          curl -fL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${TAG}/Godot_v${TAG}_export_templates.tpz"
+          unzip -q /tmp/templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}"
+
+      - name: Import project
+        run: |
+          ~/godot/godot --headless --import --path . || true
+          ~/godot/godot --headless --import --path .
+
+      - name: Export
+        run: |
+          mkdir -p "${{ matrix.dir }}"
+          ~/godot/godot --headless --path . --export-release "${{ matrix.preset }}" "${{ matrix.out }}"
+
+      - name: Check the export is not empty
+        run: |
+          test -s "${{ matrix.out }}"
+          ls -la "${{ matrix.dir }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.dir }}
+          if-no-files-found: error
+
+  pages:
+    name: Publish playable build
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-web
+          path: web
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4

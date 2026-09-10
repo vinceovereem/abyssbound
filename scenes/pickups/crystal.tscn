@@ -1,0 +1,45 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/crystal.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/crystal.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="X0"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 8, 10)
+
+[sub_resource type="AtlasTexture" id="X1"]
+atlas = ExtResource("2_tex")
+region = Rect2(8, 0, 8, 10)
+
+[sub_resource type="AtlasTexture" id="X2"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 8, 10)
+
+[sub_resource type="AtlasTexture" id="X3"]
+atlas = ExtResource("2_tex")
+region = Rect2(24, 0, 8, 10)
+
+[sub_resource type="SpriteFrames" id="Frames_crystal"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("X0")}, {"duration": 1.0, "texture": SubResource("X1")}, {"duration": 1.0, "texture": SubResource("X2")}, {"duration": 1.0, "texture": SubResource("X3")}],
+"loop": true,
+"name": &"spin",
+"speed": 8.0
+}]
+
+[sub_resource type="CircleShape2D" id="Shape_crystal"]
+radius = 7.0
+
+[node name="Crystal" type="Area2D"]
+collision_layer = 8
+collision_mask = 2
+monitorable = false
+script = ExtResource("1_script")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("Frames_crystal")
+animation = &"spin"
+autoplay = "spin"
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("Shape_crystal")
