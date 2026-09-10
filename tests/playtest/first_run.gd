@@ -124,15 +124,16 @@ func _walk() -> void:
 func _dig() -> void:
 	print("\ndigging down")
 	var t: Vector2i = world.player_tile()
-	var target := Vector2i(t.x, t.y + 2)
-	while not world.store.is_solid(target.x, target.y) and target.y < t.y + 8:
-		target.y += 1
+	var target := t + Vector2i(0, 1)
 	var before: int = world.store.get_fg(target.x, target.y)
-	_ok("there is ground to dig", before != 0)
+	_ok("there is ground under our feet", before != 0,
+		TileDB.get_db().name_of.get(before, "?"))
+	var had: int = Game.amount_of(TileDB.get_db().drop_of(before))
 
-	world.mining.aim_override = Vector2(target.x * 16 + 8, target.y * 16 + 8)
+	# Hold down and dig: the block you are standing on.
 	var broke := false
-	for i in 240:
+	for i in 300:
+		Input.action_press("move_down")
 		Input.action_press("mine")
 		await get_tree().physics_frame
 		_fps_samples.append(Engine.get_frames_per_second())
@@ -140,8 +141,14 @@ func _dig() -> void:
 			broke = true
 			break
 	Input.action_release("mine")
-	_ok("holding the button breaks the tile", broke,
+	Input.action_release("move_down")
+
+	_ok("holding down and the dig key breaks the block underfoot", broke,
 		TileDB.get_db().name_of.get(before, "?"))
+	if broke:
+		var drop := TileDB.get_db().drop_of(before)
+		_ok("breaking it gives you the material", Game.amount_of(drop) > had,
+			"%s %d -> %d" % [drop, had, Game.amount_of(drop)])
 	await _settle(20)
 	await _shot("03_dug")
 
@@ -149,38 +156,35 @@ func _dig() -> void:
 func _place_torch() -> void:
 	print("\nplacing a torch")
 	var db := TileDB.get_db()
-	# Cycle the selection round to the torch.
 	for i in world.mining.placeable.size():
 		if world.mining.selected_tile_name() == "torch":
 			break
 		world.mining.place_index = (world.mining.place_index + 1) % world.mining.placeable.size()
 	_ok("the torch can be selected", world.mining.selected_tile_name() == "torch")
 
-	# Somewhere empty, with something to attach to.
-	var t: Vector2i = world.player_tile()
-	var spot := Vector2i(t.x + 2, t.y)
-	var found := false
-	for dx in range(1, 6):
-		for dy in range(-1, 2):
-			var c := Vector2i(t.x + dx, t.y + dy)
-			if world.store.get_fg(c.x, c.y) == 0 and world.mining._has_support(c.x, c.y):
-				spot = c
-				found = true
-				break
-		if found:
+	# Dig a nook in the wall beside us and put the torch in that. A torch needs
+	# something to hang on: the tile over an open hole has nothing either side
+	# of it and is refused, which is the rule working rather than a bug.
+	var here: Vector2i = world.player_tile()
+	var facing: int = world.player.facing()
+	var spot := here + Vector2i(facing, 0)
+	for i in 300:
+		Input.action_press("mine")
+		await get_tree().physics_frame
+		if world.store.get_fg(spot.x, spot.y) == 0:
 			break
-	_ok("there is somewhere to put a torch", found, "%s" % spot)
-	var before_light: int = world.lighting.light_at(spot.x, spot.y)
+	Input.action_release("mine")
+	_ok("digging sideways opens a nook", world.store.get_fg(spot.x, spot.y) == 0)
 
-	world.mining.aim_override = Vector2(spot.x * 16 + 8, spot.y * 16 + 8)
-	for i in 6:
+	var before_light: int = world.lighting.light_at(spot.x, spot.y)
+	for i in 12:
 		Input.action_press("place")
 		await get_tree().physics_frame
 	Input.action_release("place")
 	await _settle(10)
 
 	var placed: bool = world.store.get_fg(spot.x, spot.y) == db.id("torch")
-	_ok("right click places the selected tile", placed,
+	_ok("the place key puts the torch in the nook", placed,
 		db.name_of.get(world.store.get_fg(spot.x, spot.y), "?"))
 	world.lighting.mark_dirty()
 	world.lighting.update_now(world.player_tile())

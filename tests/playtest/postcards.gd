@@ -23,6 +23,7 @@ const PLACES := [
 	{ "name": "08_caverns",     "x": 600,  "y": 380 },
 	{ "name": "09_abyss_deep",  "x": 1000, "y": 600 },
 	{ "name": "10_torch",       "x": 640,  "y": 260, "torch": true },
+	{ "name": "11_mining",      "x": 600,  "y": 200, "mining": true },
 ]
 
 var _dir := "user://postcards"
@@ -69,6 +70,23 @@ func _shoot(place: Dictionary) -> void:
 		world.lighting.mark_dirty()
 		world.lighting.update_now(t)
 		for i in 5:
+			await get_tree().physics_frame
+
+	if bool(place.get("mining", false)):
+		# Drive the real HUD and the real pickup popup, so the screenshot shows
+		# what a player sees rather than a mock up of it.
+		var t: Vector2i = world.player_tile()
+		for dx in range(-5, 6):
+			for dy in range(-3, 3):
+				world.store.set_fg(t.x + dx, t.y + dy, 0)
+		world.renderer.refresh(world.store.chunk_coord(t.x, t.y), 2)
+		world.lighting.mark_dirty()
+		world.lighting.update_now(t)
+		Game.collect("dirt", 14)
+		Game.collect("stone", 9)
+		Game.collect("copper_ore", 3)
+		world.mining.tile_broken.emit(t.x + 1, t.y + 1, "stone")
+		for i in 12:
 			await get_tree().physics_frame
 
 	await RenderingServer.frame_post_draw

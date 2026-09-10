@@ -1,20 +1,27 @@
 class_name Mining
 extends Node2D
-## Digging and placing with the mouse.
+## Digging and placing, from the keyboard, one tile at a time.
 ##
-## Break time is hardness divided by dig power, so a tier of tool later only
-## has to change one number. The target tile is drawn with its progress so the
-## player can see that holding the button is doing something, which is the
-## difference between "slow" and "broken".
+## You can only reach what you could actually touch: the block you are standing
+## on, and the ones directly beside and above you. Which of them is decided by
+## the direction you are holding, so digging is aimed with the same keys you
+## walk with rather than with a cursor:
+##
+##   F              break the tile you are facing
+##   Down + F       break the tile under your feet
+##   Up + F         break the tile over your head
+##   G              same three directions, but places instead
+##
+## Break time is hardness over dig power, so a tier of tool later changes one
+## number rather than this file.
 
 const TILE := 16
-const REACH := 5.0          ## tiles, measured centre to centre
-const DIG_POWER := 20.0     ## hardness units per second. Tool tiers scale this.
-## Holding the place button lays a run of tiles, at this interval. One press
-## per tile turns building a wall into a clicking exercise.
-const PLACE_INTERVAL := 0.12
+const DIG_POWER := 20.0
+## Holding the place key lays a run of tiles at this interval.
+const PLACE_INTERVAL := 0.14
 
 signal tile_changed(x: int, y: int)
+signal tile_broken(x: int, y: int, drop: String)
 
 var store: ChunkStore
 var renderer: ChunkRenderer
@@ -23,14 +30,8 @@ var world: Node2D
 var placeable: Array[String] = ["dirt", "stone", "torch"]
 var place_index := 0
 
-## Playtests aim here instead of using the real cursor. Everything downstream
-## of the aim is the same code the player exercises: reach, break time,
-## support rules, overlap.
-var aim_override := Vector2.INF
-
 var _target := Vector2i(-9999, -9999)
 var _progress := 0.0
-var _in_reach := false
 var _place_cooldown := 0.0
 var _db: TileDB
 
@@ -47,6 +48,19 @@ func selected_tile_name() -> String:
 	return placeable[place_index]
 
 
+## The one tile within arm's reach, chosen by which direction is held.
+func target_tile() -> Vector2i:
+	if world == null or world.player == null or not is_instance_valid(world.player):
+		return Vector2i(-9999, -9999)
+	var here: Vector2i = world.player_tile()
+	if Input.is_action_pressed("move_down"):
+		return here + Vector2i(0, 1)
+	if Input.is_action_pressed("move_up"):
+		return here + Vector2i(0, -1)
+	var facing: int = world.player.facing()
+	return here + Vector2i(facing, 0)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("cycle_place"):
 		place_index = (place_index + 1) % placeable.size()
@@ -56,26 +70,19 @@ func _process(delta: float) -> void:
 	if world == null or world.player == null or not is_instance_valid(world.player):
 		return
 
-	var mouse := aim_override if aim_override != Vector2.INF else get_global_mouse_position()
-	var tile := Vector2i(int(floor(mouse.x / TILE)), int(floor(mouse.y / TILE)))
-	var centre: Vector2 = world.player.global_position / float(TILE)
-	_in_reach = Vector2(tile).distance_to(centre) <= REACH
+	_place_cooldown = maxf(0.0, _place_cooldown - delta)
 
+	var tile := target_tile()
 	if tile != _target:
 		_target = tile
 		_progress = 0.0
 
-	_place_cooldown = maxf(0.0, _place_cooldown - delta)
-
-	if _in_reach:
-		if Input.is_action_pressed("mine"):
-			_dig(delta)
-		elif Input.is_action_pressed("place"):
-			if _place_cooldown <= 0.0:
-				_place_cooldown = PLACE_INTERVAL
-				_place()
-		else:
-			_progress = 0.0
+	if Input.is_action_pressed("mine"):
+		_dig(delta)
+	elif Input.is_action_pressed("place"):
+		if _place_cooldown <= 0.0:
+			_place_cooldown = PLACE_INTERVAL
+			_place()
 	else:
 		_progress = 0.0
 
@@ -91,9 +98,15 @@ func _dig(delta: float) -> void:
 	if hardness <= 0:
 		return
 	_progress += DIG_POWER * delta
-	if _progress >= float(hardness):
-		_progress = 0.0
-		_set_tile(_target.x, _target.y, 0)
+	if _progress < float(hardness):
+		return
+
+	_progress = 0.0
+	var drop := _db.drop_of(id)
+	_set_tile(_target.x, _target.y, 0)
+	if not drop.is_empty():
+		Game.collect(drop, 1)
+		tile_broken.emit(_target.x, _target.y, drop)
 
 
 func _place() -> void:
@@ -102,10 +115,8 @@ func _place() -> void:
 	var id := _db.id(selected_tile_name())
 	if id == 0:
 		return
-	# Nothing floats in mid air: it needs rock next to it or a wall behind it.
 	if not _has_support(_target.x, _target.y):
 		return
-	# And it may not be placed inside the player.
 	if _db.is_solid(id) and _overlaps_player(_target):
 		return
 	_set_tile(_target.x, _target.y, id)
@@ -137,12 +148,14 @@ func _draw() -> void:
 	if _target.x < -1000:
 		return
 	var rect := Rect2(_target.x * TILE, _target.y * TILE, TILE, TILE)
-	var edge := Color(1, 1, 1, 0.55) if _in_reach else Color(1, 1, 1, 0.12)
-	draw_rect(rect, edge, false, 1.0)
+	# Solid outline on something breakable, faint on empty air, so the aim is
+	# readable before the key goes down.
+	var reachable := store.get_fg(_target.x, _target.y) != 0
+	draw_rect(rect, Color(1, 1, 1, 0.6 if reachable else 0.15), false, 1.0)
 
 	if _progress > 0.0:
 		var id := store.get_fg(_target.x, _target.y)
 		var hardness := _db.hardness[id] if id > 0 else 1
 		if hardness > 0:
 			var t := clampf(_progress / float(hardness), 0.0, 1.0)
-			draw_rect(Rect2(rect.position, Vector2(TILE * t, 2.0)), Color(1, 0.9, 0.5, 0.9))
+			draw_rect(Rect2(rect.position, Vector2(TILE * t, 2.0)), Color(1, 0.9, 0.5, 0.95))

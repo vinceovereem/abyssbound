@@ -18,6 +18,7 @@ var hardness := PackedInt32Array()
 var opacity := PackedByteArray()
 var emit := PackedByteArray()
 var wall := PackedByteArray()
+var drop := {}       ## id -> what breaking it gives you, "" for nothing
 var id_of := {}      ## name -> id
 var name_of := {}    ## id -> name
 var max_id := 0
@@ -63,12 +64,23 @@ func _load() -> void:
 		emit[id] = int(row.get("emit", 0))
 		wall[id] = 1 if row.get("wall", false) else 0
 		var tile_name: String = row["name"]
+		# Unstated means it gives back itself, which is true of most rock.
+		drop[id] = str(row.get("drop", tile_name if row.get("solid", false) else ""))
 		id_of[tile_name] = id
 		name_of[id] = tile_name
 
 
 func is_solid(id: int) -> bool:
 	return id > 0 and id < solid.size() and solid[id] == 1
+
+
+func drop_of(id: int) -> String:
+	return str(drop.get(id, ""))
+
+
+## "copper_ore" reads as "Copper Ore" on screen.
+static func pretty(resource: String) -> String:
+	return resource.replace("_", " ").capitalize()
 
 
 func id(tile_name: String) -> int:

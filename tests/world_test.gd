@@ -28,6 +28,7 @@ func _ready() -> void:
 	await _check_lighting()
 	_check_save_load()
 	await _check_traversal()
+	await _check_reach()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -485,3 +486,76 @@ func _check_traversal() -> void:
 
 	root.queue_free()
 	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+## Digging is aimed with the movement keys and reaches exactly one tile. You
+## can break what you are standing on and what is beside or above you, and
+## nothing else: no reaching across a room at a block you could not touch.
+func _check_reach() -> void:
+	print("\nreach")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 300
+	add_child(world)
+	for i in 40:
+		await get_tree().physics_frame
+
+	var mining = world.mining
+	var db := TileDB.get_db()
+	var here: Vector2i = world.player_tile()
+
+	for action in ["move_down", "move_up", "move_left", "move_right", "mine", "place"]:
+		Input.action_release(action)
+
+	var forward: Vector2i = mining.target_tile()
+	_ok("with no direction held, the aim is the tile you face",
+		forward == here + Vector2i(world.player.facing(), 0), "%s" % forward)
+
+	Input.action_press("move_down")
+	await get_tree().physics_frame
+	_ok("holding down aims at the block underfoot",
+		mining.target_tile() == here + Vector2i(0, 1))
+	Input.action_release("move_down")
+
+	Input.action_press("move_up")
+	await get_tree().physics_frame
+	_ok("holding up aims overhead", mining.target_tile() == here + Vector2i(0, -1))
+	Input.action_release("move_up")
+	await get_tree().physics_frame
+
+	# Whatever is held, the aim never leaves the tiles you could touch.
+	var far := 0
+	for combo in [[], ["move_down"], ["move_up"], ["move_left"], ["move_right"]]:
+		for a: String in combo:
+			Input.action_press(a)
+		await get_tree().physics_frame
+		var t: Vector2i = mining.target_tile()
+		var d: Vector2i = t - world.player_tile()
+		if absi(d.x) > 1 or absi(d.y) > 1:
+			far += 1
+		for a: String in combo:
+			Input.action_release(a)
+	_ok("nothing further than one tile can ever be aimed at", far == 0)
+
+	# Breaking pays out, and grass gives dirt rather than grass.
+	var grass_id := db.id("grass")
+	var spot := Vector2i(here.x + 4, here.y)
+	while not store_solid(world, spot) and spot.y < here.y + 6:
+		spot.y += 1
+	world.store.set_fg(spot.x, spot.y, grass_id)
+	var before: int = Game.amount_of("dirt")
+	Game.collect(db.drop_of(grass_id), 1)
+	_ok("grass gives dirt, not grass", db.drop_of(grass_id) == "dirt")
+	_ok("collecting adds to what you are carrying", Game.amount_of("dirt") == before + 1,
+		"%d -> %d" % [before, Game.amount_of("dirt")])
+	_ok("stone gives stone", db.drop_of(db.id("stone")) == "stone")
+	_ok("leaves give nothing", db.drop_of(db.id("leaves")).is_empty())
+
+	world.queue_free()
+	await get_tree().process_frame
+
+
+func store_solid(world: Node2D, at: Vector2i) -> bool:
+	var store: ChunkStore = world.store
+	return store.is_solid(at.x, at.y)
