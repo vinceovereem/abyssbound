@@ -89,9 +89,40 @@ godot --headless --path . res://tests/smoke_test.tscn
 
 ## Building
 
-CI builds Web, Windows and Linux on every push and attaches them to the run as artifacts. The web build also goes to Vercel. To build locally, open the project in Godot and use **Project > Export**. The presets are already set up in `export_presets.cfg`.
+CI builds Web, Windows, macOS and Linux on every push and attaches them to the run as artifacts. The web build also goes to Vercel.
+
+The Windows and Linux builds embed the game data in the executable, so each one is a single file you can send to someone. The Mac build is an `.app` bundle inside a `.zip`, because that is what macOS needs. Do not turn `binary_format/embed_pck` off unless you want to hand out two files that must stay in the same folder. To build locally, open the project in Godot and use **Project > Export**. The presets are already set up in `export_presets.cfg`.
 
 One thing to know: the level maps are `.txt` files, not Godot resources, so they only get packed because `include_filter` in `export_presets.cfg` names them. If you add another non-resource file type, add it there too or it will be missing from the exported game and work fine in the editor.
+
+## Sending the game to someone
+
+Actions artifacts are no good for this. They expire, and downloading one needs a
+GitHub account. Cut a release instead:
+
+```
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+CI builds the tag and publishes a release at
+`github.com/vinceovereem/abyssbound/releases`. Anyone with the link can download
+it, no account needed. Send them the release page and they pick their platform:
+
+| Machine | File | 
+| --- | --- |
+| Windows | `Abyssbound-v0.1.0-Windows.exe`, one file, double-click it |
+| Mac | `Abyssbound-v0.1.0-macOS.zip`, unzip and run the app inside |
+
+Both builds are unsigned, because signing costs money on both platforms: 99 USD
+a year for Apple, a few hundred for a Windows certificate. So both warn on first
+launch, and the release notes spell out the way past it.
+
+- **Windows** says it does not recognise the app. **More info**, then **Run anyway**.
+- **Mac** needs a **right-click** on the app and **Open**, then **Open** again. Tell people this. Double-clicking an unnotarised app gives a dialog with no way forward, which reads as a broken download.
+
+If that friction is not worth it, send the Vercel link instead. The browser build
+needs no download and no warnings.
 
 ## Licence
 
