@@ -24,6 +24,7 @@ func _ready() -> void:
 	_check_shaft()
 	_check_ores_and_caves()
 	_check_speed()
+	await _check_digging()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -217,3 +218,62 @@ func _check_speed() -> void:
 	var per := float(us) / float(n) / 1000.0
 	_ok("a chunk generates fast enough to stream", per < 8.0,
 		"%.2f ms per chunk over %d chunks" % [per, n])
+
+
+# ---------------------------------------------------------------------------
+func _check_digging() -> void:
+	print("\ndigging")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 300
+	add_child(world)
+	for i in 40:
+		await get_tree().physics_frame
+
+	var store: ChunkStore = world.store
+	var mining = world.mining
+	var db := TileDB.get_db()
+
+	_ok("the player lands on the generated ground", world.player.is_on_floor(),
+		"tile %s" % world.player_tile())
+
+	# Dig the ground out from under the player and it should stop being solid,
+	# stop being drawn, and stop holding the player up.
+	var under: Vector2i = world.player_tile() + Vector2i(0, 1)
+	while not store.is_solid(under.x, under.y) and under.y < 200:
+		under.y += 1
+	var before := store.get_fg(under.x, under.y)
+	_ok("there is rock under the player", before != 0, db.name_of.get(before, "?"))
+
+	var y_before: float = world.player.global_position.y
+	mining._set_tile(under.x, under.y, 0)
+	_ok("a dug tile is gone from the data", store.get_fg(under.x, under.y) == 0)
+	_ok("a dug tile is gone from the tilemap",
+		world.renderer.fg_layer.get_cell_source_id(under) == -1)
+
+	for i in 30:
+		await get_tree().physics_frame
+	_ok("digging drops the player through the hole",
+		world.player.global_position.y > y_before + 4.0,
+		"y %.1f -> %.1f" % [y_before, world.player.global_position.y])
+
+	# Placing rules.
+	_ok("nothing can be placed in open sky", not mining._has_support(300, 20))
+	_ok("rock can be placed against rock", mining._has_support(under.x, under.y))
+
+	var here: Vector2i = world.player_tile()
+	_ok("a solid tile cannot be placed inside the player", mining._overlaps_player(here))
+	_ok("a tile far away does not overlap the player",
+		not mining._overlaps_player(here + Vector2i(6, 0)))
+
+	# Put it back, and it comes back.
+	mining._set_tile(under.x, under.y, db.id("stone"))
+	_ok("a placed tile is solid again", store.is_solid(under.x, under.y))
+	_ok("a placed tile is drawn",
+		world.renderer.fg_layer.get_cell_source_id(under) == 0)
+
+	_ok("harder rock takes longer to break",
+		db.hardness[db.id("abyss_stone")] > db.hardness[db.id("dirt")] * 2)
+
+	world.queue_free()
+	await get_tree().process_frame

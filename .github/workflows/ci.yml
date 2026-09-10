@@ -19,6 +19,7 @@ jobs:
   test:
     name: Import and smoke test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -48,8 +49,16 @@ jobs:
           ~/godot/godot --headless --import --path . || true
           ~/godot/godot --headless --import --path .
 
+      # Catches a script that fails to parse. Those do not fail a headless run,
+      # they hang it, which looks like a slow test until the job times out.
+      - name: Parse-check every script
+        run: GODOT=~/godot/godot ./tools/lint.sh
+
       - name: Run smoke test
         run: ~/godot/godot --headless --path . res://tests/smoke_test.tscn
+
+      - name: Run world test
+        run: ~/godot/godot --headless --path . res://tests/world_test.tscn
 
       - name: Verify generated content is up to date
         run: |
@@ -63,6 +72,7 @@ jobs:
     name: Build ${{ matrix.preset }}
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

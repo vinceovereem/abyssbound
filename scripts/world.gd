@@ -13,6 +13,7 @@ const PlayerScene := preload("res://scenes/actors/player.tscn")
 var store: ChunkStore
 var renderer: ChunkRenderer
 var sky: WorldSky
+var mining: Mining
 var player: CharacterBody2D
 
 var _camera: Camera2D
@@ -41,6 +42,11 @@ func _ready() -> void:
 	renderer.setup(store)
 
 	_spawn_player()
+
+	mining = Mining.new()
+	mining.name = "Mining"
+	add_child(mining)
+	mining.setup(self, store, renderer)
 
 	sky.update_for_depth(player_tile().y)
 	Game.zone_name = "Aerenfall"
