@@ -2,6 +2,18 @@
 
 Read this before changing anything.
 
+## Where the project is going
+
+`docs/design.md` is the spec: Aerenfall, a Terraria-shaped sandbox RPG built on
+a procedural tile world, where creatures are the core mechanic and the Abyss is
+the long goal. `docs/plan.md` is the build order, milestones 2 to 7, with the
+files each one is expected to touch.
+
+Read both before starting work on a milestone. What follows below describes the
+placeholder as it stands today, which the pivot keeps most of: the player
+controller, the crawler, the critter trust hook, the HUD, the title screen, CI
+and the art generator all survive. Zone loading is the part being replaced.
+
 ## What this is
 
 A 2D pixel-art platformer in Godot 4.6, GDScript, GL Compatibility renderer. Target is PC first, mobile possibly later. The current state is a working placeholder: real systems, stand-in art and levels.
