@@ -61,6 +61,8 @@ func _swing() -> void:
 			continue
 		var away: int = 1 if enemy.global_position.x > origin.x else -1
 		enemy.hurt(DAMAGE, away)
+		world.float_text(enemy.global_position - Vector2(0, 10), str(DAMAGE),
+			Color(1.0, 0.85, 0.35), 18.0)
 
 
 func _draw() -> void:

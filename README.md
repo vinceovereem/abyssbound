@@ -51,6 +51,15 @@ software, so it can only prove the build runs, not how fast.
 `.exe`; Mac is a `.zip`, and the app inside needs **right-click, Open** the
 first time because it is not notarised.
 
+### What there is to do
+
+The top left corner lists the next few things worth doing: gather wood, mine
+stone, place a torch, live through a night, find copper, dig deep, reach the
+Abyss. They are nudges rather than quests. Nothing is gated on them and nothing
+is lost by ignoring them, but a new world is a big empty place and they give
+you somewhere to point yourself. The list lives in `data/objectives.json` and
+adding to it needs no code.
+
 ### What to try first
 
 1. Walk east. About 60 tiles along there is a hole in the ground that keeps going.

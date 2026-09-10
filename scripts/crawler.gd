@@ -100,6 +100,7 @@ func die() -> void:
 	if _dying:
 		return
 	_dying = true
+	Goals.note_defeat()
 	set_deferred("collision_layer", 0)
 	hitbox.set_deferred("monitoring", false)
 	var tween := create_tween()

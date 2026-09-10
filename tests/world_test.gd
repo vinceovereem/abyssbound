@@ -32,6 +32,7 @@ func _ready() -> void:
 	_check_clock()
 	await _check_night()
 	await _check_death()
+	_check_goals()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -742,3 +743,59 @@ func _check_death() -> void:
 
 	world.queue_free()
 	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+## The list of things worth doing. Nudges rather than quests: nothing gates on
+## them, so the checks are about the counting being right and the data loading.
+func _check_goals() -> void:
+	print("\nobjectives")
+	Goals.reset()
+
+	_ok("objectives.json loads", Goals.objectives.size() > 0,
+		"%d objectives" % Goals.objectives.size())
+	_ok("only a few are shown at once", Goals.active().size() <= Goals.SHOWN,
+		"%d shown" % Goals.active().size())
+
+	# Collecting counts toward the matching objective and nothing else.
+	Game.collect("wood", 4)
+	_ok("gathering counts toward its objective", Goals.have("wood") == 4,
+		"%d" % Goals.have("wood"))
+	_ok("it does not count toward a different material", Goals.have("stone") == 0)
+
+	Game.collect("wood", 20)
+	_ok("finishing one marks it done", Goals.is_done("wood"))
+	_ok("progress does not run past the target",
+		Goals.have("wood") == Goals.need(Goals.objectives[0]),
+		"%d" % Goals.have("wood"))
+	_ok("a finished one drops off the list",
+		not Goals.active().any(func(o: Dictionary) -> bool: return o["id"] == "wood"))
+
+	# Placing and fighting.
+	Goals.note_placed("torch")
+	_ok("placing a torch counts", Goals.is_done("torch"))
+	Goals.note_placed("dirt")
+	_ok("placing dirt does not count as a torch", Goals.have("torch") == 1)
+
+	Goals.note_defeat()
+	Goals.note_defeat()
+	_ok("driving something off counts", Goals.have("fight") == 2)
+
+	# Depth is reached, not accumulated: going up and down again must not add up.
+	Goals.note_depth(40, 0)
+	Goals.note_depth(10, 0)
+	_ok("depth remembers the deepest, not the total", Goals.have("deep") == 40,
+		"%d" % Goals.have("deep"))
+	Goals.note_depth(200, 0)
+	_ok("digging deep enough finishes it", Goals.is_done("deep"))
+
+	Goals.note_depth(500, 2)
+	_ok("reaching an Abyss layer counts", Goals.is_done("abyss"))
+
+	# A night survived.
+	var before := Goals.is_done("night")
+	Goals._on_dawn(2)
+	_ok("seeing the sun come up counts", Goals.is_done("night") and not before)
+
+	Goals.reset()
+	_ok("resetting clears progress", Goals.have("wood") == 0 and not Goals.is_done("wood"))

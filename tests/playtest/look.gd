@@ -40,13 +40,21 @@ func _ready() -> void:
 		# Put them where the camera can see them, which the spawner
 		# deliberately never does.
 		var t: Vector2i = world.player_tile()
-		for spec in [[6, "crawler"], [-7, "crawler"], [11, "critter"]]:
+		Game.collect("wood", 4)
+		Game.collect("stone", 6)
+		for spec in [[1, "crawler"], [-7, "crawler"], [9, "critter"]]:
 			var path := "res://scenes/actors/%s.tscn" % spec[1]
 			var node: Node2D = load(path).instantiate()
 			var cx: int = t.x + int(spec[0])
 			node.position = Vector2(cx * 16 + 8, (world.store.gen.surface_height(cx) - 2) * 16)
+			if node.has_method("hurt"):
+				node.speed = 0.0
 			world.entities.add_child(node)
 		for i in 40:
+			await get_tree().physics_frame
+		# Swing at the one standing next to us, so the shot shows the hit.
+		world.combat._swing()
+		for i in 4:
 			await get_tree().physics_frame
 
 	await RenderingServer.frame_post_draw

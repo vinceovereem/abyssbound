@@ -22,6 +22,7 @@ config/icon="res://icon.png"
 Game="*res://scripts/game.gd"
 Ui="*res://scenes/ui/hud.tscn"
 DayClock="*res://scripts/clock.gd"
+Goals="*res://scripts/objectives.gd"
 
 [display]
 

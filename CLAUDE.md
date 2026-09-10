@@ -117,6 +117,35 @@ The where and when should survive that.
 as digging on purpose. Two aiming schemes in one game is how controls stop
 being learnable.
 
+## Objectives
+
+`Goals` is an autoload reading `data/objectives.json`. Adding an objective
+needs no code as long as its `kind` already exists: collect, place, defeat,
+dawn, depth, layer. Design owns the file.
+
+They are **nudges, not quests**. Nothing gates on them. If one ever becomes a
+requirement, that is a design change worth arguing about first, because the
+whole point of the world is that you decide what to do in it.
+
+Depth and layer are *reached*, not counted: going down and up again must not
+add up. There is a check for that.
+
+## Art
+
+Characters are about two tiles tall, from the concept sheet. Every actor's
+collision box is sized so its **feet sit at the same offset from its origin as
+before**: player `+8`, creatures `+5`. That is what let the sprites triple in
+size without touching any of the tile maths that asks what is under an actor.
+If you resize a sprite, keep the feet where they are or expect to fix the
+spawner, the digging and half the checks.
+
+The camera is zoomed to `1.5`, so the 640x360 viewport frames about 27 tiles
+rather than 40. The HUD is not zoomed, because it lives on the CanvasLayer.
+
+Floating world text (`World.float_text`) tints with `modulate`, not a font
+colour override, and keeps the outline at 1 px. A 4 px outline on a small font
+renders as a grey blob once the camera is zoomed in.
+
 ## Digging
 
 Aimed with the movement keys, not a cursor, and it reaches exactly one tile:

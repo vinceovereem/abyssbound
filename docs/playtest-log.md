@@ -320,3 +320,44 @@ corpse to notice.
 - Standing still through a night takes five hearts to zero. Whether that is
   tense or unfair is a judgement for whoever plays a night properly, with the
   walls and workbench that milestone 4 will provide.
+
+
+---
+
+## Round 9 — 2026-09-10 — the concept sheet
+
+**Given.** The Abyssbound concept sheet: a character about two tiles tall, a
+tight camera, rich layer colours, and a UI with a minimap, damage numbers, an
+inventory grid and a bestiary.
+
+**Done.** Characters redrawn at roughly two tiles: the player 12x16 to 20x30,
+the crawler a heavy 24x18, the critter a 20x16 rabbit from the sheet's roster.
+Camera pulled to 1.5, framing about 27 tiles instead of 40. A list of
+objectives down the left. Floating damage numbers.
+
+**The decision that made the art change cheap.** Every collision box was
+resized so each actor's feet stay at exactly the same offset from its origin.
+The player's tile maths, the spawner's footing checks and the digging all ask
+"what is under this actor" in terms of that origin, so keeping it fixed meant
+sprites could triple in size with 39 and 95 checks passing unchanged. Moving it
+would have meant fixing all three.
+
+**Four iterations on one damage number**, which is worth recording because
+three of them were wrong for different reasons:
+
+1. Nothing appeared. The crawler was two tiles away and the swing reaches one
+   and a half.
+2. Still nothing. The crawler *walks*, so it had strolled out of reach by the
+   time the swing landed.
+3. It appeared as a grey blob. A 4 px outline on an 8 px font swallows the
+   glyph once the camera is zoomed in.
+4. It appeared but stayed grey. `add_theme_color_override` was not taking on a
+   Label built in code; `modulate` does.
+
+None of that is visible to a headless check, and all of it is visible in a
+screenshot. The mechanism was right from the first attempt; everything wrong
+was about whether a person could see it.
+
+**Not done, and not pretended.** The sheet also shows a minimap, an inventory
+grid, a bestiary panel and five distinct world layers with their own palettes.
+None of those exist. See the milestone summary for where they sit.

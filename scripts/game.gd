@@ -13,6 +13,8 @@ signal resource_collected(resource: String, amount: int, total: int)
 ## Health reached zero. Whoever owns the world puts the player back; nothing
 ## here reloads a scene, because reloading a generated world throws it away.
 signal player_died
+## Took a hit. The world floats the number where it happened.
+signal player_hurt(amount: int)
 
 const MAX_HEALTH := 5
 
@@ -59,6 +61,7 @@ func amount_of(resource: String) -> int:
 
 func damage(amount: int) -> void:
 	health = max(0, health - amount)
+	player_hurt.emit(amount)
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
 		call_deferred("_on_death")

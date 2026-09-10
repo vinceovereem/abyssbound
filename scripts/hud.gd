@@ -17,6 +17,8 @@ var _full: AtlasTexture
 var _empty: AtlasTexture
 var _resources: VBoxContainer
 var _clock: Label
+var _goals: VBoxContainer
+var _toast: Label
 
 
 func _ready() -> void:
@@ -29,10 +31,13 @@ func _ready() -> void:
 
 	_build_resource_list()
 	_build_clock()
+	_build_goals()
 
 	Game.health_changed.connect(_on_health_changed)
 	Game.crystals_changed.connect(_on_crystals_changed)
 	Game.resource_collected.connect(_on_resource_collected)
+	Goals.progressed.connect(func(_i: String, _h: int, _n: int) -> void: _redraw_goals())
+	Goals.completed.connect(_on_goal_completed)
 
 
 func _slice(index: int) -> AtlasTexture:
@@ -96,6 +101,63 @@ func _process(_delta: float) -> void:
 		Color(0.62, 0.70, 0.95) if DayClock.is_night() else Color(1.0, 0.93, 0.72))
 
 
+## The next few things worth doing, down the left. Nudges, not a quest log:
+## nothing gates on them and nothing is lost by ignoring them.
+func _build_goals() -> void:
+	_goals = VBoxContainer.new()
+	_goals.name = "Goals"
+	_goals.offset_left = 8.0
+	_goals.offset_top = 22.0
+	_goals.offset_right = 200.0
+	_goals.add_theme_constant_override("separation", 1)
+	$Root.add_child(_goals)
+
+	_toast = Label.new()
+	_toast.name = "GoalToast"
+	_toast.anchor_left = 0.5
+	_toast.anchor_right = 0.5
+	_toast.offset_left = -140.0
+	_toast.offset_right = 140.0
+	_toast.offset_top = 40.0
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.add_theme_font_size_override("font_size", 10)
+	_toast.add_theme_color_override("font_color", Color(1.0, 0.92, 0.6))
+	_toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_toast.add_theme_constant_override("outline_size", 4)
+	_toast.modulate.a = 0.0
+	$Root.add_child(_toast)
+	_redraw_goals()
+
+
+func _redraw_goals() -> void:
+	if _goals == null:
+		return
+	for child in _goals.get_children():
+		child.queue_free()
+	for objective: Dictionary in Goals.active():
+		var id: String = objective["id"]
+		var need: int = Goals.need(objective)
+		var have: int = Goals.have(id)
+		var row := Label.new()
+		row.text = "%s%s" % [objective["text"], ("  %d/%d" % [have, need]) if need > 1 else ""]
+		row.add_theme_font_size_override("font_size", 8)
+		row.add_theme_color_override("font_color",
+			Color(0.98, 0.92, 0.70) if have > 0 else Color(0.72, 0.78, 0.86))
+		row.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		row.add_theme_constant_override("outline_size", 3)
+		_goals.add_child(row)
+
+
+func _on_goal_completed(_id: String, text: String) -> void:
+	_redraw_goals()
+	_toast.text = "%s  ✓" % text
+	_toast.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(_toast, "modulate:a", 1.0, 0.25)
+	tween.tween_interval(1.9)
+	tween.tween_property(_toast, "modulate:a", 0.0, 0.6)
+
+
 func _on_resource_collected(_resource: String, _amount: int, _total: int) -> void:
 	for child in _resources.get_children():
 		child.queue_free()
@@ -120,6 +182,8 @@ func set_gameplay_visible(shown: bool) -> void:
 		_resources.visible = shown
 	if _clock:
 		_clock.visible = shown
+	if _goals:
+		_goals.visible = shown
 
 
 func announce_zone(title: String) -> void:

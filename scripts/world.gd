@@ -72,9 +72,11 @@ func _ready() -> void:
 	lighting.setup(store)
 	mining.tile_changed.connect(func(_x: int, _y: int) -> void: lighting.mark_dirty())
 	mining.tile_broken.connect(_on_tile_broken)
+	mining.tile_placed.connect(func(_x: int, _y: int, n: String) -> void: Goals.note_placed(n))
 	lighting.update_now(player_tile())
 
 	Game.player_died.connect(_on_player_died)
+	Game.player_hurt.connect(_on_player_hurt)
 
 	spawner = Spawner.new()
 	spawner.name = "Spawner"
@@ -143,6 +145,7 @@ func _process(_delta: float) -> void:
 		lighting.mark_dirty()
 
 	lighting.update(tile)
+	Goals.note_depth(tile.y - store.gen.surface_height(tile.x), store.gen.abyss_layer(tile.y))
 	_publish_web_stats(tile)
 	var centre := store.chunk_coord(tile.x, tile.y)
 	if centre != _last_centre:
@@ -185,24 +188,39 @@ func _publish_web_stats(tile: Vector2i) -> void:
 	}), true)
 
 
-## A block broke and gave something up. Float the name of it off the tile, so
-## the reward is visible where the work happened rather than only in a corner
-## of the screen.
-func _on_tile_broken(x: int, y: int, drop: String) -> void:
+## Floating text in world space: what a block gave you, what a hit took off.
+## Feedback belongs where the thing happened, not only in a corner of the HUD.
+func float_text(at: Vector2, text: String, colour: Color, rise := 14.0) -> void:
 	var label := Label.new()
-	label.text = "+1 %s" % TileDB.pretty(drop)
-	label.add_theme_font_size_override("font_size", 8)
-	label.add_theme_color_override("font_color", Color(1, 0.96, 0.82))
-	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	label.add_theme_constant_override("outline_size", 4)
-	label.position = Vector2(x * TILE - 12, y * TILE - 6)
+	label.text = text
+	# A 4 px outline on an 8 px font swallows the glyph and the text reads as a
+	# grey blob, which is what it did at the zoomed in camera.
+	label.add_theme_font_size_override("font_size", 12)
+	# Tinting the whole node rather than overriding the font colour: the theme
+	# override was not taking on a Label built in code, and modulate always does.
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	label.add_theme_constant_override("outline_size", 1)
+	label.modulate = colour
+	label.position = at - Vector2(12, 6)
 	label.z_index = 30
 	add_child(label)
 
 	var tween := create_tween()
-	tween.tween_property(label, "position:y", label.position.y - 14.0, 0.7)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.25)
+	tween.tween_property(label, "position:y", label.position.y - rise, 0.7)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.7).set_delay(0.3)
 	tween.tween_callback(label.queue_free)
+
+
+func _on_tile_broken(x: int, y: int, drop: String) -> void:
+	float_text(Vector2(x * TILE, y * TILE), "+1 %s" % TileDB.pretty(drop),
+		Color(1, 0.96, 0.82))
+
+
+func _on_player_hurt(amount: int) -> void:
+	if player and is_instance_valid(player):
+		float_text(player.global_position - Vector2(0, 10), "-%d" % amount,
+			Color(1.0, 0.42, 0.42), 18.0)
 
 
 ## Dying puts you back where you started, in the same world.
