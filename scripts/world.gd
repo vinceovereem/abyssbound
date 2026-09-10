@@ -20,6 +20,7 @@ var player: CharacterBody2D
 
 var _camera: Camera2D
 var _last_centre := Vector2i(-9999, -9999)
+var _web_tick := 0
 
 ## Set before the node enters the tree to override what BootConfig would give.
 ## Playtest scripts use these to jump straight to what they are inspecting.
@@ -55,7 +56,7 @@ func _ready() -> void:
 	add_child(lighting)
 	lighting.setup(store)
 	mining.tile_changed.connect(func(_x: int, _y: int) -> void: lighting.mark_dirty())
-	lighting.update(player_tile())
+	lighting.update_now(player_tile())
 
 	debug_overlay = preload("res://scenes/ui/debug_overlay.tscn").instantiate()
 	debug_overlay.world = self
@@ -102,6 +103,7 @@ func _process(_delta: float) -> void:
 	var tile := player_tile()
 	sky.update_for_depth(tile.y)
 	lighting.update(tile)
+	_publish_web_stats(tile)
 	var centre := store.chunk_coord(tile.x, tile.y)
 	if centre != _last_centre:
 		_last_centre = centre
@@ -118,3 +120,26 @@ func teleport(tile_x: int, tile_y: int) -> void:
 	_last_centre = centre
 	player.global_position = Vector2(tile_x * TILE + TILE * 0.5, tile_y * TILE)
 	player.velocity = Vector2.ZERO
+
+
+## In a browser, hand the page what the F3 overlay shows.
+##
+## A headless CI browser renders in software and its frame rate says nothing
+## about real hardware, so this is not a performance gate. It is how an
+## automated check confirms the build actually reached the point of running,
+## and how a real browser can be asked for a real number.
+func _publish_web_stats(tile: Vector2i) -> void:
+	if not OS.has_feature("web"):
+		return
+	_web_tick += 1
+	if _web_tick % 30 != 0:
+		return
+	JavaScriptBridge.eval("window.__abyss=%s;" % JSON.stringify({
+		"ready": true,
+		"fps": Engine.get_frames_per_second(),
+		"seed": store.world_seed(),
+		"tile": [tile.x, tile.y],
+		"biome": store.gen.biome_name(tile.x),
+		"light_ms": lighting.last_ms,
+		"chunks": renderer.loaded_count(),
+	}), true)

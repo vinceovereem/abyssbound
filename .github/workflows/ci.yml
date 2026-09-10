@@ -60,6 +60,9 @@ jobs:
       - name: Run world test
         run: ~/godot/godot --headless --path . res://tests/world_test.tscn
 
+      - name: Play the first run
+        run: ~/godot/godot --headless --path . res://tests/playtest/first_run.tscn
+
       # Compares pixels rather than file bytes. Two Pillow versions encode the
       # same image to different bytes, and a byte comparison then fails on a
       # machine whose Pillow differs from the one that committed the art,
@@ -160,6 +163,44 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.dir }}
           if-no-files-found: error
+
+  # Loads the exported build in a real Chromium. Not a performance gate: a CI
+  # browser has no GPU and falls back to software rendering, so its frame rate
+  # measures the emulator. What this proves is that the wasm loads, the game
+  # reaches the point of running, and nothing throws on the way.
+  browser:
+    name: Check the browser build
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-web
+          path: build/web
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run the browser check
+        run: node tests/playtest/browser_check.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abyssbound-browser-screenshot
+          path: |
+            build/browser_check.png
+            build/browser_title.png
+          if-no-files-found: warn
 
   vercel:
     name: Deploy playable build to Vercel

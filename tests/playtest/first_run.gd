@@ -61,7 +61,12 @@ func _settle(frames: int) -> void:
 		_fps_samples.append(Engine.get_frames_per_second())
 
 
+## Headless has no renderer, so there is nothing to capture. Run this one
+## headless for the assertions, which are fast and do not depend on the window
+## having focus, and use postcards.tscn for pictures.
 func _shot(name: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("%s/%s.png" % [_dir, name])
 
@@ -81,6 +86,10 @@ func _spawn() -> void:
 func _walk() -> void:
 	print("\nwalking east toward the Abyss")
 	var start: Vector2i = world.player_tile()
+	# Re-pressed every frame on purpose. Godot releases every held action when
+	# the window loses focus, and a window launched from a shell often never
+	# has focus, so a single action_press quietly does nothing and the player
+	# stands still while the test reports the ground is impassable.
 	Input.action_press("move_right")
 	# Jump when we stop making progress, which is what a player does at a
 	# ledge. Natural terrain has one tile steps all over it and this controller
@@ -89,6 +98,7 @@ func _walk() -> void:
 	var last_x: float = world.player.global_position.x
 	for i in 240:
 		await get_tree().physics_frame
+		Input.action_press("move_right")
 		_fps_samples.append(Engine.get_frames_per_second())
 		if i % 20 == 19:
 			var progress: float = world.player.global_position.x - last_x
@@ -121,9 +131,9 @@ func _dig() -> void:
 	_ok("there is ground to dig", before != 0)
 
 	world.mining.aim_override = Vector2(target.x * 16 + 8, target.y * 16 + 8)
-	Input.action_press("mine")
 	var broke := false
 	for i in 240:
+		Input.action_press("mine")
 		await get_tree().physics_frame
 		_fps_samples.append(Engine.get_frames_per_second())
 		if world.store.get_fg(target.x, target.y) == 0:
@@ -163,8 +173,9 @@ func _place_torch() -> void:
 	var before_light: int = world.lighting.light_at(spot.x, spot.y)
 
 	world.mining.aim_override = Vector2(spot.x * 16 + 8, spot.y * 16 + 8)
-	Input.action_press("place")
-	await _settle(4)
+	for i in 6:
+		Input.action_press("place")
+		await get_tree().physics_frame
 	Input.action_release("place")
 	await _settle(10)
 
@@ -172,7 +183,7 @@ func _place_torch() -> void:
 	_ok("right click places the selected tile", placed,
 		db.name_of.get(world.store.get_fg(spot.x, spot.y), "?"))
 	world.lighting.mark_dirty()
-	world.lighting.update(world.player_tile())
+	world.lighting.update_now(world.player_tile())
 	if placed:
 		_ok("the torch makes the place brighter",
 			world.lighting.light_at(spot.x, spot.y) >= before_light,

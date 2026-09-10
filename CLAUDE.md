@@ -107,6 +107,13 @@ archived zones and are frozen: renumbering them silently repaints
   is an `Object` virtual. Both shadow silently and fail confusingly.
 - **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
   anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
+- **Godot drops every held input when the window loses focus.** A windowed
+  playtest driven with `Input.action_press` therefore does nothing at all if
+  the window never got focus, and reports the ground as impassable rather than
+  reporting that it never pressed anything. macOS also throttles unfocused
+  windows, so the same run takes minutes. Run input-driven playtests
+  **headless** and use `postcards.tscn`, which teleports instead of walking,
+  for pictures.
 - **Lighting is the performance budget.** A pass went 30 ms -> 4.5 ms and every
   step of that is load bearing. Reading tiles a chunk-run at a time instead of
   through `get_fg` per tile; per tile id lookup tables instead of a method call
