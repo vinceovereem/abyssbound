@@ -58,6 +58,14 @@ Exit code 0 or the change is not done.
 
 Player is layer 2 mask 1. Anything that needs to detect the player masks 2.
 
+## Deployment
+
+`.github/workflows/ci.yml` runs the smoke test, exports three platforms, then deploys the web build to Vercel with the Vercel CLI. `vercel.json` sets the wasm content type and cache headers, and CI copies it into `build/web` before deploying.
+
+The deploy needs `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` as repository secrets. If they are missing the step prints an explanation and exits 0 rather than failing, so a fork or a new clone still gets green CI.
+
+Do not add a Vercel build command that installs Godot. The export templates are over a gigabyte and would be downloaded on every deploy. The build happens in Actions, where it is cached, and Vercel only serves the finished files.
+
 ## What is deliberately missing
 
 No sound, no save system, no menus beyond the title, no real art. Those are the next jobs, not oversights.

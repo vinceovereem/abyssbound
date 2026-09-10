@@ -127,10 +127,42 @@ jobs:
           path: ${{ matrix.dir }}
           if-no-files-found: error
 
-  pages:
-    name: Publish playable build
+  vercel:
+    name: Deploy playable build to Vercel
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-web
+          path: build/web
+
+      - name: Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "Vercel secrets are not set, so there is nothing to deploy to."
+            echo "Add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID under"
+            echo "Settings > Secrets and variables > Actions. See README.md."
+            exit 0
+          fi
+          cp vercel.json build/web/vercel.json
+          npm install --global vercel@latest
+          vercel deploy build/web --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
+
+  # GitHub Pages is a backup host. Turn it on by setting the repository
+  # variable ENABLE_PAGES to "true" and enabling Pages in Settings > Pages
+  # with "GitHub Actions" as the source.
+  pages:
+    name: Publish playable build to Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.ENABLE_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write

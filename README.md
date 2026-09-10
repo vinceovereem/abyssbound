@@ -17,7 +17,19 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 
 ## Play it
 
-Every push to `main` publishes a browser build to GitHub Pages. Check the Actions tab for the link.
+Every push to `main` builds a browser version and deploys it to Vercel. That link is how the team playtests: no install, no Godot needed.
+
+**One-time Vercel setup.** CI needs three secrets before it can deploy. Add them under **Settings > Secrets and variables > Actions**:
+
+| Secret | Where to get it |
+| --- | --- |
+| `VERCEL_TOKEN` | vercel.com/account/tokens, create one |
+| `VERCEL_ORG_ID` | run `vercel link` in this folder, then read `.vercel/project.json` |
+| `VERCEL_PROJECT_ID` | same file |
+
+Until they exist the deploy step skips with a note instead of failing, so CI stays green.
+
+GitHub Pages is set up as a backup. To use it instead, enable Pages in **Settings > Pages** with GitHub Actions as the source, then add a repository variable `ENABLE_PAGES` set to `true`.
 
 To run it locally:
 
@@ -67,7 +79,7 @@ godot --headless --path . res://tests/smoke_test.tscn
 
 ## Building
 
-CI builds Web, Windows and Linux on every push and attaches them to the run as artifacts. To build locally, open the project in Godot and use **Project > Export**. The presets are already set up in `export_presets.cfg`.
+CI builds Web, Windows and Linux on every push and attaches them to the run as artifacts. The web build also goes to Vercel. To build locally, open the project in Godot and use **Project > Export**. The presets are already set up in `export_presets.cfg`.
 
 One thing to know: the level maps are `.txt` files, not Godot resources, so they only get packed because `include_filter` in `export_presets.cfg` names them. If you add another non-resource file type, add it there too or it will be missing from the exported game and work fine in the editor.
 
