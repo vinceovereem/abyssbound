@@ -57,16 +57,30 @@ console.log('------------------------');
 
 await page.goto(`http://localhost:${PORT}/index.html?seed=${SEED}`, { waitUntil: 'load' });
 
+// The game opens on the title screen and waits to be told to start, so the
+// canvas has to be focused and a key pressed. Without this the check sits on
+// "press space to descend" until it times out, which looks like a build that
+// failed to boot and is in fact a build working perfectly.
+const canvas = page.locator('canvas');
+await canvas.waitFor({ state: 'visible', timeout: BOOT_TIMEOUT_MS });
+await page.waitForTimeout(3000);
+await page.screenshot({ path: 'build/browser_title.png' });
+
 let stats = null;
-try {
-  await page.waitForFunction(() => window.__abyss?.ready === true, null,
-    { timeout: BOOT_TIMEOUT_MS, polling: 500 });
-  stats = await page.evaluate(() => window.__abyss);
-} catch {
-  // leave stats null; reported below
+for (let attempt = 0; attempt < 12 && stats === null; attempt++) {
+  await canvas.click({ position: { x: 640, y: 360 } }).catch(() => {});
+  await page.keyboard.press('Space');
+  try {
+    await page.waitForFunction(() => window.__abyss?.ready === true, null,
+      { timeout: 10_000, polling: 250 });
+    stats = await page.evaluate(() => window.__abyss);
+  } catch {
+    // still on the title screen; press again
+  }
 }
 
-ok('the browser build boots and starts running', stats !== null);
+ok('the browser build boots, starts, and enters the world', stats !== null,
+  stats === null ? 'never left the title screen' : '');
 
 if (stats) {
   ok('it generated the world it was asked for', stats.seed === SEED, `seed ${stats.seed}`);
@@ -93,7 +107,7 @@ ok('nothing threw in the console', errors.length === 0,
   errors.slice(0, 3).join(' | ') || 'clean');
 
 await page.screenshot({ path: 'build/browser_check.png' });
-console.log('\n  screenshot: build/browser_check.png');
+console.log('\n  screenshots: build/browser_title.png, build/browser_check.png');
 
 await browser.close();
 server.close();

@@ -194,7 +194,9 @@ jobs:
         if: always()
         with:
           name: abyssbound-browser-screenshot
-          path: build/browser_check.png
+          path: |
+            build/browser_check.png
+            build/browser_title.png
           if-no-files-found: warn
 
   vercel:
