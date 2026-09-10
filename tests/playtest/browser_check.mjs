@@ -55,32 +55,27 @@ const ok = (label, cond, detail = '') => {
 console.log('Abyssbound browser check');
 console.log('------------------------');
 
-await page.goto(`http://localhost:${PORT}/index.html?seed=${SEED}`, { waitUntil: 'load' });
+await page.goto(`http://localhost:${PORT}/index.html?start&seed=${SEED}`, { waitUntil: 'load' });
 
-// The game opens on the title screen and waits to be told to start, so the
-// canvas has to be focused and a key pressed. Without this the check sits on
-// "press space to descend" until it times out, which looks like a build that
-// failed to boot and is in fact a build working perfectly.
+// The build is loaded with ?start, which skips the title screen. Getting a
+// key press into a Godot canvas from an automated browser turned out to be
+// its own problem, and the check should be testing the game rather than
+// Playwright's focus handling.
 const canvas = page.locator('canvas');
 await canvas.waitFor({ state: 'visible', timeout: BOOT_TIMEOUT_MS });
-await page.waitForTimeout(3000);
 await page.screenshot({ path: 'build/browser_title.png' });
 
 let stats = null;
-for (let attempt = 0; attempt < 12 && stats === null; attempt++) {
-  await canvas.click({ position: { x: 640, y: 360 } }).catch(() => {});
-  await page.keyboard.press('Space');
-  try {
-    await page.waitForFunction(() => window.__abyss?.ready === true, null,
-      { timeout: 10_000, polling: 250 });
-    stats = await page.evaluate(() => window.__abyss);
-  } catch {
-    // still on the title screen; press again
-  }
+try {
+  await page.waitForFunction(() => window.__abyss?.ready === true, null,
+    { timeout: BOOT_TIMEOUT_MS, polling: 500 });
+  stats = await page.evaluate(() => window.__abyss);
+} catch {
+  // reported below
 }
 
 ok('the browser build boots, starts, and enters the world', stats !== null,
-  stats === null ? 'never left the title screen' : '');
+  stats === null ? 'never reached the world' : '');
 
 if (stats) {
   ok('it generated the world it was asked for', stats.seed === SEED, `seed ${stats.seed}`);

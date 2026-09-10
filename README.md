@@ -25,6 +25,7 @@ build and not .NET. Then:
 ./tools/play.sh                          a new world every run
 ./tools/play.sh --seed=20260910          the world in docs/playtest-log.md
 ./tools/play.sh --seed=7 --spawn-x=1000  drop in at the mouth of the Abyss
+./tools/play.sh --start --seed=7         skip the title screen
 ```
 
 The seed is printed at startup, so a world worth keeping can be got back. If
@@ -37,7 +38,8 @@ Godot lives somewhere unusual, set `GODOT=/path/to/godot`.
 ```
 
 That exports the web build and serves it at `http://localhost:8060/index.html`.
-Query parameters work the same as the flags: `?seed=20260910&spawn-x=1000`.
+Query parameters work the same as the flags:
+`?start&seed=20260910&spawn-x=1000`, where `start` skips the title screen.
 Press **F3** once it loads to see the real frame rate on real hardware, which
 is the only place that number means anything: CI has no GPU and renders in
 software, so it can only prove the build runs, not how fast.

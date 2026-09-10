@@ -29,15 +29,13 @@ static func _parse() -> void:
 			if pair.is_empty():
 				continue
 			var bits := pair.split("=")
-			if bits.size() == 2:
-				_args[bits[0]] = bits[1]
+			_args[bits[0]] = bits[1] if bits.size() == 2 else "1"
 
 	for arg in raw:
 		if not arg.begins_with("--"):
 			continue
 		var bits := arg.trim_prefix("--").split("=")
-		if bits.size() == 2:
-			_args[bits[0]] = bits[1]
+		_args[bits[0]] = bits[1] if bits.size() == 2 else "1"
 
 
 static func has(key: String) -> bool:
