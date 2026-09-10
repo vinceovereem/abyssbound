@@ -337,8 +337,49 @@ def tile_noise(seed, base, light, dark, top_edge=None, accent=None):
     return img
 
 
+def water_tile():
+    """Translucent so the tiles and walls behind it still read."""
+    rnd = random.Random(30)
+    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(16):
+        for x in range(16):
+            col = (40, 100, 175) if rnd.random() > 0.25 else (54, 120, 198)
+            px[x, y] = (*col, 210)
+    return img
+
+
+TORCH = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "......YY........",
+    ".....YOOY.......",
+    ".....OOOO.......",
+    "......OO........",
+    "......AA........",
+    "......AA........",
+    "......AA........",
+    "......AA........",
+    "......AA........",
+    "......AA........",
+    "................",
+    "................",
+]
+
+
 def tiles():
+    """The tile sheet.
+
+    Indices 0 to 5 are the original placeholder zone tiles. They are frozen:
+    the archived zones in levels/legacy/ still point at them, so appending is
+    safe and renumbering is not. Everything the generated world uses starts at
+    index 6.
+    """
+    stone = ((86, 92, 104), (108, 116, 130), (60, 66, 78))
     t = [
+        # -- 0 to 5, the legacy placeholder zone tiles. Do not renumber. ------
         # 0 grass ledge, the surface zone
         tile_noise(1, PAL["g"], PAL["G"], PAL["k"], top_edge=(84, 122, 74)),
         # 1 stone fill
@@ -351,6 +392,39 @@ def tiles():
         tile_noise(5, PAL["g"], PAL["G"], PAL["k"], top_edge=PAL["m"], accent=PAL["T"]),
         # 5 hazard, ember rock
         tile_noise(6, (72, 34, 30), (128, 52, 36), (44, 20, 20), top_edge=PAL["O"]),
+        # -- 6 onward, the generated world ----------------------------------
+        # 6 dirt
+        tile_noise(10, (112, 78, 52), (134, 96, 64), (84, 56, 36)),
+        # 7 grass, dirt with a living top edge
+        tile_noise(11, (112, 78, 52), (134, 96, 64), (84, 56, 36), top_edge=(96, 152, 72)),
+        # 8 stone
+        tile_noise(12, *stone),
+        # 9 sand
+        tile_noise(13, (214, 190, 132), (232, 212, 158), (176, 152, 100)),
+        # 10 snow
+        tile_noise(14, (222, 232, 242), (240, 248, 255), (186, 200, 216)),
+        # 11 wood
+        tile_noise(15, (120, 86, 50), (146, 108, 66), (88, 62, 36)),
+        # 12 leaves
+        tile_noise(16, (66, 122, 62), (88, 150, 78), (44, 90, 46)),
+        # 13 copper ore
+        tile_noise(17, *stone, accent=(198, 118, 62)),
+        # 14 iron ore
+        tile_noise(18, *stone, accent=(190, 194, 200)),
+        # 15 ice
+        tile_noise(19, (160, 204, 228), (196, 230, 246), (120, 168, 200)),
+        # 16 abyss stone
+        tile_noise(20, (48, 38, 66), (68, 54, 92), (30, 24, 44)),
+        # 17 torch, the first light source
+        grid(TORCH, "torch"),
+        # 18 glowstone
+        tile_noise(22, (58, 74, 96), (86, 106, 132), (42, 54, 72), accent=(140, 230, 240)),
+        # 19 dirt wall, background only
+        tile_noise(23, (74, 54, 40), (92, 68, 50), (54, 38, 28)),
+        # 20 stone wall, background only
+        tile_noise(24, (62, 68, 82), (78, 86, 102), (44, 48, 60)),
+        # 21 water. Translucent, drawn on its own layer over everything else.
+        water_tile(),
     ]
     sheet(t, "tiles/tiles.png")
 
