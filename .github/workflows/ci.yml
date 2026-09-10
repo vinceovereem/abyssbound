@@ -60,13 +60,15 @@ jobs:
       - name: Run world test
         run: ~/godot/godot --headless --path . res://tests/world_test.tscn
 
+      # Compares pixels rather than file bytes. Two Pillow versions encode the
+      # same image to different bytes, and a byte comparison then fails on a
+      # machine whose Pillow differs from the one that committed the art,
+      # which says nothing about whether the art is right.
       - name: Verify generated content is up to date
         run: |
           python3 -m pip install --quiet pillow
-          python3 tools/gen_art.py
-          python3 tools/gen_levels.py
-          git diff --exit-code -- assets levels \
-            || (echo "::error::assets/ or levels/ differ from what the tools produce. Run the tools and commit the result." && exit 1)
+          python3 tools/verify_generated.py \
+            || (echo "::error::assets/ or levels/ differ from what the tools produce." && exit 1)
 
   build:
     name: Build ${{ matrix.preset }}

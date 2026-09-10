@@ -28,7 +28,9 @@ Two people work on it. One handles code and tooling. One handles design and art.
 
 **Never hand-edit `.tscn` node structure unless you have to.** It works, but it is easy to produce a file Godot silently drops nodes from. If you do edit one, run the smoke test afterwards. It catches missing nodes.
 
-**Art is generated, not drawn.** Everything in `assets/` comes out of `tools/gen_art.py`. If you want a different sprite, change the ASCII grid in that script and re-run it. Do not write PNG bytes directly and do not commit an asset the generator did not produce, because CI checks that `assets/` matches the generator output.
+**Art is generated, not drawn.** Everything in `assets/` comes out of `tools/`: sprites and tiles from `gen_art.py`, the tile set resource from `gen_tileset.py`, level maps from `gen_levels.py`. Change the ASCII grid or the tile data and re-run. Do not write PNG bytes directly and do not commit an asset the generator did not produce.
+
+`tools/verify_generated.py` is what CI runs, and it compares **pixels, not file bytes**. Pillow versions encode the same image differently, so a byte comparison fails on any machine whose Pillow differs from the one that committed the art while telling you nothing about whether the art is right.
 
 **Levels are text.** Everything in `levels/` comes out of `tools/gen_levels.py` and is also editable by hand. Same CI check applies. The legend lives in the header of each map file and in `scripts/level.gd`.
 
