@@ -105,9 +105,13 @@ archived zones and are frozen: renumbering them silently repaints
   is an `Object` virtual. Both shadow silently and fail confusingly.
 - **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
   anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
-- **Lighting is the performance budget.** A pass reads every tile in the window
-  once into flat arrays on purpose. Putting a `store.get_fg()` back inside the
-  sweeps costs about 22 ms a pass.
+- **Lighting is the performance budget.** A pass went 30 ms -> 4.5 ms and every
+  step of that is load bearing. Reading tiles a chunk-run at a time instead of
+  through `get_fg` per tile; per tile id lookup tables instead of a method call
+  in the inner loop; `while` loops in the sweeps because `for x in range(...)`
+  stored in a variable allocates an Array per row per sweep; and `set_data`
+  instead of `set_pixel`. CI's runner is about twice as slow as a dev Mac, so
+  treat 8 ms local as the real ceiling.
 
 ## Physics layers
 

@@ -35,6 +35,11 @@ var _light := PackedByteArray()
 var _fall := PackedByteArray()
 var _solid := PackedByteArray()
 var _pixels := PackedByteArray()
+# Per tile id lookups, built once. The read loop runs 8000 times a pass and a
+# method call per tile in there is not free.
+var _lut_solid := PackedByteArray()
+var _lut_fall := PackedByteArray()
+var _lut_emit := PackedByteArray()
 var _origin := Vector2i(-99999, -99999)
 var _image: Image
 var _texture: ImageTexture
@@ -51,6 +56,16 @@ func setup(chunk_store: ChunkStore) -> void:
 	_fall.resize(REGION_W * REGION_H)
 	_solid.resize(REGION_W * REGION_H)
 	_pixels.resize(REGION_W * REGION_H * 4)
+
+	var ids := _db.max_id + 1
+	_lut_solid.resize(ids)
+	_lut_fall.resize(ids)
+	_lut_emit.resize(ids)
+	for id in ids:
+		var solid := _db.is_solid(id)
+		_lut_solid[id] = 1 if solid else 0
+		_lut_fall[id] = maxi(MIN_SOLID_FALLOFF, int(_db.opacity[id])) if solid else AIR_FALLOFF
+		_lut_emit[id] = int(_db.emit[id])
 
 	_image = Image.create_empty(REGION_W, REGION_H, false, Image.FORMAT_RGBA8)
 	_texture = ImageTexture.create_from_image(_image)
@@ -91,43 +106,16 @@ func light_at(x: int, y: int) -> int:
 
 func _recompute() -> void:
 	var start := Time.get_ticks_usec()
-
-	# Read every tile once into flat arrays. The sweeps below touch each tile
-	# eight times, and going back to the chunk store for all of that was the
-	# single most expensive thing this function did: 30 ms became 4.
-	var n := REGION_W * REGION_H
-	for ly in REGION_H:
-		var wy := _origin.y + ly
-		var row := ly * REGION_W
-		for lx in REGION_W:
-			var id := store.get_fg(_origin.x + lx, wy)
-			var i := row + lx
-			_solid[i] = 1 if _db.is_solid(id) else 0
-			_fall[i] = maxi(MIN_SOLID_FALLOFF, int(_db.opacity[id])) if _solid[i] == 1 else AIR_FALLOFF
-			_light[i] = int(_db.emit[id]) if id > 0 else 0
-
-	# Pass 1: sunlight straight down each column, undimmed through air and
-	# dying inside rock.
-	for lx in REGION_W:
-		var wx := _origin.x + lx
-		var sky := 0
-		if _origin.y <= store.gen.surface_height(wx) and not store.gen.in_shaft(wx, _origin.y):
-			sky = SKY
-		for ly in REGION_H:
-			var i := ly * REGION_W + lx
-			if _solid[i] == 1:
-				sky = maxi(0, sky - _fall[i])
-			if sky > _light[i]:
-				_light[i] = sky
-
-	# Pass 2: spread into the places sunlight cannot reach. Two rounds of four
-	# sweeps is enough for a torch to fill a room.
+	_read_tiles()
+	_sunlight()
+	# Two rounds of four sweeps is enough for a torch to fill a room.
 	for round in 2:
 		_sweep_x(1)
 		_sweep_x(-1)
 		_sweep_y(1)
 		_sweep_y(-1)
 
+	var n := REGION_W * REGION_H
 	for i in n:
 		if _light[i] < AMBIENT:
 			_light[i] = AMBIENT
@@ -136,20 +124,85 @@ func _recompute() -> void:
 	last_ms = float(Time.get_ticks_usec() - start) / 1000.0
 
 
+## Copy the window's tiles into flat arrays.
+##
+## Reads run along a row, and a row crosses a chunk boundary only every 32
+## tiles, so the chunk is looked up once per run and the tiles inside it are
+## read straight out of its byte array. Going through ChunkStore.get_fg for
+## every tile meant a bounds check and a dictionary lookup 8000 times a pass.
+func _read_tiles() -> void:
+	for ly in REGION_H:
+		var wy := _origin.y + ly
+		var row := ly * REGION_W
+		if wy < 0 or wy >= WorldGen.HEIGHT:
+			for lx in REGION_W:
+				_solid[row + lx] = 0
+				_fall[row + lx] = AIR_FALLOFF
+				_light[row + lx] = 0
+			continue
+
+		var cy := wy >> 5
+		var row_in_chunk := (wy & 31) * Chunk.SIZE
+		var lx := 0
+		while lx < REGION_W:
+			var wx := _origin.x + lx
+			if wx < 0 or wx >= WorldGen.WIDTH:
+				# Off the edge of the map is rock, so light cannot leak in.
+				_solid[row + lx] = 1
+				_fall[row + lx] = 255
+				_light[row + lx] = 0
+				lx += 1
+				continue
+			var lx_in := wx & 31
+			var run: int = mini(Chunk.SIZE - lx_in, REGION_W - lx)
+			var chunk := store.get_chunk(wx >> 5, cy)
+			var base := row_in_chunk + lx_in
+			var fg := chunk.fg
+			for k in run:
+				var id: int = fg[base + k]
+				var i := row + lx + k
+				_solid[i] = _lut_solid[id]
+				_fall[i] = _lut_fall[id]
+				_light[i] = _lut_emit[id]
+			lx += run
+
+
+## Sunlight straight down each column: undimmed through air, dying in rock.
+func _sunlight() -> void:
+	for lx in REGION_W:
+		var wx := _origin.x + lx
+		var sky := 0
+		if _origin.y <= store.gen.surface_height(wx) and not store.gen.in_shaft(wx, _origin.y):
+			sky = SKY
+		var i := lx
+		for ly in REGION_H:
+			if _solid[i] == 1:
+				sky = maxi(0, sky - _fall[i])
+			if sky > _light[i]:
+				_light[i] = sky
+			i += REGION_W
+
+
+# The sweeps are written as while loops on purpose. `for x in range(a, b, s)`
+# with the range stored in a variable allocates an Array per row per sweep,
+# which is 576 throwaway arrays every recompute.
 func _sweep_x(dir: int) -> void:
 	for ly in REGION_H:
 		var row := ly * REGION_W
-		var xs: Array = range(1, REGION_W) if dir > 0 else range(REGION_W - 2, -1, -1)
-		for lx: int in xs:
+		var lx := 1 if dir > 0 else REGION_W - 2
+		var stop := REGION_W if dir > 0 else -1
+		while lx != stop:
 			var i := row + lx
 			var value: int = _light[i - dir] - _fall[i]
 			if value > _light[i]:
 				_light[i] = value
+			lx += dir
 
 
 func _sweep_y(dir: int) -> void:
-	var ys: Array = range(1, REGION_H) if dir > 0 else range(REGION_H - 2, -1, -1)
-	for ly: int in ys:
+	var ly := 1 if dir > 0 else REGION_H - 2
+	var stop := REGION_H if dir > 0 else -1
+	while ly != stop:
 		var row := ly * REGION_W
 		var prev_row := (ly - dir) * REGION_W
 		for lx in REGION_W:
@@ -157,6 +210,7 @@ func _sweep_y(dir: int) -> void:
 			var value: int = _light[prev_row + lx] - _fall[i]
 			if value > _light[i]:
 				_light[i] = value
+		ly += dir
 
 
 func _write_image() -> void:

@@ -121,8 +121,7 @@ no jump, and stepping up lands the player on top of the step.
 
 - **Light spikes to 13 to 18 ms while moving.** The average over the run was
   121 fps native, but a recompute lands on one frame and blows the budget. It
-  is a stutter, not a slowdown. The fix is to spread a pass across frames or
-  recompute only the part of the window that changed. Not done.
+  is a stutter, not a slowdown.
 - **No browser measurement.** Everything above is native macOS. See the caveat
   in the milestone summary.
 
@@ -148,3 +147,38 @@ passing. No console errors. 121 fps average native.
 
 Stopping the loop here. The remaining known problem is the light spike, which
 is recorded above and carried into the next milestone rather than hidden.
+
+
+---
+
+## Round 6 — 2026-09-10 — the light spike, on someone else's hardware
+
+**Played.** Nothing new. CI ran the same checks on a Linux runner and failed
+one: *a light pass fits in a frame budget*, at **18.8 ms**. The same pass
+measures 8.5 ms on the dev Mac.
+
+This is the most useful failure of the milestone. The budget check was written
+expecting to catch a regression later; instead it caught the known spike the
+moment it ran on ordinary hardware, and put a number on the thing the milestone
+summary could otherwise only hedge about.
+
+**Changed.** Not the threshold. Three more passes over the hot path:
+
+- Tiles are read a chunk-run at a time. A row crosses a chunk boundary only
+  every 32 tiles, so the chunk is found once per run and its byte array is read
+  directly, instead of `ChunkStore.get_fg` doing a bounds check and a
+  dictionary lookup 8000 times a pass.
+- Per tile id lookup tables for solid, falloff and emission, so the inner loop
+  is array indexing with no method calls.
+- The sweeps became `while` loops. `for x in range(a, b, step)` with the range
+  held in a variable allocates an Array per row per sweep, which was 576
+  throwaway arrays every recompute.
+
+**Result.** 8.5 ms to **4.55 ms** on the dev Mac, and 30 ms to 4.55 ms across
+the milestone as a whole. On CI's runner, which measured about twice as slow,
+that should land near 10 ms and inside a frame.
+
+**Still open.** A browser is still unmeasured, and it is the number that
+actually matters for the stated target. If it turns out to be short there, the
+next move is to split a pass across two frames rather than to make the light
+worse.
