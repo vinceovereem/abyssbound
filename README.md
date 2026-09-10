@@ -17,9 +17,49 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 
 ## Play it
 
-Every push to `main` builds a browser version and deploys it to Vercel. That link is how the team playtests: no install, no Godot needed.
+**Fastest, and what the screenshots come from.** Godot 4.6 is needed once, from
+[godotengine.org/download](https://godotengine.org/download), the standard
+build and not .NET. Then:
 
-**One-time Vercel setup.** CI needs three secrets before it can deploy. Add them under **Settings > Secrets and variables > Actions**:
+```
+./tools/play.sh                          a new world every run
+./tools/play.sh --seed=20260910          the world in docs/playtest-log.md
+./tools/play.sh --seed=7 --spawn-x=1000  drop in at the mouth of the Abyss
+```
+
+The seed is printed at startup, so a world worth keeping can be got back. If
+Godot lives somewhere unusual, set `GODOT=/path/to/godot`.
+
+**In a browser, on your own machine.**
+
+```
+./tools/serve_web.sh
+```
+
+That exports the web build and serves it at `http://localhost:8060/index.html`.
+Query parameters work the same as the flags: `?seed=20260910&spawn-x=1000`.
+Press **F3** once it loads to see the real frame rate on real hardware, which
+is the only place that number means anything: CI has no GPU and renders in
+software, so it can only prove the build runs, not how fast.
+
+**Nothing installed at all.** Download a build from
+[Releases](https://github.com/vinceovereem/abyssbound/releases). Windows is one
+`.exe`; Mac is a `.zip`, and the app inside needs **right-click, Open** the
+first time because it is not notarised.
+
+### What to try first
+
+1. Walk east. About 60 tiles along there is a hole in the ground that keeps going.
+2. Hold the left mouse button on a tile to dig it. Break time depends on the rock.
+3. Press **Q** twice to select the torch, then right-click to place it. Then dig
+   down far enough that it matters.
+4. Press **F3** at any point to see the seed, the biome, the depth and the frame time.
+
+### Hosting the web build
+
+`.github/workflows/ci.yml` will deploy the browser build to Vercel on every
+push to `main`, but only once three secrets exist. Until then the step prints
+a note and exits without failing, which is why there is no public link yet.
 
 | Secret | Where to get it |
 | --- | --- |
@@ -27,23 +67,21 @@ Every push to `main` builds a browser version and deploys it to Vercel. That lin
 | `VERCEL_ORG_ID` | run `vercel link` in this folder, then read `.vercel/project.json` |
 | `VERCEL_PROJECT_ID` | same file |
 
-Until they exist the deploy step skips with a note instead of failing, so CI stays green.
-
-GitHub Pages is set up as a backup. To use it instead, enable Pages in **Settings > Pages** with GitHub Actions as the source, then add a repository variable `ENABLE_PAGES` set to `true`.
-
-To run it locally:
-
-1. Install [Godot 4.6](https://godotengine.org/download) (the standard build, not .NET)
-2. Open Godot, click **Import**, pick the `project.godot` file in this folder
-3. Run it: **Cmd+B** on Mac, **F5** on Windows and Linux. The play button in the top-right toolbar does the same thing
+GitHub Pages is set up as a backup. To use it instead, enable Pages in
+**Settings > Pages** with GitHub Actions as the source, then add a repository
+variable `ENABLE_PAGES` set to `true`.
 
 ## Controls
 
 | Key | Action |
 | --- | --- |
-| A / D or arrows | Move |
+| A / D or arrows | Move. Single tile ledges are walked up, not jumped |
 | Space / W / Up | Jump. Hold for a higher jump |
-| E | Tame a critter |
+| Left mouse | Dig the tile under the cursor, within reach |
+| Right mouse | Place the selected tile. Hold to lay a run of them |
+| Q | Cycle what gets placed: dirt, stone, torch |
+| F3 | Debug overlay: seed, fps, light cost, biome, depth |
+| E | Tame a critter (the archived zones only, for now) |
 | R | Restart |
 | Esc | Quit |
 

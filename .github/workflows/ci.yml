@@ -161,6 +161,42 @@ jobs:
           path: ${{ matrix.dir }}
           if-no-files-found: error
 
+  # Loads the exported build in a real Chromium. Not a performance gate: a CI
+  # browser has no GPU and falls back to software rendering, so its frame rate
+  # measures the emulator. What this proves is that the wasm loads, the game
+  # reaches the point of running, and nothing throws on the way.
+  browser:
+    name: Check the browser build
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: abyssbound-web
+          path: build/web
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run the browser check
+        run: node tests/playtest/browser_check.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abyssbound-browser-screenshot
+          path: build/browser_check.png
+          if-no-files-found: warn
+
   vercel:
     name: Deploy playable build to Vercel
     needs: build
