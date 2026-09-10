@@ -35,7 +35,7 @@ To run it locally:
 
 1. Install [Godot 4.6](https://godotengine.org/download) (the standard build, not .NET)
 2. Open Godot, click **Import**, pick the `project.godot` file in this folder
-3. Press **F5**
+3. Run it: **Cmd+B** on Mac, **F5** on Windows and Linux. The play button in the top-right toolbar does the same thing
 
 ## Controls
 
@@ -48,6 +48,16 @@ To run it locally:
 | Esc | Quit |
 
 A gamepad works too.
+
+### Editor shortcuts
+
+Godot uses different keys on Mac. Worth knowing before you go hunting for F5.
+
+| Action | Mac | Windows and Linux |
+| --- | --- | --- |
+| Run project | Cmd+B | F5 |
+| Run current scene | Cmd+R | F6 |
+| Stop | Cmd+. | F8 |
 
 ## Layout
 
@@ -65,9 +75,9 @@ docs/         How the pieces fit together
 
 **The art.** Open `tools/gen_art.py`. The palette is at the top and every sprite is an ASCII grid below it. Change a character, run `python3 tools/gen_art.py`, and the sprite sheet is rebuilt. When you have real art, drop the PNGs into `assets/` at the same sizes and delete the generator.
 
-**The levels.** Open a file in `levels/`. It is a text map with one character per tile, and the legend is in the header of each file. Edit it in any text editor and press F5 in Godot. `tools/gen_levels.py` rebuilds them from scratch and checks that no pit is too wide to jump and nothing is out of reach.
+**The levels.** Open a file in `levels/`. It is a text map with one character per tile, and the legend is in the header of each file. Edit it in any text editor and re-run the project in Godot. `tools/gen_levels.py` rebuilds them from scratch and checks that no pit is too wide to jump and nothing is out of reach.
 
-**The feel.** Open `scenes/actors/player.tscn` in Godot and look at the inspector. Speed, jump height, gravity, coyote time and knockback are all there. Change a number, press F5, see how it feels. Nothing in `scripts/player.gd` needs touching.
+**The feel.** Open `scenes/actors/player.tscn` in Godot and look at the inspector. Speed, jump height, gravity, coyote time and knockback are all there. Change a number, run the project, see how it feels. Nothing in `scripts/player.gd` needs touching.
 
 ## Tests
 
