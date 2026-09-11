@@ -8,8 +8,6 @@ extends CanvasLayer
 ##   I        open the backpack           C  open the crafting list
 ##   1 to 9   while crafting is open, make that recipe
 
-const TILE_SHEET := preload("res://assets/tiles/tiles.png")
-const ITEM_SHEET := preload("res://assets/sprites/items.png")
 const SLOT := 20
 
 var world: Node2D
@@ -21,6 +19,8 @@ var _book: RecipeBook
 var _hotbar: HBoxContainer
 var _bag: PanelContainer
 var _bag_grid: GridContainer
+var _worn: HBoxContainer
+var _defence: Label
 var _craft: PanelContainer
 var _craft_rows: VBoxContainer
 var _available: Array[int] = []
@@ -44,19 +44,7 @@ func _ready() -> void:
 # Icons
 # ---------------------------------------------------------------------------
 func icon_for(id: String) -> Texture2D:
-	if id.is_empty():
-		return null
-	var tex := AtlasTexture.new()
-	var tile := _items.tile_of(id)
-	if not tile.is_empty():
-		tex.atlas = TILE_SHEET
-		tex.region = Rect2(_tiles.id(tile) * 16, 0, 16, 16)
-		return tex
-	if _items.of(id).has("icon"):
-		tex.atlas = ITEM_SHEET
-		tex.region = Rect2(int(_items.of(id)["icon"]) * 16, 0, 16, 16)
-		return tex
-	return null
+	return ItemIcons.texture_for(id)
 
 
 func _make_slot() -> Panel:
@@ -149,13 +137,36 @@ func _framed(title: String, body: Control, width: float, height: float) -> Panel
 
 
 func _build_bag() -> void:
+	var column := VBoxContainer.new()
+
+	var worn_row := HBoxContainer.new()
+	worn_row.add_theme_constant_override("separation", 4)
+	var label := Label.new()
+	label.text = "WORN"
+	label.add_theme_font_size_override("font_size", 8)
+	label.add_theme_color_override("font_color", Color(0.70, 0.76, 0.86))
+	worn_row.add_child(label)
+
+	_worn = HBoxContainer.new()
+	_worn.add_theme_constant_override("separation", 2)
+	for i in 3:
+		_worn.add_child(_make_slot())
+	worn_row.add_child(_worn)
+
+	_defence = Label.new()
+	_defence.add_theme_font_size_override("font_size", 8)
+	_defence.add_theme_color_override("font_color", Color(0.95, 0.90, 0.72))
+	worn_row.add_child(_defence)
+	column.add_child(worn_row)
+
 	_bag_grid = GridContainer.new()
 	_bag_grid.columns = Inventory.HOTBAR
 	_bag_grid.add_theme_constant_override("h_separation", 2)
 	_bag_grid.add_theme_constant_override("v_separation", 2)
 	for i in Inventory.SLOTS:
 		_bag_grid.add_child(_make_slot())
-	_bag = _framed("CARRYING   (I to close)", _bag_grid, 240, 106)
+	column.add_child(_bag_grid)
+	_bag = _framed("CARRYING   (I to close, G wears armour)", column, 250, 132)
 
 
 func _build_craft() -> void:
@@ -206,6 +217,14 @@ func _refresh() -> void:
 	if _bag.visible:
 		for i in Inventory.SLOTS:
 			_fill_slot(_bag_grid.get_child(i), i, i == Game.inventory.selected)
+		var slots := ["head", "body", "legs"]
+		for i in slots.size():
+			var worn: String = str(Game.inventory.equipped[slots[i]])
+			var slot := _worn.get_child(i) as Panel
+			slot.add_theme_stylebox_override("panel", _style(false))
+			(slot.get_node("Art") as TextureRect).texture = ItemIcons.texture_for(worn)
+			(slot.get_node("Count") as Label).text = ""
+		_defence.text = "  defence %d" % Game.inventory.defence()
 	if _craft.visible:
 		_refresh_craft()
 

@@ -7,7 +7,8 @@
     "       weapon    changes how hard you hit; damage replaces the base",
     "station: placing this block makes that crafting station available nearby",
     "stack:   how many fit in one slot",
-    "icon: column in assets/sprites/items.png. Blocks draw their tile instead."
+    "icon: column in assets/sprites/items.png. Blocks draw their tile instead.",
+    "armour: slot is head, body or legs; defence subtracts from hits taken"
   ],
   "items": [
     {
@@ -180,6 +181,67 @@
       "stack": 1,
       "damage": 6,
       "icon": 10
+    },
+    {
+      "id": "hide",
+      "name": "Hide",
+      "kind": "material",
+      "stack": 99,
+      "icon": 11
+    },
+    {
+      "id": "copper_helm",
+      "name": "Copper Helm",
+      "kind": "armour",
+      "slot": "head",
+      "defence": 1,
+      "stack": 1,
+      "icon": 12
+    },
+    {
+      "id": "copper_mail",
+      "name": "Copper Mail",
+      "kind": "armour",
+      "slot": "body",
+      "defence": 2,
+      "stack": 1,
+      "icon": 13
+    },
+    {
+      "id": "copper_greaves",
+      "name": "Copper Greaves",
+      "kind": "armour",
+      "slot": "legs",
+      "defence": 1,
+      "stack": 1,
+      "icon": 14
+    },
+    {
+      "id": "iron_helm",
+      "name": "Iron Helm",
+      "kind": "armour",
+      "slot": "head",
+      "defence": 2,
+      "stack": 1,
+      "icon": 15
+    },
+    {
+      "id": "iron_mail",
+      "name": "Iron Mail",
+      "kind": "armour",
+      "slot": "body",
+      "defence": 3,
+      "stack": 1,
+      "icon": 16
+    },
+    {
+      "id": "iron_greaves",
+      "name": "Iron Greaves",
+      "kind": "armour",
+      "slot": "legs",
+      "defence": 2,
+      "stack": 1,
+      "icon": 17
     }
   ]
 }

@@ -138,6 +138,26 @@ Stations are found by looking at the tiles around the player
 someone else buried still works if you stand next to it, and one that gets
 mined stops working, with no bookkeeping either way.
 
+## Drops and armour
+
+Breaking a tile spawns an `ItemDrop` rather than putting the material straight
+in the bag. Drops are plain `Node2D`s moved by hand against the chunk store,
+not physics bodies: there can be a lot of them and none need to collide with
+anything but the ground.
+
+**A full bag is not an error.** The drop simply lies there. That is what lets
+digging always succeed, and it replaced an earlier rule where a dug tile was
+put back into the ground when the bag was full.
+
+Armour lives in `Inventory.equipped`, apart from the slots, so it cannot be
+placed, stacked or dropped while worn. Equipping swaps the old piece back into
+the bag and **undoes itself if there is no room**, like everything else here:
+never destroy a player's things.
+
+Defence subtracts from a hit with a floor of 1. Being untouchable takes the
+tension out of a night faster than being fragile does, so armour must never
+reduce a hit to nothing.
+
 ## Objectives
 
 `Goals` is an autoload reading `data/objectives.json`. Adding an objective

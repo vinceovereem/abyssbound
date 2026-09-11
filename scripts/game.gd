@@ -64,8 +64,11 @@ func amount_of(resource: String) -> int:
 
 
 func damage(amount: int) -> void:
-	health = max(0, health - amount)
-	player_hurt.emit(amount)
+	# Armour softens a hit but never removes it entirely. Being untouchable
+	# takes the tension out of a night faster than being fragile does.
+	var softened: int = maxi(1, amount - inventory.defence() / 3)
+	health = max(0, health - softened)
+	player_hurt.emit(softened)
 	health_changed.emit(health, MAX_HEALTH)
 	if health == 0:
 		call_deferred("_on_death")

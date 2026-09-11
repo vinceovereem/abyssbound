@@ -36,6 +36,7 @@ var spawn_override_x := -1
 
 
 func _ready() -> void:
+	add_to_group("world")
 	var world_seed := seed_override if seed_override >= 0 else BootConfig.world_seed()
 	# Printed so a playtest that trips over something can be replayed exactly.
 	print("[world] seed=%d" % world_seed)
@@ -217,9 +218,21 @@ func float_text(at: Vector2, text: String, colour: Color, rise := 14.0) -> void:
 	tween.tween_callback(label.queue_free)
 
 
+## Put something on the ground where it was broken, with a little pop, rather
+## than teleporting it into the bag. A full bag then just means it lies there.
+func spawn_drop(at: Vector2, item_id: String, amount := 1) -> void:
+	if item_id.is_empty() or amount <= 0:
+		return
+	var drop := ItemDrop.new()
+	drop.name = "Drop"
+	entities.add_child(drop)
+	drop.global_position = at
+	drop.setup(item_id, amount, store,
+		Vector2(randf_range(-28.0, 28.0), randf_range(-95.0, -55.0)))
+
+
 func _on_tile_broken(x: int, y: int, drop: String) -> void:
-	float_text(Vector2(x * TILE, y * TILE), "+1 %s" % TileDB.pretty(drop),
-		Color(1, 0.96, 0.82))
+	spawn_drop(Vector2(x * TILE + TILE * 0.5, y * TILE + TILE * 0.5), drop, 1)
 
 
 func _on_player_hurt(amount: int) -> void:

@@ -146,8 +146,14 @@ func _dig() -> void:
 	_ok("holding down and the dig key breaks the block underfoot", broke,
 		TileDB.get_db().name_of.get(before, "?"))
 	if broke:
+		# What comes out falls on the ground and flies to you, so it arrives a
+		# moment later rather than instantly.
 		var drop := TileDB.get_db().drop_of(before)
-		_ok("breaking it gives you the material", Game.amount_of(drop) > had,
+		for i in 120:
+			await get_tree().physics_frame
+			if Game.amount_of(drop) > had:
+				break
+		_ok("what you break ends up in your bag", Game.amount_of(drop) > had,
 			"%s %d -> %d" % [drop, had, Game.amount_of(drop)])
 	await _settle(20)
 	await _shot("03_dug")

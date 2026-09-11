@@ -682,6 +682,82 @@ BAR = [
     "................",
 ]
 
+HIDE = [
+    "................",
+    "................",
+    "...KK......KK...",
+    "..KNNK....KNNK..",
+    "..KNNNKKKKNNNK..",
+    "..KNNNNNNNNNNK..",
+    "..KNNNNNNNNNNK..",
+    "...KNNNNNNNNK...",
+    "...KNNNNNNNNK...",
+    "....KNNNNNNK....",
+    "....KNNKKNNK....",
+    ".....KK..KK.....",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+HELM = [
+    "................",
+    "................",
+    "....KKKKKK......",
+    "...KXXXXXXK.....",
+    "..KXXXXXXXXK....",
+    "..KXXKKKKXXK....",
+    "..KXX....XXK....",
+    "..KXX....XXK....",
+    "..KXK....KXK....",
+    "..KK......KK....",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+MAIL = [
+    "................",
+    "..KK........KK..",
+    "..KXKKKKKKKKXK..",
+    "..KXXXXXXXXXXK..",
+    "..KXXXXXXXXXXK..",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "....KXXXXXXK....",
+    "....KKKKKKKK....",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+GREAVES = [
+    "................",
+    "...KKKKKKKKKK...",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "...KXXXXXXXXK...",
+    "...KXXKKKKXXK...",
+    "...KXXK..KXXK...",
+    "...KXXK..KXXK...",
+    "...KXXK..KXXK...",
+    "...KXXK..KXXK...",
+    "...KKK....KKK...",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
 TIER = {
     "wood": (146, 108, 66),
     "stone": (108, 116, 130),
@@ -702,6 +778,13 @@ ICONS = [
     ("wood_sword", SWORD, "wood"),
     ("copper_sword", SWORD, "copper"),
     ("iron_sword", SWORD, "iron"),
+    ("hide", HIDE, "wood"),
+    ("copper_helm", HELM, "copper"),
+    ("copper_mail", MAIL, "copper"),
+    ("copper_greaves", GREAVES, "copper"),
+    ("iron_helm", HELM, "iron"),
+    ("iron_mail", MAIL, "iron"),
+    ("iron_greaves", GREAVES, "iron"),
 ]
 
 
