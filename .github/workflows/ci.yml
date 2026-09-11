@@ -60,6 +60,11 @@ jobs:
       - name: Run world test
         run: ~/godot/godot --headless --path . res://tests/world_test.tscn
 
+      # Guards the input map. Every key was once bound to device 16, which
+      # matches no real key press, so nothing on the keyboard did anything.
+      - name: Check the game can be started
+        run: ~/godot/godot --headless --path . res://tests/playtest/start_game.tscn
+
       - name: Play the first run
         run: ~/godot/godot --headless --path . res://tests/playtest/first_run.tscn
 

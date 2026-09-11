@@ -14,6 +14,19 @@ func _ready() -> void:
 	# quicker for anyone testing a particular seed:
 	#   ./tools/play.sh --start --seed=7
 	#   index.html?start&seed=7
+	# Lets a built artifact be checked, not just the source tree. Three
+	# releases shipped with an input map that matched nothing, and running the
+	# game was the only way that would have shown up.
+	#   Abyssbound --check-input
+	if BootConfig.has("check-input"):
+		var dead := InputCheck.dead_bindings()
+		if dead.is_empty():
+			print("input map OK: every key binding responds to its own key")
+		else:
+			printerr("DEAD KEY BINDINGS: ", ", ".join(dead))
+		get_tree().quit(0 if dead.is_empty() else 1)
+		return
+
 	if BootConfig.has("start"):
 		call_deferred("_begin")
 		return
