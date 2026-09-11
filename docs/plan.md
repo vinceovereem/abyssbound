@@ -154,101 +154,100 @@ Two items from the task list above did not land as written, both deliberately:
 Carried forward: the light pass spikes to 13-18 ms while moving. See
 `playtest-log.md` round 4.
 
-## Milestone 3 — items and crafting
+## The order changed
 
-Inventory, hotbar, drops, ores, tool tiers, stations, data-driven recipes, and
-the first armour.
+Playing milestone 2 said the world felt like a tech demo, and the reason was
+that nothing else was in it. So the order is now: make it alive and dangerous,
+then make what you dig up matter, then make staying alive cost something.
+Bosses are new to the plan and come once there is gear to fight them with.
 
-- Item definitions, stack limits, an inventory model separate from its UI.
-- Hotbar on 1 to 0, an inventory screen, both usable without a mouse hover so a
-  mobile port stays possible.
-- Dropped items that fly to the player and merge into stacks.
-- Ore tiles that drop materials; smelting; tool tiers that change break time.
-- Stations — workbench, furnace, anvil — with a proximity check.
-- Recipes as data, resolved against nearby stations.
-- First armour set and the damage reduction it implies.
+| # | Milestone | Why here |
+| --- | --- | --- |
+| 3 | The world is alive and dangerous | The emptiest gap. Nothing else fixes "it feels like a demo" |
+| 4 | Inventory, crafting, tools | Makes what you mine mean something |
+| 5 | Survival meters | Pressure, once there is food and gear to answer it with |
+| 6 | The first boss | Needs gear from 4 and danger from 3 to be a wall worth climbing |
+| 7 | Gating: ocean, snow, sky | Companions and kit that open closed places |
+| 8 | The Abyss, layers 1 to 5 | The long goal, once the surface loop holds |
+| 9 | Town, NPCs, and maybe classes | Least Terraria-shaped. Last, and classes may be cut |
 
-Files: `scripts/items/*.gd`, `scripts/ui/inventory.gd`, `scripts/ui/hotbar.gd`,
-`data/items.json`, `data/recipes.json`, `data/tiles.json`, `scenes/ui/*`,
-`tools/gen_art.py` for item icons, `tests/`.
+## Milestone 3 — the world is alive and dangerous
 
-Checks: a recipe fails without its station and succeeds with it; stacks respect
-their limit; a mined ore yields its drop; a better tool breaks a tile faster;
-inventory survives save and load.
+Terraria's first night is the best tutorial in the genre: the sun goes down,
+things come for you, and you learn that shelter and light are the answer. That
+is what this milestone is.
 
-## Milestone 4 — creatures and companions
+### Tasks
 
-The heart of the game. Clock, schedules, Bestiary, trust, eggs, companions.
+1. **A day clock.** One day is about 20 real minutes. Sky colour, light level
+   and spawning all read from it. Shown on the HUD.
+2. **Wildlife.** Passive creatures that spawn by biome and wander: the existing
+   critter on the surface, something in the caves. They are not a threat; they
+   are proof the world is inhabited.
+3. **Hostiles at night.** Enemies spawn on the surface once the sun is down,
+   away from where the player can see them appear, and path toward the player.
+   They burn off or leave at dawn.
+4. **Something to fight with.** The player has no attack at all today, only
+   stomping. A swing with reach and a cooldown, aimed the same way digging is.
+5. **Shelter works.** Enemies do not spawn on lit tiles or inside an enclosed
+   space, so digging in and putting a torch down is a real answer rather than a
+   suggestion.
+6. **Danger is readable.** Health already exists; a hit needs to be obvious, and
+   dying needs to put you back somewhere sensible with what you were carrying.
 
-- The day clock, ~20 real minutes, with sky colour and light following it.
-- Species definitions in `data/creatures/`.
-- Creature AI: habitat spawning, nests and dens, schedules, temperament,
-  line of sight and a fear response.
-- Observation: unseen proximity fills the Bestiary in stages.
-- Trust: right hour, right food, staged approach, decay when frightened.
-- Eggs: theft while the parent is away, hostility if seen, incubation, rearing.
-- Companion select, mount mode and rider mode, bond level.
-- Ship three species: **wolf** (mount, fast run and pounce), **rabbit** (rider,
-  higher jump and faster digging), **glowbug** (rider, light).
+### Files
 
-Files: `scripts/creatures/*.gd`, `scripts/clock.gd`, `scripts/bestiary.gd`,
-`scripts/companion.gd`, `data/creatures/*.json`, `scenes/actors/*`,
-`scenes/ui/bestiary.tscn`, `tools/gen_art.py`, `tests/`.
+`scripts/clock.gd` (new autoload), `scripts/world/spawner.gd`,
+`scripts/creatures/*.gd`, `scripts/player_attack.gd`, `scripts/world/sky.gd`,
+`data/creatures/*.json`, `scenes/actors/*`, `tools/gen_art.py`, `tests/`.
 
-Checks: feeding at the right hour raises trust and at the wrong hour does not;
-being seen taking an egg makes the parent hostile; scaring a creature costs
-trust; a mounted wolf moves faster than the player on foot; a shouldered rabbit
-jumps higher; the Bestiary reveals in the right order; schedules fire at the
-right clock time.
+### Checks to add
 
-## Milestone 5 — gating
+Same seed and same clock time spawns the same creatures. Nothing hostile
+spawns in daylight. Nothing spawns on a lit tile. An enemy moves toward the
+player rather than wandering. A swing kills a crawler and a miss does not.
+Dawn clears the night's hostiles. Sheltering in a lit, enclosed room survives a
+night.
 
-The first real proof that "you unlock possibilities, not areas" works.
+### Done when
 
-- Ocean at both map edges, with water deep enough to drown in.
-- Oxygen meter underwater; the oxygen kit that extends it.
-- A swimming companion.
-- Snow biome cold, health drain, and the warm coat that stops it.
-- A hippogriff nest on a mountain with an egg that can be stolen, and flight
-  that reaches a sky island.
+You can walk out at dusk, watch things arrive, dig into a hillside, light it,
+and come out at dawn — and that sequence is the obvious thing to do without
+being told.
 
-Files: `scripts/world/water.gd`, `scripts/player_survival.gd`,
-`data/items.json`, `data/creatures/*.json`, `scripts/creatures/*.gd`, `tests/`.
+## Milestone 4 — inventory, crafting, tools
 
-Checks: unequipped players drown and equipped ones do not; cold drains health
-without a coat and does not with one; a sky island is unreachable on foot and
-reachable mounted; every gate in the table in `design.md` has a test.
+As the old milestone 3. Hotbar, inventory screen, drops that fly to the player,
+stack limits, ores, tool tiers, stations, data-driven recipes, first armour.
 
-## Milestone 6 — the Abyss, layers 1 to 5
+`Game.collect()` is a plain tally standing in for this. It gets replaced here,
+not extended.
 
-- Five distinct layers: tiles, backdrop, light colour, creatures, danger.
-- Layer readout on the HUD.
-- Pressure as the deep-layer gate, and the suit that answers it.
-- The climb back made costly in time and supplies.
-- Outpost beacons: craft, place, and travel to from the surface camp.
+## Milestone 5 — survival meters
 
-Files: `scripts/world/abyss.gd`, `scripts/world/world_gen.gd`,
-`data/abyss_layers.json`, `scripts/beacon.gd`, `scenes/ui/hud.tscn`,
-`tools/gen_art.py`, `tests/`.
+Hunger, temperature in snow and desert, oxygen underwater. Deliberately after
+crafting: a hunger bar with nothing to eat is not difficulty, it is a chore.
 
-Checks: each layer generates with its own tile set and creatures; the HUD layer
-number matches actual depth; a placed beacon survives save and load and travel
-arrives at it; the deep layers punish an unsuited player.
+## Milestone 6 — the first boss
 
-## Milestone 7 — town and classes
+A surface boss, summoned at night with something you build, beatable with the
+first tier of gear, dropping what is needed to survive Abyss layer 1. Summoned
+rather than stumbled into. The fight should reward having prepared a space.
 
-- NPCs with a job, a home and a schedule on the day clock.
-- A housing validity check, Terraria-style: enclosed, lit, furnished.
-- A merchant who buys and sells.
-- Class select at the start: Warrior, Ranger, Rogue, Arcanist, Beastmaster.
-- A first skill tree per class, and cross-tree unlocks later.
+## Milestone 7 — gating
 
-Files: `scripts/npc/*.gd`, `scripts/housing.gd`, `scripts/classes.gd`,
-`data/npcs.json`, `data/classes.json`, `scenes/ui/*`, `tests/`.
+Ocean, water simulation, oxygen kit, a swimming companion. Snow and the warm
+coat. A hippogriff nest with an egg worth stealing, and flight to a sky island.
 
-Checks: an invalid house is rejected and a valid one accepted; an NPC moves in
-when its condition is met; buying and selling moves items and currency both
-ways; each class starts with its kit; a skill unlock changes a real value.
+## Milestone 8 — the Abyss, layers 1 to 5
+
+Distinct layers, a costly climb back, outpost beacons and travel.
+
+## Milestone 9 — town, NPCs, and maybe classes
+
+Housing, a merchant, NPC schedules. Classes and skill trees are the least
+Terraria-shaped idea in the design and may be cut in favour of gear that
+implies a playstyle.
 
 ## Standing rules
 

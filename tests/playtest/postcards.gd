@@ -24,6 +24,10 @@ const PLACES := [
 	{ "name": "09_abyss_deep",  "x": 1000, "y": 600 },
 	{ "name": "10_torch",       "x": 640,  "y": 260, "torch": true },
 	{ "name": "11_mining",      "x": 600,  "y": 200, "mining": true },
+	{ "name": "12_dawn",        "x": 560,  "y": -1, "time": 0.26 },
+	{ "name": "13_noon",        "x": 560,  "y": -1, "time": 0.50 },
+	{ "name": "14_dusk",        "x": 560,  "y": -1, "time": 0.76 },
+	{ "name": "15_night",       "x": 560,  "y": -1, "time": 0.92 },
 ]
 
 var _dir := "user://postcards"
@@ -41,6 +45,9 @@ func _ready() -> void:
 
 
 func _shoot(place: Dictionary) -> void:
+	DayClock.paused = true
+	DayClock.set_time(float(place.get("time", 0.5)))
+
 	var world: Node2D = WorldScene.instantiate()
 	world.seed_override = SEED
 	world.spawn_override_x = int(place["x"])
@@ -93,9 +100,10 @@ func _shoot(place: Dictionary) -> void:
 	var img := get_viewport().get_texture().get_image()
 	var path := "%s/%s.png" % [_dir, place["name"]]
 	img.save_png(path)
-	print("  %s  biome=%s  tile=%s  light=%.2fms" % [
+	print("  %s  biome=%s  tile=%s  light=%.2fms  clock=%s sun=%d" % [
 		place["name"], world.store.gen.biome_name(world.player_tile().x),
-		world.player_tile(), world.lighting.last_ms])
+		world.player_tile(), world.lighting.last_ms,
+		DayClock.clock_text(), world.lighting.sky_light])
 
 	world.queue_free()
 	await get_tree().process_frame

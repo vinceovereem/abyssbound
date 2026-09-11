@@ -230,3 +230,134 @@ Worst single step is 1.26 ms of a 4.44 ms pass, which is about 7 ms in wasm.
 
 Both of those are checks lying about the game rather than the game being
 wrong, which is the failure mode worth being slowest to believe.
+
+
+---
+
+## Round 8 — 2026-09-10 — the world is alive and dangerous
+
+**Why this milestone happened at all.** Playing milestone 2 the verdict was that
+it was far from Terraria. Two things came out of that: digging was wrong, and
+the world was empty. Digging was fixed first (round 8a below). This is the
+second half.
+
+### 8a — digging
+
+Digging was a cursor with five tiles of reach, which let you break blocks
+across a room you could not touch. It is now aimed with the movement keys and
+reaches exactly one tile: the block you face, or the one under your feet or
+over your head. Breaking a block gives you the material, which floats off the
+tile and lands in a tally on the right, so mining visibly pays instead of just
+leaving a hole.
+
+A check confirms nothing further than one tile can be aimed at, whatever
+combination of keys is held.
+
+### 8b — the day, and what comes out in it
+
+**Played.** `day_night.tscn`, one world stepped through dawn, noon, dusk and
+midnight, and the headless night checks.
+
+**Worked.**
+
+- The sky reads as a time of day: warm at dawn and dusk, blue at noon, nearly
+  black at midnight, with the clock on screen in warm or cold ink to match.
+- **Night is dark because the sun stops giving light**, not because something is
+  drawn over the screen. That one decision is what makes a torch matter after
+  dusk and a lit room read as safe, and it fell out of the lighting built in
+  milestone 2 rather than needing anything new.
+- Wildlife by day, hostiles by night, and morning clears them off the surface.
+- A swing kills a crawler in two hits, aimed with the same keys as digging,
+  because two aiming schemes in one game is how controls stop being learnable.
+
+**Wrong, and fixed.**
+
+- The nearest creature readout said `@CharacterBody2D@15`. Godot renames an
+  instanced scene the moment two of them collide, so the overlay now names
+  things by their group rather than their node name.
+- The first day and night shots showed an empty world. Spawning happens off
+  screen on purpose, and the script did not wait for anything to walk in. The
+  rule was right and the screenshot was lying.
+- Sampling "dawn" at 0.26 gave full daylight, because sunrise finishes *before*
+  dawn. Twilight is 0.20 to 0.25, not 0.25 to 0.30.
+
+**A harness trap worth writing down.** macOS throttles a windowed run that is
+not in front. A twenty second screenshot script took several minutes behind
+another window and looked exactly like a hang. Anything windowed now calls
+`DisplayServer.window_move_to_foreground()` and runs with `--always-on-top`.
+That is the second time the harness has lied about the game rather than the
+other way round.
+
+### 8c — the screenshot that found two bugs
+
+The last shot of round 8 was meant to be a picture of a crawler arriving. It
+came back showing the player dead, with the words **"You fell too deep."**
+
+Two things wrong in one frame.
+
+- **The death message was a lie.** That text is from the placeholder, when
+  falling down a shaft was the only way to die. Being killed by something and
+  being told you fell is worse than saying nothing.
+- **Dying threw the world away.** `R` reloaded the scene, which built a brand
+  new world from a fresh seed. Everything dug was gone. In a game about digging
+  that is not a death penalty, it is losing the save.
+
+Death now puts you back where you started, in the same world, with your health
+and everything you dug. Checks cover all of it: same seed, same hole, back at
+the spawn column, message cleared.
+
+Neither of these would have shown up in a headless check, because both were
+about what the player is told and what the player keeps. It took a picture of a
+corpse to notice.
+
+**Still not right.**
+
+- Dawn and dusk look identical. Sunrise should be cooler than sunset.
+- Hostiles are one crawler with a new flag. Milestone 4 gives them species,
+  habits and hours.
+- Death costs nothing yet. Terraria drops some of your coins; there is nothing
+  here to drop until milestone 4 gives you things to carry.
+- Standing still through a night takes five hearts to zero. Whether that is
+  tense or unfair is a judgement for whoever plays a night properly, with the
+  walls and workbench that milestone 4 will provide.
+
+
+---
+
+## Round 9 — 2026-09-10 — the concept sheet
+
+**Given.** The Abyssbound concept sheet: a character about two tiles tall, a
+tight camera, rich layer colours, and a UI with a minimap, damage numbers, an
+inventory grid and a bestiary.
+
+**Done.** Characters redrawn at roughly two tiles: the player 12x16 to 20x30,
+the crawler a heavy 24x18, the critter a 20x16 rabbit from the sheet's roster.
+Camera pulled to 1.5, framing about 27 tiles instead of 40. A list of
+objectives down the left. Floating damage numbers.
+
+**The decision that made the art change cheap.** Every collision box was
+resized so each actor's feet stay at exactly the same offset from its origin.
+The player's tile maths, the spawner's footing checks and the digging all ask
+"what is under this actor" in terms of that origin, so keeping it fixed meant
+sprites could triple in size with 39 and 95 checks passing unchanged. Moving it
+would have meant fixing all three.
+
+**Four iterations on one damage number**, which is worth recording because
+three of them were wrong for different reasons:
+
+1. Nothing appeared. The crawler was two tiles away and the swing reaches one
+   and a half.
+2. Still nothing. The crawler *walks*, so it had strolled out of reach by the
+   time the swing landed.
+3. It appeared as a grey blob. A 4 px outline on an 8 px font swallows the
+   glyph once the camera is zoomed in.
+4. It appeared but stayed grey. `add_theme_color_override` was not taking on a
+   Label built in code; `modulate` does.
+
+None of that is visible to a headless check, and all of it is visible in a
+screenshot. The mechanism was right from the first attempt; everything wrong
+was about whether a person could see it.
+
+**Not done, and not pretended.** The sheet also shows a minimap, an inventory
+grid, a bestiary panel and five distinct world layers with their own palettes.
+None of those exist. See the milestone summary for where they sit.

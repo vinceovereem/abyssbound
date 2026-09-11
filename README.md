@@ -12,8 +12,10 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 - One enemy, the crawler. Walk into it and you lose a heart. Land on its head and it dies
 - Crystals to pick up, hearts to lose, both shown in the HUD
 - A critter you can tame. Stand near it and hold **E** until the trust bar fills, then it follows you
-- Three zones that get darker as you go down, joined by a descent point
-- Ember rock that hurts, and open shafts that cost a heart and put you back at the start
+- A day and night cycle. The sun goes out, the world goes dark, and things
+  come out that did not before
+- Wildlife by day, hostiles by night, and a swing to answer them with
+- Light keeps them off: a lit room is a safe one
 
 ## Play it
 
@@ -49,13 +51,26 @@ software, so it can only prove the build runs, not how fast.
 `.exe`; Mac is a `.zip`, and the app inside needs **right-click, Open** the
 first time because it is not notarised.
 
+### What there is to do
+
+The top left corner lists the next few things worth doing: gather wood, mine
+stone, place a torch, live through a night, find copper, dig deep, reach the
+Abyss. They are nudges rather than quests. Nothing is gated on them and nothing
+is lost by ignoring them, but a new world is a big empty place and they give
+you somewhere to point yourself. The list lives in `data/objectives.json` and
+adding to it needs no code.
+
 ### What to try first
 
 1. Walk east. About 60 tiles along there is a hole in the ground that keeps going.
 2. Hold the left mouse button on a tile to dig it. Break time depends on the rock.
 3. Press **Q** twice to select the torch, then right-click to place it. Then dig
    down far enough that it matters.
-4. Press **F3** at any point to see the seed, the biome, the depth and the frame time.
+4. **Wait for dark.** A day is twenty real minutes, the clock is at the top of
+   the screen, and things come out at night. Dig into a hillside, put a torch
+   down, and nothing spawns in the light.
+5. Press **F3** at any point to see the seed, the biome, the depth, the time and
+   what the nearest creature is doing.
 
 ### Hosting the web build
 
@@ -83,6 +98,7 @@ variable `ENABLE_PAGES` set to `true`.
 | Down + F | Dig the block under your feet |
 | Up + F | Dig the block over your head |
 | G | Place the selected tile, aimed the same way. Hold to lay a run |
+| X | Swing. Aimed the same way as digging |
 | Q | Cycle what gets placed: dirt, stone, torch |
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |
 | E | Tame a critter (the archived zones only, for now) |

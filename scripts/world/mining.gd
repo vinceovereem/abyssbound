@@ -22,6 +22,7 @@ const PLACE_INTERVAL := 0.14
 
 signal tile_changed(x: int, y: int)
 signal tile_broken(x: int, y: int, drop: String)
+signal tile_placed(x: int, y: int, tile_name: String)
 
 var store: ChunkStore
 var renderer: ChunkRenderer
@@ -120,6 +121,7 @@ func _place() -> void:
 	if _db.is_solid(id) and _overlaps_player(_target):
 		return
 	_set_tile(_target.x, _target.y, id)
+	tile_placed.emit(_target.x, _target.y, selected_tile_name())
 
 
 func _has_support(x: int, y: int) -> bool:

@@ -92,6 +92,60 @@ stops being reproducible, which breaks saves and every seeded test.
 archived zones and are frozen: renumbering them silently repaints
 `levels/legacy/`. Append, never reorder.
 
+## The living world
+
+`DayClock` is an autoload. One day is twenty real minutes, half of it dark.
+Everything that should care what time it is reads it rather than keeping its
+own timer: the sky colour, how much light the sun gives, and what may spawn.
+
+**Night is dark because the sun stops giving light**, not because a filter is
+drawn over the screen. `Lighting.sky_light` is scaled by `DayClock.daylight()`,
+which is why a torch matters after dusk and why a lit room reads as safe.
+
+`scripts/world/spawner.gd` owns where and when. Its rules are the design, not
+an implementation detail:
+
+- hostiles only appear on tiles darker than `DARK_ENOUGH`, so shelter works
+- nothing appears within `MIN_TILES` of the player, so nothing pops in on screen
+- dawn clears the night's hostiles off the surface
+- anything past `FORGET_TILES` is freed
+
+Milestone 4 replaces *what* spawns with real species from `data/creatures/`.
+The where and when should survive that.
+
+`scripts/world/combat.gd` is the player's swing, and it aims with the same keys
+as digging on purpose. Two aiming schemes in one game is how controls stop
+being learnable.
+
+## Objectives
+
+`Goals` is an autoload reading `data/objectives.json`. Adding an objective
+needs no code as long as its `kind` already exists: collect, place, defeat,
+dawn, depth, layer. Design owns the file.
+
+They are **nudges, not quests**. Nothing gates on them. If one ever becomes a
+requirement, that is a design change worth arguing about first, because the
+whole point of the world is that you decide what to do in it.
+
+Depth and layer are *reached*, not counted: going down and up again must not
+add up. There is a check for that.
+
+## Art
+
+Characters are about two tiles tall, from the concept sheet. Every actor's
+collision box is sized so its **feet sit at the same offset from its origin as
+before**: player `+8`, creatures `+5`. That is what let the sprites triple in
+size without touching any of the tile maths that asks what is under an actor.
+If you resize a sprite, keep the feet where they are or expect to fix the
+spawner, the digging and half the checks.
+
+The camera is zoomed to `1.5`, so the 640x360 viewport frames about 27 tiles
+rather than 40. The HUD is not zoomed, because it lives on the CanvasLayer.
+
+Floating world text (`World.float_text`) tints with `modulate`, not a font
+colour override, and keeps the outline at 1 px. A 4 px outline on a small font
+renders as a grey blob once the camera is zoomed in.
+
 ## Digging
 
 Aimed with the movement keys, not a cursor, and it reaches exactly one tile:
@@ -122,6 +176,11 @@ jump, so nothing is lost.
   is an `Object` virtual. Both shadow silently and fail confusingly.
 - **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
   anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
+- **macOS throttles a windowed run that is not in front.** A screenshot script
+  that takes twenty seconds with the window up takes several minutes behind
+  another window, which looks exactly like a hang. Call
+  `DisplayServer.window_move_to_foreground()` at the start of anything windowed,
+  and pass `--always-on-top`.
 - **Godot drops every held input when the window loses focus.** A windowed
   playtest driven with `Input.action_press` therefore does nothing at all if
   the window never got focus, and reports the ground as impassable rather than

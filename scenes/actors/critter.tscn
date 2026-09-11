@@ -5,11 +5,11 @@
 
 [sub_resource type="AtlasTexture" id="W0"]
 atlas = ExtResource("2_tex")
-region = Rect2(0, 0, 16, 12)
+region = Rect2(0, 0, 20, 16)
 
 [sub_resource type="AtlasTexture" id="W1"]
 atlas = ExtResource("2_tex")
-region = Rect2(16, 0, 16, 12)
+region = Rect2(20, 0, 20, 16)
 
 [sub_resource type="SpriteFrames" id="Frames_critter"]
 animations = [{
@@ -25,7 +25,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="Shape_critter"]
-size = Vector2(13, 9)
+size = Vector2(14, 11)
 
 [sub_resource type="CircleShape2D" id="Shape_trust"]
 radius = 26.0
@@ -42,12 +42,13 @@ collision_mask = 1
 script = ExtResource("1_script")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
+offset = Vector2(0, -1)
 sprite_frames = SubResource("Frames_critter")
 animation = &"idle"
 autoplay = "idle"
 
 [node name="Collision" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1)
+position = Vector2(0, 0)
 shape = SubResource("Shape_critter")
 
 [node name="TrustArea" type="Area2D" parent="."]

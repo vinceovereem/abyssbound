@@ -8,6 +8,12 @@ extends CanvasLayer
 
 const DAY_TOP := Color(0.29, 0.51, 0.76)
 const DAY_BOTTOM := Color(0.65, 0.79, 0.89)
+const NIGHT_TOP := Color(0.02, 0.03, 0.09)
+const NIGHT_BOTTOM := Color(0.06, 0.08, 0.17)
+## Sunrise and sunset. Strongest halfway through twilight, absent at noon and
+## at midnight, which is what makes dusk read as an event rather than a fade.
+const WARM_TOP := Color(0.42, 0.26, 0.34)
+const WARM_BOTTOM := Color(0.95, 0.55, 0.32)
 const DEEP_TOP := Color(0.04, 0.05, 0.08)
 const DEEP_BOTTOM := Color(0.07, 0.08, 0.12)
 const ABYSS_TOP_C := Color(0.06, 0.03, 0.10)
@@ -42,16 +48,23 @@ func _ready() -> void:
 
 ## depth_tile is the player's tile y. The bands match the world's layers so the
 ## backdrop changes at the same places the tiles do.
-func update_for_depth(depth_tile: int) -> void:
+func update_for_depth(depth_tile: int, daylight: float = 1.0) -> void:
+	var lit_top := NIGHT_TOP.lerp(DAY_TOP, daylight)
+	var lit_bottom := NIGHT_BOTTOM.lerp(DAY_BOTTOM, daylight)
+	# Peaks halfway between dark and light, which is exactly dawn and dusk.
+	var warm := 1.0 - absf(daylight * 2.0 - 1.0)
+	lit_top = lit_top.lerp(WARM_TOP, warm * 0.6)
+	lit_bottom = lit_bottom.lerp(WARM_BOTTOM, warm * 0.6)
+
 	var top: Color
 	var bottom: Color
 	if depth_tile < 140:
-		top = DAY_TOP
-		bottom = DAY_BOTTOM
+		top = lit_top
+		bottom = lit_bottom
 	elif depth_tile < WorldGen.ABYSS_TOP:
 		var t := clampf(float(depth_tile - 140) / 120.0, 0.0, 1.0)
-		top = DAY_TOP.lerp(DEEP_TOP, t)
-		bottom = DAY_BOTTOM.lerp(DEEP_BOTTOM, t)
+		top = lit_top.lerp(DEEP_TOP, t)
+		bottom = lit_bottom.lerp(DEEP_BOTTOM, t)
 	else:
 		var t := clampf(float(depth_tile - WorldGen.ABYSS_TOP) / 240.0, 0.0, 1.0)
 		top = DEEP_TOP.lerp(ABYSS_TOP_C, t)
