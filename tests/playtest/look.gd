@@ -36,6 +36,26 @@ func _ready() -> void:
 		for i in 10:
 			await get_tree().physics_frame
 
+	if BootConfig.has("give"):
+		Game.inventory.add("wood", 34)
+		Game.inventory.add("stone", 61)
+		Game.inventory.add("copper_ore", 9)
+		Game.inventory.add("torch", 12)
+		Game.inventory.add("wood_pick", 1)
+		Game.inventory.add("workbench", 1)
+		# Stand a workbench next to us so the station recipes show up.
+		var t: Vector2i = world.player_tile()
+		world.store.set_fg(t.x + 2, t.y, TileDB.get_db().id("workbench"))
+		world.renderer.update_tile(t.x + 2, t.y)
+		for i in 4:
+			await get_tree().physics_frame
+
+	if BootConfig.has("craft"):
+		world.inventory_ui._craft.visible = true
+		world.inventory_ui._refresh()
+		for i in 4:
+			await get_tree().physics_frame
+
 	if BootConfig.has("creatures"):
 		# Put them where the camera can see them, which the spawner
 		# deliberately never does.

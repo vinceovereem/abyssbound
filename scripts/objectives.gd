@@ -87,6 +87,10 @@ func note_placed(tile_name: String) -> void:
 	_advance("place", tile_name, 1)
 
 
+func note_crafted(item_id: String, amount: int) -> void:
+	_advance("craft", item_id, amount)
+
+
 func note_defeat() -> void:
 	_advance("defeat", "", 1)
 

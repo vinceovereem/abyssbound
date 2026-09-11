@@ -9,16 +9,75 @@
     "  defeat   count=creatures driven off",
     "  dawn     count=nights survived",
     "  depth    count=tiles below the surface reached",
-    "  layer    count=Abyss layer reached"
+    "  layer    count=Abyss layer reached",
+    "  craft    what=item id, count=how many made"
   ],
   "objectives": [
-    { "id": "wood",   "text": "Gather wood from the trees",   "kind": "collect", "what": "wood",       "count": 10 },
-    { "id": "stone",  "text": "Mine stone",                   "kind": "collect", "what": "stone",      "count": 25 },
-    { "id": "torch",  "text": "Place a torch",                "kind": "place",   "what": "torch",      "count": 1  },
-    { "id": "fight",  "text": "Drive off what comes at night","kind": "defeat",  "count": 3  },
-    { "id": "night",  "text": "Live to see the sun come up",  "kind": "dawn",    "count": 1  },
-    { "id": "copper", "text": "Find copper in the rock",      "kind": "collect", "what": "copper_ore", "count": 5  },
-    { "id": "deep",   "text": "Dig 150 tiles below the grass","kind": "depth",   "count": 150 },
-    { "id": "abyss",  "text": "Descend into the Abyss",       "kind": "layer",   "count": 1  }
+    {
+      "id": "wood",
+      "text": "Gather wood from the trees",
+      "kind": "collect",
+      "what": "wood",
+      "count": 10
+    },
+    {
+      "id": "torch",
+      "text": "Make a torch from wood",
+      "kind": "craft",
+      "what": "torch",
+      "count": 1
+    },
+    {
+      "id": "bench",
+      "text": "Build a workbench",
+      "kind": "craft",
+      "what": "workbench",
+      "count": 1
+    },
+    {
+      "id": "pick",
+      "text": "Make a pickaxe",
+      "kind": "craft",
+      "what": "wood_pick",
+      "count": 1
+    },
+    {
+      "id": "stone",
+      "text": "Mine stone",
+      "kind": "collect",
+      "what": "stone",
+      "count": 25
+    },
+    {
+      "id": "fight",
+      "text": "Drive off what comes at night",
+      "kind": "defeat",
+      "count": 3
+    },
+    {
+      "id": "night",
+      "text": "Live to see the sun come up",
+      "kind": "dawn",
+      "count": 1
+    },
+    {
+      "id": "copper",
+      "text": "Find copper in the rock",
+      "kind": "collect",
+      "what": "copper_ore",
+      "count": 5
+    },
+    {
+      "id": "deep",
+      "text": "Dig 150 tiles below the grass",
+      "kind": "depth",
+      "count": 150
+    },
+    {
+      "id": "abyss",
+      "text": "Descend into the Abyss",
+      "kind": "layer",
+      "count": 1
+    }
   ]
 }

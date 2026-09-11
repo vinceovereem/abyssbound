@@ -399,6 +399,64 @@ def top_edge_overlay():
     return img
 
 
+WORKBENCH = [
+    "................",
+    "................",
+    "................",
+    "..KKKKKKKKKKKK..",
+    "..KAAAAAAAAAAK..",
+    "..KAnAAAAAnAAK..",
+    "..KKKKKKKKKKKK..",
+    "...K.A....A.K...",
+    "...K.A....A.K...",
+    "...K.A....A.K...",
+    "...K.A....A.K...",
+    "...K.A....A.K...",
+    "...KnA....AnK...",
+    "...KKK....KKK...",
+    "................",
+    "................",
+]
+
+FURNACE = [
+    "................",
+    "..KKKKKKKKKKKK..",
+    "..KggggggggggK..",
+    "..KgGGGGGGGGgK..",
+    "..KgGKKKKKKGgK..",
+    "..KgGKOOOOKGgK..",
+    "..KgGKOYYOKGgK..",
+    "..KgGKOOOOKGgK..",
+    "..KgGKKKKKKGgK..",
+    "..KgGGGGGGGGgK..",
+    "..KggggggggggK..",
+    "..KgggggggggGK..",
+    "..KKKKKKKKKKKK..",
+    "................",
+    "................",
+    "................",
+]
+
+ANVIL = [
+    "................",
+    "................",
+    "................",
+    "....KKKKKKKK....",
+    "...KmmmmmmmmK...",
+    "..KmmmmmmmmmmK..",
+    "..KmmGGGGGGmmK..",
+    "...KGGGGGGGGK...",
+    ".....KGGGGK.....",
+    ".....KGGGGK.....",
+    "....KGGGGGGK....",
+    "...KGGGGGGGGK...",
+    "...KKKKKKKKKK...",
+    "................",
+    "................",
+    "................",
+]
+
+
 def water_tile():
     """Translucent so the tiles and walls behind it still read."""
     rnd = random.Random(30)
@@ -492,6 +550,10 @@ def tiles():
         # 23 tree trunk. Looks like wood, but you walk through it the way you
         # walk through a tree in Terraria. Wood the building block stays solid.
         tile_noise(15, (120, 86, 50), (146, 108, 66), (88, 62, 36)),
+        # 24 to 26, the crafting stations. Furniture: drawn, walked through.
+        grid(WORKBENCH, "workbench"),
+        grid(FURNACE, "furnace"),
+        grid(ANVIL, "anvil"),
     ]
     sheet(t, "tiles/tiles.png")
 
@@ -538,6 +600,130 @@ def backdrops():
 # --------------------------------------------------------------------------
 # Project icon.
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Item icons. 16x16, one row, in the order listed in ICONS below.
+#
+# Tools and bars are the same shape in four metals, so the grids use "X" as a
+# stand-in that gets painted the tier colour. One drawing, four items.
+# --------------------------------------------------------------------------
+PICK = [
+    "................",
+    "....XXX....XXX..",
+    "...XXXXXXXXXXX..",
+    "...XXXXXXXXXXX..",
+    "....XXXXXXXXX...",
+    ".......AA.......",
+    ".......AA.......",
+    ".......AA.......",
+    ".......AA.......",
+    ".......AA.......",
+    ".......AA.......",
+    ".......AA.......",
+    ".......nn.......",
+    "................",
+    "................",
+    "................",
+]
+
+SWORD = [
+    "............XX..",
+    "...........XXX..",
+    "..........XXX...",
+    ".........XXX....",
+    "........XXX.....",
+    ".......XXX......",
+    "......XXX.......",
+    ".....XXX........",
+    "....XXX.........",
+    "...AAAAA........",
+    "....nn..........",
+    "...nnn..........",
+    "...nn...........",
+    "................",
+    "................",
+    "................",
+]
+
+ORE = [
+    "................",
+    "................",
+    "....gggg........",
+    "...ggXXgg.......",
+    "..ggXXXXgg......",
+    "..gXXggXXg......",
+    "..ggXXggXg......",
+    "...gXXggg.......",
+    "....gggg........",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+BAR = [
+    "................",
+    "................",
+    "................",
+    ".....XXXXXX.....",
+    "....XXXXXXXX....",
+    "...XXXXXXXXXX...",
+    "...XXXXXXXXXX...",
+    "....XXXXXXXX....",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+TIER = {
+    "wood": (146, 108, 66),
+    "stone": (108, 116, 130),
+    "copper": (198, 118, 62),
+    "iron": (190, 194, 200),
+}
+
+# Order matters: it is the "icon" index in data/items.json.
+ICONS = [
+    ("copper_ore", ORE, "copper"),
+    ("iron_ore", ORE, "iron"),
+    ("copper_bar", BAR, "copper"),
+    ("iron_bar", BAR, "iron"),
+    ("wood_pick", PICK, "wood"),
+    ("stone_pick", PICK, "stone"),
+    ("copper_pick", PICK, "copper"),
+    ("iron_pick", PICK, "iron"),
+    ("wood_sword", SWORD, "wood"),
+    ("copper_sword", SWORD, "copper"),
+    ("iron_sword", SWORD, "iron"),
+]
+
+
+def tinted(rows, colour, name):
+    """Like grid(), but "X" means "paint this the tier colour"."""
+    img = Image.new("RGBA", (len(rows[0]), len(rows)), (0, 0, 0, 0))
+    px = img.load()
+    for y, row in enumerate(rows):
+        assert len(row) == 16, f"{name}: row {y} is {len(row)} wide"
+        for x, ch in enumerate(row):
+            if ch == "X":
+                px[x, y] = (*colour, 255)
+            elif PAL[ch]:
+                px[x, y] = (*PAL[ch], 255)
+    return img
+
+
+def items():
+    frames = [tinted(rows, TIER[tier], name) for name, rows, tier in ICONS]
+    sheet(frames, "sprites/items.png")
+
+
 def icon():
     img = Image.new("RGBA", (64, 64), (13, 20, 32, 255))
     px = img.load()
@@ -561,6 +747,7 @@ if __name__ == "__main__":
     crystal()
     hearts()
     tiles()
+    items()
     backdrops()
     icon()
     print("Done.")

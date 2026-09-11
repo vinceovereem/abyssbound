@@ -15,7 +15,6 @@ const HEART_SIZE := Vector2i(9, 8)
 
 var _full: AtlasTexture
 var _empty: AtlasTexture
-var _resources: VBoxContainer
 var _clock: Label
 var _goals: VBoxContainer
 var _toast: Label
@@ -29,13 +28,11 @@ func _ready() -> void:
 	fade.color.a = 0.0
 	set_gameplay_visible(false)
 
-	_build_resource_list()
 	_build_clock()
 	_build_goals()
 
 	Game.health_changed.connect(_on_health_changed)
 	Game.crystals_changed.connect(_on_crystals_changed)
-	Game.resource_collected.connect(_on_resource_collected)
 	Goals.progressed.connect(func(_i: String, _h: int, _n: int) -> void: _redraw_goals())
 	Goals.completed.connect(_on_goal_completed)
 
@@ -60,19 +57,6 @@ func _on_health_changed(current: int, maximum: int) -> void:
 
 func _on_crystals_changed(total: int) -> void:
 	crystal_label.text = str(total)
-
-
-## What breaking blocks has given you, down the right hand side.
-func _build_resource_list() -> void:
-	_resources = VBoxContainer.new()
-	_resources.name = "Resources"
-	_resources.anchor_left = 1.0
-	_resources.anchor_right = 1.0
-	_resources.offset_left = -118.0
-	_resources.offset_right = -6.0
-	_resources.offset_top = 22.0
-	_resources.add_theme_constant_override("separation", 1)
-	$Root.add_child(_resources)
 
 
 ## The time, top centre. Knowing dusk is coming is the whole point of having a
@@ -158,28 +142,10 @@ func _on_goal_completed(_id: String, text: String) -> void:
 	tween.tween_property(_toast, "modulate:a", 0.0, 0.6)
 
 
-func _on_resource_collected(_resource: String, _amount: int, _total: int) -> void:
-	for child in _resources.get_children():
-		child.queue_free()
-	var names: Array = Game.resources.keys()
-	names.sort()
-	for resource: String in names:
-		var row := Label.new()
-		row.text = "%s  %d" % [TileDB.pretty(resource), int(Game.resources[resource])]
-		row.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		row.add_theme_font_size_override("font_size", 8)
-		row.add_theme_color_override("font_color", Color(0.86, 0.91, 1.0))
-		row.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-		row.add_theme_constant_override("outline_size", 3)
-		_resources.add_child(row)
-
-
 ## Hearts and the crystal count only belong on screen during a level.
 func set_gameplay_visible(shown: bool) -> void:
 	$Root/TopLeft.visible = shown
 	$Root/TopRight.visible = shown
-	if _resources:
-		_resources.visible = shown
 	if _clock:
 		_clock.visible = shown
 	if _goals:

@@ -117,6 +117,27 @@ The where and when should survive that.
 as digging on purpose. Two aiming schemes in one game is how controls stop
 being learnable.
 
+## Carrying and crafting
+
+`Game.inventory` is an `Inventory`: thirty flat slots, the first ten being the
+hotbar. It **replaced** a name-to-count tally. Do not reintroduce one alongside
+it or the two will disagree about what the player has.
+
+`data/items.json` and `data/recipes.json` are design-owned. Adding an item or a
+recipe needs no code. An item's `tile` makes it placeable, its `station` makes
+placing it unlock recipes, its `power` makes it a pickaxe and its `damage`
+makes it a weapon.
+
+**What you dig goes in the bag, and if the bag is full the tile goes back.**
+Both `Mining._dig` and `RecipeBook.make` undo themselves rather than destroying
+things when there is no room. That is the rule to keep: never silently eat a
+player's materials.
+
+Stations are found by looking at the tiles around the player
+(`Mining.stations_in_reach`), not by remembering what was placed. A workbench
+someone else buried still works if you stand next to it, and one that gets
+mined stops working, with no bookkeeping either way.
+
 ## Objectives
 
 `Goals` is an autoload reading `data/objectives.json`. Adding an objective

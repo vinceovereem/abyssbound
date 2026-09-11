@@ -22,14 +22,15 @@ var health: int = MAX_HEALTH
 var crystals: int = 0
 var zone_name: String = "Surface"
 
-## What breaking blocks has given you. A real inventory replaces this in
-## milestone 3; this is enough to see that mining pays.
-var resources := {}
+## What the player is carrying. This replaced a plain name-to-count tally; do
+## not reintroduce one alongside it, or the two will disagree.
+var inventory: Inventory
 
 var _changing_zone := false
 
 
 func _ready() -> void:
+	inventory = Inventory.new()
 	# Autoloads start before the first scene, so announce the initial values
 	# on the next frame once listeners exist.
 	call_deferred("_broadcast")
@@ -46,17 +47,20 @@ func add_crystals(amount: int) -> void:
 	crystals_changed.emit(crystals)
 
 
-## Picked up from breaking a tile.
-func collect(resource: String, amount: int) -> void:
+## Picked up. Returns what would not fit, which the caller may want to leave
+## on the ground rather than quietly destroy.
+func collect(resource: String, amount: int) -> int:
 	if resource.is_empty() or amount <= 0:
-		return
-	var total: int = int(resources.get(resource, 0)) + amount
-	resources[resource] = total
-	resource_collected.emit(resource, amount, total)
+		return amount
+	var left := inventory.add(resource, amount)
+	var taken := amount - left
+	if taken > 0:
+		resource_collected.emit(resource, taken, inventory.count_of(resource))
+	return left
 
 
 func amount_of(resource: String) -> int:
-	return int(resources.get(resource, 0))
+	return inventory.count_of(resource)
 
 
 func damage(amount: int) -> void:
@@ -84,7 +88,7 @@ func _on_death() -> void:
 func restart() -> void:
 	health = MAX_HEALTH
 	crystals = 0
-	resources.clear()
+	inventory.clear()
 	_broadcast()
 	Ui.hide_message()
 	change_zone(get_tree().current_scene.scene_file_path, zone_name)
