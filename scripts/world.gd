@@ -19,6 +19,7 @@ var combat: Combat
 var spawner: Spawner
 var entities: Node2D
 var debug_overlay: CanvasLayer
+var inventory_ui: CanvasLayer
 var player: CharacterBody2D
 
 var _camera: Camera2D
@@ -82,6 +83,10 @@ func _ready() -> void:
 	spawner.name = "Spawner"
 	add_child(spawner)
 	spawner.setup(self, store, lighting)
+
+	inventory_ui = preload("res://scenes/ui/inventory_ui.tscn").instantiate()
+	inventory_ui.world = self
+	add_child(inventory_ui)
 
 	debug_overlay = preload("res://scenes/ui/debug_overlay.tscn").instantiate()
 	debug_overlay.world = self

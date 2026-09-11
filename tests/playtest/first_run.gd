@@ -156,10 +156,23 @@ func _dig() -> void:
 func _place_torch() -> void:
 	print("\nplacing a torch")
 	var db := TileDB.get_db()
-	for i in world.mining.placeable.size():
-		if world.mining.selected_tile_name() == "torch":
-			break
-		world.mining.place_index = (world.mining.place_index + 1) % world.mining.placeable.size()
+	# Torches are made from wood now, not chosen from a fixed list, so make one
+	# the way a player would: gather, then craft it by hand.
+	Game.inventory.add("wood", 4)
+	var book := RecipeBook.get_book()
+	var torch_recipe := -1
+	for i in book.recipes.size():
+		if book.recipes[i]["out"] == "torch":
+			torch_recipe = i
+	_ok("a torch can be made from wood by hand",
+		book.make(torch_recipe, Game.inventory, {}))
+	_ok("the torch ends up in the bag", Game.inventory.count_of("torch") >= 1,
+		"%d" % Game.inventory.count_of("torch"))
+
+	# Put it in the selected hotbar slot.
+	for i in Inventory.HOTBAR:
+		if Game.inventory.ids[i] == "torch":
+			Game.inventory.select(i)
 	_ok("the torch can be selected", world.mining.selected_tile_name() == "torch")
 
 	# Dig a nook in the wall beside us and put the torch in that. A torch needs

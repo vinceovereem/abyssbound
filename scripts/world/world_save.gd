@@ -35,6 +35,7 @@ static func save_world(store: ChunkStore, player_position: Vector2) -> bool:
 		"seed": store.world_seed(),
 		"player": player_position,
 		"edits": edits,
+		"inventory": Game.inventory.to_save(),
 	}, true)
 	file.close()
 	return true
@@ -60,6 +61,8 @@ static func load_world() -> Dictionary:
 
 	var store := ChunkStore.new(int(data["seed"]))
 	store.pending_edits = data.get("edits", {})
+	if data.has("inventory"):
+		Game.inventory.from_save(data["inventory"])
 	return {
 		"store": store,
 		"player": data.get("player", Vector2.ZERO),

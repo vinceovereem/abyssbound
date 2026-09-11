@@ -361,3 +361,42 @@ was about whether a person could see it.
 **Not done, and not pretended.** The sheet also shows a minimap, an inventory
 grid, a bestiary panel and five distinct world layers with their own palettes.
 None of those exist. See the milestone summary for where they sit.
+
+
+---
+
+## Round 10 — 2026-09-11 — things worth carrying
+
+**Built.** A real inventory, a hotbar, a backpack, crafting with stations, tool
+tiers, and item icons.
+
+**The loop it creates.** Chop a tree, press C, make a torch. Ten wood makes a
+workbench. Put it down, stand next to it, and pickaxes, a sword and a furnace
+appear in the list. A wooden pickaxe digs at 26 against bare hands at 14; an
+iron one at 92. Smelt ore at the furnace, make an anvil, and the better tools
+follow. That is the first twenty minutes of Terraria, and until this round none
+of it existed: you could mine wood and stone and do nothing whatsoever with it.
+
+**The rule worth keeping.** Nothing silently eats the player's materials. If
+the bag is full, a dug tile goes back into the ground rather than vanishing,
+and a craft that cannot fit its result puts the ingredients back. Both are
+easy to get wrong in a way nobody notices until someone loses an hour of ore.
+
+**Stations are looked at, not remembered.** `stations_in_reach` reads the tiles
+around the player each time. A workbench someone walled in still works if you
+stand next to it, and one that gets mined stops working, with no bookkeeping to
+go stale.
+
+**Two checks that were wrong rather than the code.** Twice a placement check
+failed because the tile it aimed at had nothing to attach to: the support rule
+refusing correctly, not the inventory misbehaving. The fix both times was for
+the test to go and find a legal spot first. Worth noticing that this is the
+same mistake as round 8's torch, made again.
+
+**Still not right.**
+
+- Armour does not exist, so there is nothing defensive to make.
+- Items do not drop on the ground. Breaking a block teleports it into the bag,
+  where the concept sheet shows drops flying to the player.
+- The hotbar cannot be rearranged, and nothing can be dropped.
+- Dying does not cost you anything you are carrying.

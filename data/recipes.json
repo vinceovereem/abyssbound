@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "What can be made from what. Design owns this file.",
+    "station: empty means you can make it anywhere, by hand.",
+    "The order here is the order they appear in the crafting list."
+  ],
+  "recipes": [
+    { "out": "torch",        "count": 3, "needs": { "wood": 1 },                        "station": "" },
+    { "out": "workbench",    "count": 1, "needs": { "wood": 10 },                       "station": "" },
+
+    { "out": "wood_pick",    "count": 1, "needs": { "wood": 8 },                        "station": "workbench" },
+    { "out": "wood_sword",   "count": 1, "needs": { "wood": 6 },                        "station": "workbench" },
+    { "out": "furnace",      "count": 1, "needs": { "stone": 20 },                      "station": "workbench" },
+    { "out": "stone_pick",   "count": 1, "needs": { "wood": 4, "stone": 12 },           "station": "workbench" },
+
+    { "out": "copper_bar",   "count": 1, "needs": { "copper_ore": 3 },                  "station": "furnace" },
+    { "out": "iron_bar",     "count": 1, "needs": { "iron_ore": 3 },                    "station": "furnace" },
+    { "out": "anvil",        "count": 1, "needs": { "iron_bar": 5 },                    "station": "furnace" },
+
+    { "out": "copper_pick",  "count": 1, "needs": { "wood": 4, "copper_bar": 8 },       "station": "anvil" },
+    { "out": "copper_sword", "count": 1, "needs": { "wood": 3, "copper_bar": 7 },       "station": "anvil" },
+    { "out": "iron_pick",    "count": 1, "needs": { "wood": 4, "iron_bar": 10 },        "station": "anvil" },
+    { "out": "iron_sword",   "count": 1, "needs": { "wood": 3, "iron_bar": 8 },         "station": "anvil" }
+  ]
+}

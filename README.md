@@ -16,6 +16,9 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
   come out that did not before
 - Wildlife by day, hostiles by night, and a swing to answer them with
 - Light keeps them off: a lit room is a safe one
+- A hotbar, a backpack and crafting. Wood becomes torches and a workbench;
+  the workbench unlocks tools; a furnace smelts ore into bars; an anvil turns
+  bars into better tools
 
 ## Play it
 
@@ -66,10 +69,10 @@ adding to it needs no code.
 2. Hold the left mouse button on a tile to dig it. Break time depends on the rock.
 3. Press **Q** twice to select the torch, then right-click to place it. Then dig
    down far enough that it matters.
-4. **Wait for dark.** A day is twenty real minutes, the clock is at the top of
+6. **Wait for dark.** A day is twenty real minutes, the clock is at the top of
    the screen, and things come out at night. Dig into a hillside, put a torch
    down, and nothing spawns in the light.
-5. Press **F3** at any point to see the seed, the biome, the depth, the time and
+7. Press **F3** at any point to see the seed, the biome, the depth, the time and
    what the nearest creature is doing.
 
 ### Hosting the web build
@@ -99,7 +102,10 @@ variable `ENABLE_PAGES` set to `true`.
 | Up + F | Dig the block over your head |
 | G | Place the selected tile, aimed the same way. Hold to lay a run |
 | X | Swing. Aimed the same way as digging |
-| Q | Cycle what gets placed: dirt, stone, torch |
+| 1 to 0 | Pick a hotbar slot. What is in it is what you place |
+| Q | Next hotbar slot |
+| I | Backpack |
+| C | Crafting. While it is open, the number keys make things |
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |
 | E | Tame a critter (the archived zones only, for now) |
 | R | Restart |

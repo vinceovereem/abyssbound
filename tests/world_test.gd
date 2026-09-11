@@ -33,6 +33,9 @@ func _ready() -> void:
 	await _check_night()
 	await _check_death()
 	_check_goals()
+	_check_inventory()
+	_check_crafting()
+	await _check_stations_and_tools()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -415,9 +418,22 @@ func _check_save_load() -> void:
 	var again: ChunkStore = WorldSave.load_world()["store"]
 	_ok("edits survive a second save and load", again.get_fg(x, y) == 0)
 
+	# What you were carrying comes back too.
+	Game.inventory.clear()
+	Game.inventory.add("iron_bar", 7)
+	Game.inventory.add("copper_pick", 1)
+	WorldSave.save_world(store, Vector2.ZERO)
+	Game.inventory.clear()
+	_ok("the bag is empty before loading", Game.amount_of("iron_bar") == 0)
+	WorldSave.load_world()
+	_ok("what you were carrying comes back", Game.amount_of("iron_bar") == 7,
+		"%d bars" % Game.amount_of("iron_bar"))
+	_ok("and so does the pickaxe", Game.amount_of("copper_pick") == 1)
+	Game.inventory.clear()
+
 	var fresh_size := FileAccess.open(WorldSave.PATH, FileAccess.READ).get_length()
 	_ok("a save is small because it stores changes, not the world",
-		fresh_size < 4096, "%d bytes for 2 edits" % fresh_size)
+		fresh_size < 8192, "%d bytes" % fresh_size)
 
 	WorldSave.clear()
 
@@ -772,10 +788,10 @@ func _check_goals() -> void:
 		not Goals.active().any(func(o: Dictionary) -> bool: return o["id"] == "wood"))
 
 	# Placing and fighting.
-	Goals.note_placed("torch")
-	_ok("placing a torch counts", Goals.is_done("torch"))
-	Goals.note_placed("dirt")
-	_ok("placing dirt does not count as a torch", Goals.have("torch") == 1)
+	Goals.note_crafted("torch", 1)
+	_ok("crafting a torch counts", Goals.is_done("torch"))
+	Goals.note_crafted("dirt", 1)
+	_ok("crafting something else does not count as a torch", Goals.have("torch") == 1)
 
 	Goals.note_defeat()
 	Goals.note_defeat()
@@ -799,3 +815,187 @@ func _check_goals() -> void:
 
 	Goals.reset()
 	_ok("resetting clears progress", Goals.have("wood") == 0 and not Goals.is_done("wood"))
+
+
+# ---------------------------------------------------------------------------
+func _check_inventory() -> void:
+	print("\ncarrying things")
+	var db := ItemDB.get_db()
+	_ok("items.json loads", db.order.size() > 0, "%d items" % db.order.size())
+	_ok("a block knows what tile it becomes", db.tile_of("stone") == "stone")
+	_ok("a pickaxe has dig power", db.power_of("iron_pick") > db.power_of("wood_pick"))
+	_ok("a workbench provides its station", db.station_of("workbench") == "workbench")
+
+	var inv := Inventory.new()
+	_ok("a new bag is empty", inv.count_of("stone") == 0)
+
+	inv.add("stone", 30)
+	_ok("things go in", inv.count_of("stone") == 30)
+
+	# Stacks fill up rather than spreading into partial piles.
+	inv.add("stone", 200)
+	var limit := db.stack_limit("stone")
+	var used := 0
+	for i in Inventory.SLOTS:
+		if inv.ids[i] == "stone":
+			used += 1
+	_ok("a big pile fills whole stacks", inv.count_of("stone") == 230,
+		"%d in %d slots of %d" % [inv.count_of("stone"), used, limit])
+
+	_ok("taking out works", inv.remove("stone", 200) and inv.count_of("stone") == 30)
+	_ok("taking out more than you have fails", not inv.remove("stone", 999))
+	_ok("and changes nothing when it fails", inv.count_of("stone") == 30)
+
+	# A tool stacks to one, so a full bag of them is thirty tools.
+	var tools := Inventory.new()
+	var left := tools.add("iron_pick", 40)
+	_ok("single stack items take a slot each",
+		tools.count_of("iron_pick") == Inventory.SLOTS and left == 40 - Inventory.SLOTS,
+		"%d held, %d left over" % [tools.count_of("iron_pick"), left])
+
+	_ok("a full bag reports what would not fit", tools.add("stone", 5) == 5)
+	_ok("unknown things are refused", inv.add("not_a_thing", 3) == 3)
+
+	inv.select(4)
+	_ok("the hotbar selection sticks", inv.selected == 4)
+	inv.select(99)
+	_ok("selection cannot leave the hotbar", inv.selected == Inventory.HOTBAR - 1)
+
+
+# ---------------------------------------------------------------------------
+func _check_crafting() -> void:
+	print("\ncrafting")
+	var book := RecipeBook.get_book()
+	_ok("recipes.json loads", book.recipes.size() > 0, "%d recipes" % book.recipes.size())
+
+	var inv := Inventory.new()
+	var nowhere := {}
+	var bench := { "workbench": true }
+
+	# By hand, with nothing, nothing is possible.
+	_ok("with nothing you can make nothing", book.available(inv, nowhere).is_empty())
+
+	inv.add("wood", 10)
+	var by_hand := book.available(inv, nowhere)
+	_ok("wood alone makes a torch and a workbench", by_hand.size() == 2,
+		"%d recipes" % by_hand.size())
+
+	var pick_index := -1
+	for i in book.recipes.size():
+		if book.recipes[i]["out"] == "wood_pick":
+			pick_index = i
+	_ok("a pickaxe needs a workbench, not bare hands",
+		not book.can_make(pick_index, inv, nowhere))
+	inv.add("wood", 10)
+	_ok("and can be made once one is standing there",
+		book.can_make(pick_index, inv, bench))
+
+	var wood_before := inv.count_of("wood")
+	_ok("making it works", book.make(pick_index, inv, bench))
+	_ok("making it spends the wood", inv.count_of("wood") == wood_before - 8,
+		"%d -> %d" % [wood_before, inv.count_of("wood")])
+	_ok("and hands over the pickaxe", inv.count_of("wood_pick") == 1)
+
+	# Smelting needs the furnace, and ore.
+	var bar := -1
+	for i in book.recipes.size():
+		if book.recipes[i]["out"] == "copper_bar":
+			bar = i
+	var forge := { "furnace": true }
+	inv.add("copper_ore", 3)
+	_ok("ore does not become a bar over a workbench", not book.can_make(bar, inv, bench))
+	_ok("but it does over a furnace", book.can_make(bar, inv, forge))
+	_ok("smelting consumes the ore",
+		book.make(bar, inv, forge) and inv.count_of("copper_ore") == 0
+			and inv.count_of("copper_bar") == 1)
+
+
+# ---------------------------------------------------------------------------
+## Crafting and digging as the player actually meets them: a station standing
+## in the world, and a pickaxe in the hotbar.
+func _check_stations_and_tools() -> void:
+	print("\nstations and tools")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 30:
+		await get_tree().physics_frame
+
+	var mining = world.mining
+	var tiles := TileDB.get_db()
+	var here: Vector2i = world.player_tile()
+	Game.inventory.clear()
+
+	_ok("standing in an empty field, no station is in reach",
+		mining.stations_in_reach().is_empty())
+
+	world.store.set_fg(here.x + 3, here.y, tiles.id("workbench"))
+	var near: Dictionary = mining.stations_in_reach()
+	_ok("a workbench put down nearby counts", near.has("workbench"), "%s" % near.keys())
+
+	world.store.set_fg(here.x + 3, here.y, 0)
+	world.store.set_fg(here.x + 40, here.y, tiles.id("workbench"))
+	_ok("one across the map does not", not mining.stations_in_reach().has("workbench"))
+
+	# A pickaxe digs faster than hands, which is the whole reason to make one.
+	var by_hand: float = mining.dig_power()
+	Game.inventory.add("iron_pick", 1)
+	Game.inventory.select(0)
+	var with_pick: float = mining.dig_power()
+	_ok("bare hands are the slow way", by_hand == Mining.HAND_POWER, "%.0f" % by_hand)
+	_ok("a pickaxe digs faster than hands", with_pick > by_hand,
+		"%.0f vs %.0f" % [with_pick, by_hand])
+
+	# Placing spends what you are carrying. Find somewhere it is actually
+	# allowed first: empty, with rock beside it, or the earlier failure is the
+	# support rule refusing rather than the inventory misbehaving.
+	var spot := here
+	var found := false
+	for dx in range(-3, 4):
+		for dy in range(-2, 3):
+			var c := here + Vector2i(dx, dy)
+			if world.store.get_fg(c.x, c.y) == 0 and mining._has_support(c.x, c.y):
+				spot = c
+				found = true
+				break
+		if found:
+			break
+	_ok("there is somewhere a block is allowed", found, "%s" % spot)
+
+	Game.inventory.clear()
+	Game.inventory.add("torch", 2)
+	Game.inventory.select(0)
+	mining._target = spot
+	mining._place()
+	_ok("placing puts the tile down",
+		world.store.get_fg(spot.x, spot.y) == tiles.id("torch"))
+	_ok("placing spends one from the stack", Game.inventory.count_of("torch") == 1,
+		"%d left" % Game.inventory.count_of("torch"))
+
+	world.store.set_fg(spot.x, spot.y, 0)
+	Game.inventory.clear()
+	Game.inventory.add("wood_pick", 1)
+	Game.inventory.select(0)
+	mining._target = spot
+	mining._place()
+	_ok("a pickaxe is not a block and does not get placed",
+		world.store.get_fg(spot.x, spot.y) == 0)
+	_ok("and is still in the bag", Game.inventory.count_of("wood_pick") == 1)
+
+	# Breaking gives the material into the bag.
+	Game.inventory.clear()
+	var dug := here + Vector2i(0, 2)
+	while not world.store.is_solid(dug.x, dug.y) and dug.y < here.y + 8:
+		dug.y += 1
+	var was: int = world.store.get_fg(dug.x, dug.y)
+	mining._target = dug
+	mining._progress = 9999.0
+	mining._dig(0.001)
+	_ok("breaking a block puts it in the bag",
+		Game.inventory.count_of(tiles.drop_of(was)) == 1,
+		"%s" % tiles.drop_of(was))
+
+	Game.inventory.clear()
+	world.queue_free()
+	await get_tree().process_frame
