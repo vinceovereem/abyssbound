@@ -437,3 +437,38 @@ player's things to complete an action.
 - Dying still costs nothing.
 - Armour icons are legible but the three pieces look more alike than they
   should.
+
+
+---
+
+## Round 12 — 2026-09-11 — nothing on the keyboard ever worked
+
+**Reported.** "I can't start the game, I press space and it doesn't get in."
+
+**Found.** Every key in `project.godot` was bound with `"device":16`. Real key
+presses arrive from device -1, so **no keyboard action matched anything**. Not
+jump, not moving, not digging, not the key that starts the game. It was in the
+project from the first commit, and everything I added copied it.
+
+**Why it hid for eleven rounds.** Every test drives input with
+`Input.action_press()`, which sets the action state directly and never goes
+through the input map at all. So the smoke test could jump, the playtest could
+walk twenty four tiles, and the browser check could dig, while a person holding
+a real keyboard got nothing. The tests were not testing input; they were
+bypassing it.
+
+It also explains something I got wrong in round 7. The browser check timed out
+on the title screen and I blamed Godot canvas focus, then worked around it by
+adding `--start` to skip the title. The workaround was sound but the diagnosis
+was not: the real reason Space did nothing in the browser is the same reason it
+did nothing everywhere else. **A workaround that makes a symptom go away is not
+a diagnosis**, and I should have been suspicious of one that specific.
+
+**Fixed.** All 29 key bindings moved to device -1. `start_game.tscn` now drives
+the real title screen with a real `InputEventKey` through
+`Input.parse_input_event`, and separately checks **every** binding in the map
+against a synthetic press of its own key, so a future mistake in any one of
+them fails CI rather than shipping.
+
+**What this cost.** Three releases, v0.1.0 through v0.3.0, in which the desktop
+builds could not be played at all.

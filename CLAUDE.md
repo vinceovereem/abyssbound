@@ -217,6 +217,17 @@ jump, so nothing is lost.
   is an `Object` virtual. Both shadow silently and fail confusingly.
 - **Type inference stops at an untyped node.** `world` is a plain `Node2D`, so
   anything read off it needs an explicit type: `var t: Vector2i = world.player_tile()`.
+- **Key bindings must use `"device":-1`.** The project shipped with every key
+  bound to `"device":16`, which matches no real key press, so *nothing on the
+  keyboard worked*: not moving, not jumping, not the key that starts the game.
+  It hid for a long time because tests drive input with `Input.action_press()`,
+  which sets the action state directly and never goes through the input map.
+  `tests/playtest/start_game.tscn` now checks every binding against a synthetic
+  key press, and CI runs it.
+- **`Input.action_press()` does not produce an event.** It sets the action
+  state for anything polling `Input.is_action_pressed()`, but nothing reaches
+  `_input` or `_unhandled_input`. To test a screen that handles events, build an
+  `InputEventKey` and pass it to `Input.parse_input_event()`.
 - **macOS throttles a windowed run that is not in front.** A screenshot script
   that takes twenty seconds with the window up takes several minutes behind
   another window, which looks exactly like a hang. Call
