@@ -32,23 +32,10 @@ func _ready() -> void:
 	_ok("the world scene exists", ResourceLoader.exists("res://scenes/world.tscn"))
 
 	# The bug this file was written for: every key was bound with device 16,
-	# so a real key press matched no action at all. Nothing on the keyboard
-	# worked, including the key that starts the game.
-	var unmatched: Array[String] = []
-	for action: StringName in InputMap.get_actions():
-		if str(action).begins_with("ui_"):
-			continue
-		for event in InputMap.action_get_events(action):
-			if not (event is InputEventKey):
-				continue
-			var probe := InputEventKey.new()
-			probe.physical_keycode = event.physical_keycode
-			probe.keycode = event.keycode
-			probe.pressed = true
-			if not InputMap.event_is_action(probe, action):
-				unmatched.append("%s/%s" % [action, event.as_text()])
+	# so a real key press matched no action at all.
+	var unmatched := InputCheck.dead_bindings()
 	_ok("every key binding matches a real key press", unmatched.is_empty(),
-		", ".join(unmatched) if unmatched else "all bindings live")
+		", ".join(unmatched) if not unmatched.is_empty() else "all bindings live")
 
 	var title: Control = load("res://scenes/main.tscn").instantiate()
 	add_child(title)
