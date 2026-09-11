@@ -12,6 +12,9 @@ extends CharacterBody2D
 @export var sight := 16.0        ## tiles
 @export var hunt_speed := 46.0
 @export var health := 2
+## A hunter hits harder than something merely patrolling, which is what makes
+## armour worth making before a night out.
+@export var damage := 1
 @export var jump_velocity := -260.0
 
 @onready var sprite: AnimatedSprite2D = $Sprite
@@ -27,6 +30,7 @@ func _ready() -> void:
 	add_to_group("enemy")
 	if hunts:
 		add_to_group("hostile")
+		damage = 2
 
 
 func _physics_process(delta: float) -> void:
@@ -92,7 +96,7 @@ func _check_player() -> void:
 			hurt(2, 0)
 		else:
 			var away: int = 1 if body.global_position.x > global_position.x else -1
-			body.take_damage(1, away)
+			body.take_damage(damage, away)
 		return
 
 
@@ -101,6 +105,10 @@ func die() -> void:
 		return
 	_dying = true
 	Goals.note_defeat()
+	# Something to take away from a fight.
+	var world := get_tree().get_first_node_in_group("world")
+	if world != null and is_instance_valid(world) and world.has_method("spawn_drop"):
+		world.spawn_drop(global_position, "hide", 1)
 	set_deferred("collision_layer", 0)
 	hitbox.set_deferred("monitoring", false)
 	var tween := create_tween()

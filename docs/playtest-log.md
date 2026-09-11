@@ -400,3 +400,40 @@ same mistake as round 8's torch, made again.
   where the concept sheet shows drops flying to the player.
 - The hotbar cannot be rearranged, and nothing can be dropped.
 - Dying does not cost you anything you are carrying.
+
+
+---
+
+## Round 11 — 2026-09-11 — things on the ground, and something to wear
+
+**Built.** Item drops and armour, the two most obviously unfinished things left
+in the mining loop.
+
+**Drops.** Breaking a block now leaves it lying there, bobbing, and it flies to
+you when you come near. Creatures drop hide when driven off, so a fight is
+worth having. They are plain nodes moved by hand against the chunk store rather
+than physics bodies, because there can be a great many of them and none of them
+need to collide with anything except the ground.
+
+This also **removed a rule rather than adding one**. Digging used to put a tile
+back into the ground when the bag was full. Now a full bag just means the drop
+waits, which is both simpler and what the concept sheet shows.
+
+**Armour.** Copper and iron sets at the anvil, worn with the same key that
+places a block, shown in the backpack with a defence total. It softens a hit
+and never removes one: being untouchable takes the tension out of a night
+faster than being fragile does. Hunting creatures now hit for two rather than
+one, so a set is worth making before going out after dark.
+
+**Same rule everywhere.** Equipping swaps the old piece back and undoes itself
+if there is nowhere to put it. That is the third place this rule appears, after
+digging into a full bag and crafting with no room for the result. It is worth
+stating plainly in CLAUDE.md rather than rediscovering: never destroy a
+player's things to complete an action.
+
+**Still not right.**
+
+- The hotbar cannot be rearranged and nothing can be dropped on purpose.
+- Dying still costs nothing.
+- Armour icons are legible but the three pieces look more alike than they
+  should.

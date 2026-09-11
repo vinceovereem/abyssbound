@@ -16,6 +16,10 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
   come out that did not before
 - Wildlife by day, hostiles by night, and a swing to answer them with
 - Light keeps them off: a lit room is a safe one
+- What you break falls on the ground and flies to you when you get close. A
+  full bag means it waits rather than vanishing
+- Armour from copper and iron at an anvil, which softens a hit but never
+  stops one
 - A hotbar, a backpack and crafting. Wood becomes torches and a workbench;
   the workbench unlocks tools; a furnace smelts ore into bars; an anvil turns
   bars into better tools
@@ -100,11 +104,11 @@ variable `ENABLE_PAGES` set to `true`.
 | F | Dig. Reaches one tile, aimed with the movement keys |
 | Down + F | Dig the block under your feet |
 | Up + F | Dig the block over your head |
-| G | Place the selected tile, aimed the same way. Hold to lay a run |
+| G | Use what you are holding: place a block, or put armour on |
 | X | Swing. Aimed the same way as digging |
 | 1 to 0 | Pick a hotbar slot. What is in it is what you place |
 | Q | Next hotbar slot |
-| I | Backpack |
+| I | Backpack. Shows what you are wearing and your defence |
 | C | Crafting. While it is open, the number keys make things |
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |
 | E | Tame a critter (the archived zones only, for now) |

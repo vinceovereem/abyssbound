@@ -14,6 +14,9 @@ const HOTBAR := 10
 var ids: Array[String] = []
 var counts: Array[int] = []
 var selected := 0
+## What is worn. Kept apart from the slots so armour cannot be accidentally
+## placed, dropped or stacked while it is on.
+var equipped := { "head": "", "body": "", "legs": "" }
 
 var _db: ItemDB
 
@@ -29,6 +32,8 @@ func clear() -> void:
 	for i in SLOTS:
 		ids[i] = ""
 		counts[i] = 0
+	for slot: String in equipped.keys():
+		equipped[slot] = ""
 	selected = 0
 	changed.emit()
 
@@ -106,6 +111,51 @@ func remove(id: String, amount: int) -> bool:
 	return true
 
 
+## Puts a piece on, swapping whatever was there back into the bag. Refuses if
+## the bag has no room for the swap, so nothing is destroyed by equipping.
+func equip(id: String) -> bool:
+	if not _db.has(id) or _db.kind(id) != "armour":
+		return false
+	var slot := str(_db.of(id).get("slot", ""))
+	if slot.is_empty() or not equipped.has(slot):
+		return false
+	if count_of(id) <= 0:
+		return false
+
+	var previous: String = equipped[slot]
+	if not remove(id, 1):
+		return false
+	equipped[slot] = id
+	if not previous.is_empty() and add(previous, 1) > 0:
+		# Nowhere to put the old piece. Undo rather than lose it.
+		equipped[slot] = previous
+		add(id, 1)
+		return false
+	changed.emit()
+	return true
+
+
+func unequip(slot: String) -> bool:
+	var worn: String = str(equipped.get(slot, ""))
+	if worn.is_empty():
+		return false
+	if add(worn, 1) > 0:
+		return false   # no room; leave it on
+	equipped[slot] = ""
+	changed.emit()
+	return true
+
+
+## How much a hit is softened by what is worn.
+func defence() -> int:
+	var total := 0
+	for slot: String in equipped.keys():
+		var worn: String = equipped[slot]
+		if not worn.is_empty():
+			total += int(_db.of(worn).get("defence", 0))
+	return total
+
+
 ## Everything held, as id -> total. For saving and for the crafting list.
 func totals() -> Dictionary:
 	var out := {}
@@ -116,15 +166,21 @@ func totals() -> Dictionary:
 	return out
 
 
-func to_save() -> Array:
-	var out: Array = []
+func to_save() -> Dictionary:
+	var slots: Array = []
 	for i in SLOTS:
-		out.append([ids[i], counts[i]])
-	return out
+		slots.append([ids[i], counts[i]])
+	return { "slots": slots, "equipped": equipped.duplicate() }
 
 
-func from_save(data: Array) -> void:
-	for i in mini(SLOTS, data.size()):
-		ids[i] = str(data[i][0])
-		counts[i] = int(data[i][1])
+func from_save(data: Variant) -> void:
+	# Older saves were a bare array of slots, with nothing worn.
+	var slots: Array = data if data is Array else data.get("slots", [])
+	for i in mini(SLOTS, slots.size()):
+		ids[i] = str(slots[i][0])
+		counts[i] = int(slots[i][1])
+	if data is Dictionary:
+		for slot: String in data.get("equipped", {}).keys():
+			if equipped.has(slot):
+				equipped[slot] = str(data["equipped"][slot])
 	changed.emit()

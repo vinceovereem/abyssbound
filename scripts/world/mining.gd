@@ -141,10 +141,8 @@ func _dig(delta: float) -> void:
 	_set_tile(_target.x, _target.y, 0)
 	if drop.is_empty():
 		return
-	# If there is no room, put the tile back rather than destroying it.
-	if Game.collect(drop, 1) > 0:
-		_set_tile(_target.x, _target.y, id)
-		return
+	# Breaking always succeeds. What comes out lies on the ground until it is
+	# picked up, so a full bag costs you nothing.
 	tile_broken.emit(_target.x, _target.y, drop)
 
 
@@ -152,6 +150,11 @@ func _place() -> void:
 	if store.get_fg(_target.x, _target.y) != 0:
 		return
 	var held := Game.inventory.selected_item()
+	# The place key doubles as "use what I am holding": armour goes on rather
+	# than going down.
+	if _items.kind(held) == "armour":
+		Game.inventory.equip(held)
+		return
 	var tile_name := _items.tile_of(held)
 	if tile_name.is_empty():
 		return   # nothing selected, or what is selected is not a block

@@ -36,6 +36,7 @@ func _ready() -> void:
 	_check_inventory()
 	_check_crafting()
 	await _check_stations_and_tools()
+	_check_armour()
 
 	print("---------------------")
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -983,7 +984,7 @@ func _check_stations_and_tools() -> void:
 		world.store.get_fg(spot.x, spot.y) == 0)
 	_ok("and is still in the bag", Game.inventory.count_of("wood_pick") == 1)
 
-	# Breaking gives the material into the bag.
+	# Breaking leaves the material on the ground rather than teleporting it in.
 	Game.inventory.clear()
 	var dug := here + Vector2i(0, 2)
 	while not world.store.is_solid(dug.x, dug.y) and dug.y < here.y + 8:
@@ -992,10 +993,111 @@ func _check_stations_and_tools() -> void:
 	mining._target = dug
 	mining._progress = 9999.0
 	mining._dig(0.001)
-	_ok("breaking a block puts it in the bag",
+	await get_tree().process_frame
+
+	var drops := 0
+	for node in world.entities.get_children():
+		if node is ItemDrop:
+			drops += 1
+	_ok("breaking a block leaves it on the ground", drops == 1, "%d drops" % drops)
+	_ok("and it is what the tile drops",
+		drops == 1 and _first_drop(world).item_id == tiles.drop_of(was),
+		tiles.drop_of(was))
+	_ok("the bag is still empty until it is picked up",
+		Game.inventory.count_of(tiles.drop_of(was)) == 0)
+
+	# Walking over it takes it.
+	var loose := _first_drop(world)
+	loose.global_position = world.player.global_position
+	for i in 20:
+		await get_tree().physics_frame
+	_ok("walking into it picks it up",
 		Game.inventory.count_of(tiles.drop_of(was)) == 1,
-		"%s" % tiles.drop_of(was))
+		"%d" % Game.inventory.count_of(tiles.drop_of(was)))
+
+	# A full bag leaves it lying there rather than destroying it.
+	Game.inventory.clear()
+	for i in Inventory.SLOTS:
+		Game.inventory.add("iron_pick", 1)
+	world.spawn_drop(world.player.global_position, "stone", 1)
+	for i in 20:
+		await get_tree().physics_frame
+	var still := 0
+	for node in world.entities.get_children():
+		if node is ItemDrop and not node.is_queued_for_deletion():
+			still += 1
+	_ok("a full bag leaves it on the ground rather than eating it", still >= 1,
+		"%d still there" % still)
 
 	Game.inventory.clear()
 	world.queue_free()
 	await get_tree().process_frame
+
+
+func _first_drop(world: Node2D) -> ItemDrop:
+	for node in world.entities.get_children():
+		if node is ItemDrop:
+			return node
+	return null
+
+
+# ---------------------------------------------------------------------------
+func _check_armour() -> void:
+	print("\narmour")
+	var inv := Inventory.new()
+	var db := ItemDB.get_db()
+
+	_ok("armour knows where it goes", str(db.of("iron_mail").get("slot", "")) == "body")
+	_ok("nothing worn is no defence", inv.defence() == 0)
+
+	inv.add("copper_helm", 1)
+	_ok("you cannot wear what you are not carrying", not inv.equip("iron_helm"))
+	_ok("putting it on works", inv.equip("copper_helm"))
+	_ok("it leaves the bag when worn", inv.count_of("copper_helm") == 0)
+	_ok("and counts toward defence", inv.defence() == 1, "%d" % inv.defence())
+
+	inv.add("copper_mail", 1)
+	inv.add("copper_greaves", 1)
+	inv.equip("copper_mail")
+	inv.equip("copper_greaves")
+	_ok("a full set adds up", inv.defence() == 4, "%d" % inv.defence())
+
+	# Swapping a piece puts the old one back rather than losing it.
+	inv.add("iron_helm", 1)
+	_ok("swapping a piece works", inv.equip("iron_helm"))
+	_ok("the old piece comes back to the bag", inv.count_of("copper_helm") == 1)
+	_ok("and defence follows the better piece", inv.defence() == 5, "%d" % inv.defence())
+
+	_ok("taking it off returns it", inv.unequip("head") and inv.count_of("iron_helm") == 1)
+	_ok("and drops the defence", inv.defence() == 3, "%d" % inv.defence())
+
+	# Armour softens a hit but never removes it.
+	Game.inventory.clear()
+	Game.health = Game.MAX_HEALTH
+	Game.damage(2)
+	var bare: int = Game.MAX_HEALTH - Game.health
+	Game.health = Game.MAX_HEALTH
+
+	for piece in ["iron_helm", "iron_mail", "iron_greaves"]:
+		Game.inventory.add(piece, 1)
+		Game.inventory.equip(piece)
+	_ok("a full iron set is worth something", Game.inventory.defence() == 7,
+		"%d" % Game.inventory.defence())
+	Game.damage(2)
+	var armoured: int = Game.MAX_HEALTH - Game.health
+	_ok("armour softens a hit", armoured < bare, "%d vs %d" % [armoured, bare])
+	_ok("but never removes it", armoured >= 1)
+
+	# It survives a save.
+	WorldSave.clear()
+	var store := ChunkStore.new(99)
+	WorldSave.save_world(store, Vector2.ZERO)
+	Game.inventory.clear()
+	_ok("nothing is worn after clearing", Game.inventory.defence() == 0)
+	WorldSave.load_world()
+	_ok("what you were wearing comes back", Game.inventory.defence() == 7,
+		"%d" % Game.inventory.defence())
+	WorldSave.clear()
+
+	Game.inventory.clear()
+	Game.health = Game.MAX_HEALTH

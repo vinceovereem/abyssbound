@@ -50,6 +50,24 @@ func _ready() -> void:
 		for i in 4:
 			await get_tree().physics_frame
 
+	if BootConfig.has("drops"):
+		var t: Vector2i = world.player_tile()
+		for spec in [[-3, "stone"], [-1, "wood"], [2, "copper_ore"], [4, "hide"], [6, "iron_bar"]]:
+			world.spawn_drop(Vector2((t.x + int(spec[0])) * 16 + 8, (t.y - 2) * 16),
+				str(spec[1]), 1)
+		for i in 45:
+			await get_tree().physics_frame
+
+	if BootConfig.has("bag"):
+		for piece in ["iron_helm", "copper_mail", "iron_greaves"]:
+			Game.inventory.add(piece, 1)
+			Game.inventory.equip(piece)
+		Game.inventory.add("copper_helm", 1)
+		world.inventory_ui._bag.visible = true
+		world.inventory_ui._refresh()
+		for i in 4:
+			await get_tree().physics_frame
+
 	if BootConfig.has("craft"):
 		world.inventory_ui._craft.visible = true
 		world.inventory_ui._refresh()
