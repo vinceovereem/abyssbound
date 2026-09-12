@@ -59,6 +59,13 @@ func _ready() -> void:
 	_ok("pressing it starts a scene change", fade.color.a > 0.01,
 		"fade alpha %.2f" % fade.color.a)
 
-	print("---------------------")
-	print("%d passed, %d failed" % [_passed, _failed])
-	get_tree().quit(0 if _failed == 0 else 1)
+	# Changing scene frees this node, because it is the current scene. A
+	# watcher parented to the root outlives that and can report whether the
+	# world really arrived, which is the half of "does the game start" that
+	# checking for a fade does not cover.
+	var watcher := Node.new()
+	watcher.set_script(load("res://tests/playtest/start_watcher.gd"))
+	watcher.passed_so_far = _passed
+	get_tree().root.add_child(watcher)
+
+	print("  ... waiting for the world to load")
