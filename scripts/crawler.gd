@@ -27,6 +27,7 @@ var _player: Node2D = null
 
 
 func _ready() -> void:
+	ArtManifest.dress(sprite, "crawler")
 	add_to_group("enemy")
 	if hunts:
 		add_to_group("hostile")

@@ -5,8 +5,8 @@ extends RefCounted
 ## Blocks draw the tile they become, so a stack of stone in the hotbar is the
 ## stone you will place. Everything else draws from the item sheet.
 
-const TILE_SHEET := preload("res://assets/tiles/tiles.png")
-const ITEM_SHEET := preload("res://assets/sprites/items.png")
+const TILE_SHEET := preload("res://assets/generated/tiles/tiles.png")
+const ITEM_SHEET := preload("res://assets/generated/sprites/items.png")
 
 
 static func texture_for(id: String) -> Texture2D:

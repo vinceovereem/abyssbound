@@ -17,7 +17,7 @@ import random
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "assets")
+OUT = os.path.join(ROOT, "assets", "generated")
 
 # --------------------------------------------------------------------------
 # Palette. One character per colour so sprites can be written as ASCII grids.

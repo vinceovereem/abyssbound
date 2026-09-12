@@ -2,7 +2,7 @@ extends CanvasLayer
 ## Autoloaded as `Ui`. Survives scene changes, so the heads-up display and the
 ## fade-to-black do not have to be rebuilt in every zone.
 
-const HEART_TEXTURE := preload("res://assets/ui/heart.png")
+const HEART_TEXTURE := preload("res://assets/generated/ui/heart.png")
 const HEART_SIZE := Vector2i(9, 8)
 
 @onready var hearts: HBoxContainer = $Root/TopLeft/Hearts

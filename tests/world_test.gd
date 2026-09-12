@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _check_reach()
 	await _check_finds()
 	await _check_trees()
+	_check_art_manifest()
 	_check_clock()
 	await _check_night()
 	await _check_death()
@@ -1292,3 +1293,47 @@ func _check_trees() -> void:
 	Game.inventory.clear()
 	world.queue_free()
 	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+## The manifest is what lets art be replaced without touching code, so the
+## thing worth checking is that it really is the source of what gets drawn.
+func _check_art_manifest() -> void:
+	print("\nart manifest")
+	ArtManifest.reset()
+
+	_ok("art.json loads", ArtManifest.has("player"))
+	_ok("it knows the creatures too",
+		ArtManifest.has("crawler") and ArtManifest.has("critter"))
+
+	var frames := ArtManifest.frames_for("player")
+	_ok("it builds frames for the player", frames != null)
+	if frames == null:
+		return
+
+	for animation in ["idle", "run", "jump", "fall"]:
+		_ok("the player has a %s animation" % animation, frames.has_animation(animation))
+	_ok("run is more than one frame", frames.get_frame_count("run") > 1,
+		"%d frames" % frames.get_frame_count("run"))
+
+	# Frame size comes from the manifest, not from the code.
+	var first: AtlasTexture = frames.get_frame_texture("idle", 0)
+	_ok("frames are cut to the size the manifest gives",
+		first.region.size == Vector2(20, 30), "%s" % first.region.size)
+
+	_ok("the same frames are shared, not rebuilt per actor",
+		ArtManifest.frames_for("player") == frames)
+	_ok("asking for something not in the manifest gives nothing back",
+		ArtManifest.frames_for("not_a_sprite") == null)
+
+	# The point of the whole thing: a scene keeps working when the manifest
+	# has nothing to say, rather than going invisible.
+	var player: CharacterBody2D = load("res://scenes/actors/player.tscn").instantiate()
+	var sprite: AnimatedSprite2D = player.get_node("Sprite")
+	var before := sprite.sprite_frames
+	ArtManifest.dress(sprite, "not_a_sprite")
+	_ok("an unknown name leaves the scene's own art alone",
+		sprite.sprite_frames == before)
+	ArtManifest.dress(sprite, "player")
+	_ok("a known name replaces it", sprite.sprite_frames == frames)
+	player.free()

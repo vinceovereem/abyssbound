@@ -7,7 +7,7 @@ extends Node2D
 ## cells stays bounded by the window rather than by the size of the world.
 
 const SOURCE_ID := 0
-const TILESET := preload("res://assets/tiles/tileset.tres")
+const TILESET := preload("res://assets/generated/tiles/tileset.tres")
 const WATER_ATLAS := 21
 const EDGE_ATLAS := 22
 
