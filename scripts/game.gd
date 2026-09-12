@@ -16,9 +16,14 @@ signal player_died
 ## Took a hit. The world floats the number where it happened.
 signal player_hurt(amount: int)
 
-const MAX_HEALTH := 5
+## Hearts grow. Life crystals found in caves raise this permanently, which is
+## the reason to go down rather than merely a reward for having gone.
+const STARTING_HEALTH := 5
+const MOST_HEALTH := 10
 
-var health: int = MAX_HEALTH
+var max_health := STARTING_HEALTH
+
+var health: int = STARTING_HEALTH
 var crystals: int = 0
 var zone_name: String = "Surface"
 
@@ -37,7 +42,7 @@ func _ready() -> void:
 
 
 func _broadcast() -> void:
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	crystals_changed.emit(crystals)
 	zone_changed.emit(zone_name)
 
@@ -45,6 +50,16 @@ func _broadcast() -> void:
 func add_crystals(amount: int) -> void:
 	crystals += amount
 	crystals_changed.emit(crystals)
+
+
+## A life crystal. Returns false when there is no more room for hearts.
+func gain_heart() -> bool:
+	if max_health >= MOST_HEALTH:
+		return false
+	max_health += 1
+	health = max_health
+	health_changed.emit(health, max_health)
+	return true
 
 
 ## Picked up. Returns what would not fit, which the caller may want to leave
@@ -69,14 +84,14 @@ func damage(amount: int) -> void:
 	var softened: int = maxi(1, amount - inventory.defence() / 3)
 	health = max(0, health - softened)
 	player_hurt.emit(softened)
-	health_changed.emit(health, MAX_HEALTH)
+	health_changed.emit(health, max_health)
 	if health == 0:
 		call_deferred("_on_death")
 
 
 func heal(amount: int) -> void:
-	health = min(MAX_HEALTH, health + amount)
-	health_changed.emit(health, MAX_HEALTH)
+	health = min(max_health, health + amount)
+	health_changed.emit(health, max_health)
 
 
 func _on_death() -> void:
@@ -89,9 +104,11 @@ func _on_death() -> void:
 
 ## Reset run state and reload the current zone.
 func restart() -> void:
-	health = MAX_HEALTH
+	health = max_health
 	crystals = 0
 	inventory.clear()
+	max_health = STARTING_HEALTH
+	health = max_health
 	_broadcast()
 	Ui.hide_message()
 	change_zone(get_tree().current_scene.scene_file_path, zone_name)

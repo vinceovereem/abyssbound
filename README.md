@@ -12,6 +12,10 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 - One enemy, the crawler. Walk into it and you lose a heart. Land on its head and it dies
 - Crystals to pick up, hearts to lose, both shown in the HUD
 - A critter you can tame. Stand near it and hold **E** until the trust bar fills, then it follows you
+- Caves worth exploring: winding tunnels near the surface opening into
+  chambers deeper down, all connected
+- Chests waiting in them with tools, torches and materials, better the deeper
+  you go, and life crystals that permanently add a heart
 - A day and night cycle. The sun goes out, the world goes dark, and things
   come out that did not before
 - Wildlife by day, hostiles by night, and a swing to answer them with
@@ -69,14 +73,18 @@ adding to it needs no code.
 
 ### What to try first
 
-1. Walk east. About 60 tiles along there is a hole in the ground that keeps going.
+1. Walk east and look for a hole in the ground. The surface is dotted with cave
+   mouths; follow one down rather than digging your own shaft.
 2. Hold the left mouse button on a tile to dig it. Break time depends on the rock.
 3. Press **Q** twice to select the torch, then right-click to place it. Then dig
    down far enough that it matters.
-6. **Wait for dark.** A day is twenty real minutes, the clock is at the top of
+6. **Find a chest.** They sit on cave floors from the cavern layer down. Stand
+   next to one and press **E**. A deep one holds a better pickaxe than you could
+   make. Life crystals glow red and give you a heart when you mine them.
+7. **Wait for dark.** A day is twenty real minutes, the clock is at the top of
    the screen, and things come out at night. Dig into a hillside, put a torch
    down, and nothing spawns in the light.
-7. Press **F3** at any point to see the seed, the biome, the depth, the time and
+8. Press **F3** at any point to see the seed, the biome, the depth, the time and
    what the nearest creature is doing.
 
 ### Hosting the web build
@@ -108,6 +116,7 @@ variable `ENABLE_PAGES` set to `true`.
 | X | Swing. Aimed the same way as digging |
 | 1 to 0 | Pick a hotbar slot. What is in it is what you place |
 | Q | Next hotbar slot |
+| E | Open a chest you are standing next to |
 | I | Backpack. Shows what you are wearing and your defence |
 | C | Crafting. While it is open, the number keys make things |
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |

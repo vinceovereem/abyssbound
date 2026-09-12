@@ -77,9 +77,9 @@ func _spawn() -> void:
 		"tile %s" % world.player_tile())
 	_ok("spawn is in daylight",
 		world.lighting.light_at(world.player_tile().x, world.player_tile().y) > 200)
-	_ok("the Abyss is within walking distance of spawn",
-		absi(WorldGen.ABYSS_CENTER_X - SPAWN_X) < 120,
-		"%d tiles east" % (WorldGen.ABYSS_CENTER_X - SPAWN_X))
+	_ok("spawn is on the surface, above the caves",
+		world.store.gen.depth_band(world.player_tile().y,
+			world.store.gen.surface_height(SPAWN_X)) == 0)
 	await _shot("01_spawn")
 
 

@@ -92,6 +92,30 @@ stops being reproducible, which breaks saves and every seeded test.
 archived zones and are frozen: renumbering them silently repaints
 `levels/legacy/`. Append, never reorder.
 
+## Underground
+
+There is no chasm. The underground is caves, in four depth bands (surface,
+underground, caverns, deep) that `WorldGen.depth_band` names. Openness is
+tuned deliberately: roughly 18% air near the surface, 37% in the caverns, 42%
+deep. Push it much past that and the deep bands stop being caves and become
+empty rooms with hundred tile drops in them, which is where the first attempt
+landed.
+
+Three noises overlap to make them: winding tunnels, big chambers past the
+cavern line, and a **third set of tunnels at a different frequency whose only
+job is to join the first two up**. Without the third, chambers are isolated
+pockets and the caves are not explorable. `tests/world_test.gd` floods from
+many footholds and takes the largest system, because flooding from the first
+hole it finds measures whichever pocket that happened to be.
+
+Chests and life crystals are placed by `_place_finds` **after** the rock, so
+they can ask what is underneath them without the rock needing to know they
+exist. One candidate per grid cell, decided by a hash of the cell, kept only if
+it lands on a floor. Same seed, same chest, same cave.
+
+Chest contents come from `WorldGen.chest_loot(x, y)` and are a pure function of
+position, so a chest holds the same thing however many times you look at it.
+
 ## The living world
 
 `DayClock` is an autoload. One day is twenty real minutes, half of it dark.

@@ -20,6 +20,13 @@ func _ready() -> void:
 	world.seed_override = BootConfig.get_int("seed", 20260910)
 	world.spawn_override_x = BootConfig.get_int("spawn-x", 560)
 	add_child(world)
+	if BootConfig.has("depth"):
+		for i in 20:
+			await get_tree().physics_frame
+		world.teleport(BootConfig.get_int("spawn-x", 560), BootConfig.get_int("depth", 250))
+		world.lighting.sky_light = Lighting.SKY
+		world.lighting.mark_dirty()
+		world.lighting.update_now(world.player_tile())
 	world.debug_overlay.visible = BootConfig.has("overlay")
 	for i in 40:
 		await get_tree().physics_frame
@@ -94,6 +101,12 @@ func _ready() -> void:
 		world.combat._swing()
 		for i in 4:
 			await get_tree().physics_frame
+
+	if BootConfig.has("bright"):
+		# Judging the shape of a cave through the dark is guesswork. This is
+		# for looking at geometry, not for judging how the game reads.
+		world.lighting.get_node("Darkness").visible = false
+		await get_tree().physics_frame
 
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("user://look/look.png")

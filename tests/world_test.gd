@@ -21,7 +21,7 @@ func _ready() -> void:
 	_check_order_independence()
 	_check_surface()
 	_check_biomes()
-	_check_shaft()
+	_check_caves()
 	_check_ores_and_caves()
 	_check_speed()
 	await _check_digging()
@@ -29,6 +29,7 @@ func _ready() -> void:
 	_check_save_load()
 	await _check_traversal()
 	await _check_reach()
+	await _check_finds()
 	_check_clock()
 	await _check_night()
 	await _check_death()
@@ -139,55 +140,101 @@ func _check_biomes() -> void:
 		"y=%d" % store.gen.surface_height(1300))
 
 
-func _check_shaft() -> void:
-	print("\nthe Abyss")
+## Caves you can explore, which is the whole point of the underground now that
+## there is no single chasm to walk down.
+func _check_caves() -> void:
+	print("\ncaves")
 	var store := ChunkStore.new(7)
-
-	# Open all the way down, and open at the top so it can be walked into.
-	var blocked := 0
-	var deepest := 0
-	for y in range(140, WorldGen.HEIGHT, 3):
-		var cx := store.gen.shaft_center(y)
-		if store.is_solid(cx, y):
-			blocked += 1
-		else:
-			deepest = y
-	_ok("the shaft is open from the surface to the bottom", blocked == 0,
-		"%d blocked samples, deepest open y=%d" % [blocked, deepest])
-
-	var mouth := store.gen.surface_height(WorldGen.ABYSS_CENTER_X)
-	_ok("the shaft mouth is at the surface, not sealed",
-		not store.is_solid(store.gen.shaft_center(mouth + 2), mouth + 2))
-
-	# Sampled, not spot-checked: any single deep tile may land inside a cavern,
-	# so the claim is about what the rock down there is made of.
 	var db := TileDB.get_db()
-	var abyss_rock := 0
-	var other_rock := 0
-	for x in range(200, 900, 11):
-		for y in range(WorldGen.ABYSS_TOP + 40, 780, 13):
+
+	# Openness, measured where the chambers are meant to be.
+	var air := 0
+	var solid := 0
+	for x in range(400, 800):
+		for y in range(WorldGen.CAVERN_TOP, WorldGen.DEEP_TOP, 2):
+			if store.get_fg(x, y) == 0:
+				air += 1
+			else:
+				solid += 1
+	var openness := 100.0 * float(air) / float(air + solid)
+	_ok("the caverns are open enough to walk about in", openness > 22.0,
+		"%.1f%% air" % openness)
+	_ok("but are still rock, not a void", openness < 55.0, "%.1f%% air" % openness)
+
+	# The thing that makes it explorable rather than a field of pockets: some
+	# cave should lead a long way. Flooding from the first hole found measures
+	# whichever pocket that happened to be, so take the best of many starts.
+	var starts: Array[Vector2i] = []
+	for x in range(420, 900, 24):
+		for y in range(WorldGen.CAVERN_TOP + 10, WorldGen.DEEP_TOP, 40):
+			if store.get_fg(x, y) == 0 and store.get_fg(x, y + 1) != 0:
+				starts.append(Vector2i(x, y))
+				break
+	_ok("there is somewhere underground to stand", starts.size() > 8,
+		"%d footholds sampled" % starts.size())
+
+	var biggest := 0
+	for from: Vector2i in starts:
+		biggest = maxi(biggest, _flood(store, from, 30000))
+	_ok("some cave leads a long way", biggest > 2500,
+		"largest system %d tiles" % biggest)
+
+	# A way in from the surface, without digging.
+	var entrances := 0
+	for x in range(300, 1700, 3):
+		var h := store.gen.surface_height(x)
+		var open_run := 0
+		for y in range(h, h + 26):
+			if store.get_fg(x, y) == 0:
+				open_run += 1
+			else:
+				open_run = 0
+			if open_run >= 6:
+				entrances += 1
+				break
+	_ok("the surface has holes you can walk into", entrances > 10,
+		"%d of %d columns" % [entrances, 467])
+
+	# Depth still changes the rock.
+	var deep_rock := 0
+	var other := 0
+	for x in range(300, 900, 13):
+		for y in range(WorldGen.DEEP_TOP + 40, 780, 17):
 			var t := store.get_fg(x, y)
 			if t == db.id("abyss_stone"):
-				abyss_rock += 1
+				deep_rock += 1
 			elif t != 0:
-				other_rock += 1
-	_ok("the deep layers are their own rock", other_rock == 0 and abyss_rock > 100,
-		"%d abyss, %d other" % [abyss_rock, other_rock])
+				other += 1
+	_ok("the deep rock is its own stone", other == 0 and deep_rock > 40,
+		"%d deep, %d other" % [deep_rock, other])
 
-	_ok("the shaft is wider deep than shallow",
-		store.gen.shaft_half_width(700) > store.gen.shaft_half_width(100))
+	_ok("there is no chasm any more", not store.gen.has_method("in_shaft"))
 
-	# Without a wall behind it the sky backdrop shows through and the mouth
-	# reads as a cliff over open air rather than a hole in the ground.
-	var walled := 0
-	var sampled := 0
-	for y in range(220, 760, 17):
-		var cx := store.gen.shaft_center(y)
-		sampled += 1
-		if store.get_bg(cx, y) != 0:
-			walled += 1
-	_ok("the shaft has rock behind it, not sky", walled == sampled,
-		"%d of %d samples walled" % [walled, sampled])
+
+## How many air tiles connect to this one. Bounded so a runaway cannot hang.
+func _flood(store: ChunkStore, from: Vector2i, limit: int) -> int:
+	if from.x < 0:
+		return 0
+	var seen := {}
+	var queue: Array[Vector2i] = [from]
+	seen[from] = true
+	var count := 0
+	while not queue.is_empty() and count < limit:
+		var at: Vector2i = queue.pop_back()
+		count += 1
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var next := at + d
+			if seen.has(next):
+				continue
+			if next.y < 40 or next.y >= WorldGen.HEIGHT - 2:
+				continue
+			if next.x < 2 or next.x >= WorldGen.WIDTH - 2:
+				continue
+			if store.get_fg(next.x, next.y) != 0:
+				continue
+			seen[next] = true
+			queue.append(next)
+	return count
 
 
 func _check_ores_and_caves() -> void:
@@ -750,7 +797,7 @@ func _check_death() -> void:
 	for i in 90:
 		await get_tree().physics_frame
 
-	_ok("you come back with your health", Game.health == Game.MAX_HEALTH,
+	_ok("you come back with your health", Game.health == Game.max_health,
 		"%d" % Game.health)
 	_ok("you come back in the same world", world.store.world_seed() == seed_before)
 	_ok("the hole you dug is still there", world.store.get_fg(hole.x, hole.y) == 0)
@@ -806,8 +853,8 @@ func _check_goals() -> void:
 	Goals.note_depth(200, 0)
 	_ok("digging deep enough finishes it", Goals.is_done("deep"))
 
-	Goals.note_depth(500, 2)
-	_ok("reaching an Abyss layer counts", Goals.is_done("abyss"))
+	Goals.note_depth(500, 3)
+	_ok("reaching the deep rock counts", Goals.is_done("deep_rock"))
 
 	# A night survived.
 	var before := Goals.is_done("night")
@@ -1073,10 +1120,10 @@ func _check_armour() -> void:
 
 	# Armour softens a hit but never removes it.
 	Game.inventory.clear()
-	Game.health = Game.MAX_HEALTH
+	Game.health = Game.max_health
 	Game.damage(2)
-	var bare: int = Game.MAX_HEALTH - Game.health
-	Game.health = Game.MAX_HEALTH
+	var bare: int = Game.max_health - Game.health
+	Game.health = Game.max_health
 
 	for piece in ["iron_helm", "iron_mail", "iron_greaves"]:
 		Game.inventory.add(piece, 1)
@@ -1084,7 +1131,7 @@ func _check_armour() -> void:
 	_ok("a full iron set is worth something", Game.inventory.defence() == 7,
 		"%d" % Game.inventory.defence())
 	Game.damage(2)
-	var armoured: int = Game.MAX_HEALTH - Game.health
+	var armoured: int = Game.max_health - Game.health
 	_ok("armour softens a hit", armoured < bare, "%d vs %d" % [armoured, bare])
 	_ok("but never removes it", armoured >= 1)
 
@@ -1100,4 +1147,73 @@ func _check_armour() -> void:
 	WorldSave.clear()
 
 	Game.inventory.clear()
-	Game.health = Game.MAX_HEALTH
+	Game.health = Game.max_health
+
+
+# ---------------------------------------------------------------------------
+## Chests and life crystals: the Terraria way of getting things, where you go
+## and find them rather than grind blocks for them.
+func _check_finds() -> void:
+	print("\nwhat is in the caves")
+	var store := ChunkStore.new(20260910)
+	var db := TileDB.get_db()
+
+	# They exist, underground, standing on something.
+	var chests: Array[Vector2i] = []
+	var crystals := 0
+	var floating := 0
+	for x in range(400, 1000):
+		for y in range(WorldGen.CAVERN_TOP - 60, 760):
+			var t := store.get_fg(x, y)
+			if t != db.id("chest") and t != db.id("life_crystal"):
+				continue
+			if not store.is_solid(x, y + 1):
+				floating += 1
+			if t == db.id("chest"):
+				chests.append(Vector2i(x, y))
+			else:
+				crystals += 1
+	_ok("there are chests to find", chests.size() > 4, "%d" % chests.size())
+	_ok("there are life crystals to find", crystals > 2, "%d" % crystals)
+	_ok("nothing is floating in mid air", floating == 0, "%d floating" % floating)
+
+	# The same seed puts the same chest in the same cave.
+	var again := ChunkStore.new(20260910)
+	_ok("the same seed puts them in the same places",
+		again.get_fg(chests[0].x, chests[0].y) == db.id("chest"))
+
+	# What is inside is worth the walk, and deterministic.
+	var loot: Array = store.gen.chest_loot(chests[0].x, chests[0].y)
+	var again_loot: Array = again.gen.chest_loot(chests[0].x, chests[0].y)
+	_ok("a chest holds several things", loot.size() >= 3, "%d kinds" % loot.size())
+	_ok("its contents do not change between visits", str(loot) == str(again_loot))
+	var names: Array = []
+	for entry: Array in loot:
+		names.append(str(entry[0]))
+	_ok("it holds something worth having",
+		names.any(func(n: String) -> bool: return ItemDB.get_db().kind(n) == "tool"),
+		", ".join(names))
+
+	# Deeper chests hold better tools.
+	var shallow: Array = store.gen.chest_loot(500, WorldGen.CAVERN_TOP)
+	var deep: Array = store.gen.chest_loot(500, WorldGen.HEIGHT - 40)
+	var items := ItemDB.get_db()
+	var shallow_power := 0
+	var deep_power := 0
+	for entry: Array in shallow:
+		shallow_power = maxi(shallow_power, items.power_of(str(entry[0])))
+	for entry: Array in deep:
+		deep_power = maxi(deep_power, items.power_of(str(entry[0])))
+	_ok("a deep chest beats a shallow one", deep_power > shallow_power,
+		"%d vs %d" % [deep_power, shallow_power])
+
+	# Hearts grow, and stop growing.
+	Game.max_health = Game.STARTING_HEALTH
+	var before := Game.max_health
+	_ok("a crystal gives a heart", Game.gain_heart() and Game.max_health == before + 1)
+	while Game.gain_heart():
+		pass
+	_ok("hearts stop at a limit", Game.max_health == Game.MOST_HEALTH,
+		"%d" % Game.max_health)
+	Game.max_health = Game.STARTING_HEALTH
+	Game.health = Game.max_health

@@ -472,3 +472,61 @@ them fails CI rather than shipping.
 
 **What this cost.** Three releases, v0.1.0 through v0.3.0, in which the desktop
 builds could not be played at all.
+
+
+---
+
+## Round 13 — 2026-09-11 — caves instead of a chasm
+
+**Asked for.** Less Minecraft, more Terraria. No deep Abyss; big caves you can
+explore.
+
+**What was actually wrong.** The Abyss was one vast shaft near the middle of a
+two thousand tile world. That made a single column the only interesting place
+to go, and everywhere else was rock you tunnelled through because there was
+nothing else to do with it. That is Minecraft's underground. Terraria's is a
+place you walk around in and find things.
+
+**Removed.** The shaft, and with it `in_shaft`, `shaft_center`,
+`shaft_half_width` and `abyss_layer`. Depth is now four bands that name
+themselves.
+
+**Added.** Caves made of three overlapping noises: winding tunnels, chambers
+past the cavern line, and a third set of tunnels at a different frequency whose
+only job is to join the other two up. Without the third the chambers are
+isolated pockets, which is not exploring, it is a series of rooms.
+
+**Tuned by measuring, not by eye.** The first attempt looked fine in two
+screenshots and was badly wrong in the third: at y=540 the world was an empty
+room, no rock at all. Measuring openness per band gave the real picture:
+
+| Band | First try | Shipped |
+| --- | --- | --- |
+| shallow | 18.1% | 18.1% |
+| caverns upper | 40.9% | 36.9% |
+| caverns lower | 52.3% | 39.3% |
+| deep | 51.5% | 41.6% |
+| deepest | 53.1% | 41.7% |
+| longest vertical drop | 101 tiles | 47 tiles |
+
+A hundred tile drop is not a cave, it is a fall that kills you. Three rounds of
+tuning got a gradient that opens up with depth without dissolving.
+
+**Chests and life crystals.** The answer to "how do you get resources" is now
+that you go and find them. Chests sit on cave floors from the caverns down,
+holding torches, materials and a pickaxe better than the one you could make,
+better the deeper they are. Life crystals give a heart permanently. Both are
+placed by hashing a grid cell and keeping the candidate only if it lands on a
+floor, so the same seed puts the same chest in the same cave.
+
+**A check that was measuring the wrong thing.** "One cave leads a long way"
+flooded from the first opening it found and reported 505 tiles, so it failed.
+The caves were fine; the test had picked a pocket. Flooding from many footholds
+and taking the largest found 30,000. Worth remembering: a failing check is not
+automatically evidence about the code.
+
+**And a screenshot that lied twice.** The chest would not appear in two
+attempts. First the player had teleported directly onto it and was standing in
+front of it. Then my crop was simply below where the chest was. The tile data
+and the renderer had been right the whole time, which asking the running world
+directly established in one go.

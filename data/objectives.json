@@ -69,15 +69,15 @@
     },
     {
       "id": "deep",
-      "text": "Dig 150 tiles below the grass",
+      "text": "Find a cave and follow it down 150 tiles",
       "kind": "depth",
       "count": 150
     },
     {
-      "id": "abyss",
-      "text": "Descend into the Abyss",
+      "id": "deep_rock",
+      "text": "Reach the deep rock",
       "kind": "layer",
-      "count": 1
+      "count": 3
     }
   ]
 }

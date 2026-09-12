@@ -16,9 +16,11 @@ const WIDTH := 2000
 const HEIGHT := 800
 
 const SEA_LEVEL := 130
-const CAVERN_TOP := 300
-const ABYSS_TOP := 460
-const ABYSS_CENTER_X := 1000
+## Where the rock opens out. Above this the underground is tunnels; below it
+## there are chambers big enough to lose your bearings in.
+const CAVERN_TOP := 200
+## Darker, harder rock. Depth for its own sake, not a separate place.
+const DEEP_TOP := 460
 const SKY_ISLAND_X0 := 1100
 const SKY_ISLAND_X1 := 1450
 
@@ -45,7 +47,7 @@ var _cave := FastNoiseLite.new()
 var _cavern := FastNoiseLite.new()
 var _copper := FastNoiseLite.new()
 var _iron := FastNoiseLite.new()
-var _shaft := FastNoiseLite.new()
+var _cross := FastNoiseLite.new()
 var _island := FastNoiseLite.new()
 
 # Tile ids, resolved once so the inner loops compare integers.
@@ -62,6 +64,8 @@ var COPPER := 0
 var IRON := 0
 var ICE := 0
 var ABYSS := 0
+var CHEST := 0
+var CRYSTAL := 0
 var DIRT_WALL := 0
 var STONE_WALL := 0
 
@@ -82,6 +86,8 @@ func _init(seed_value: int = 0) -> void:
 	IRON = _db.id("iron_ore")
 	ICE = _db.id("ice")
 	ABYSS = _db.id("abyss_stone")
+	CHEST = _db.id("chest")
+	CRYSTAL = _db.id("life_crystal")
 	DIRT_WALL = _db.id("dirt_wall")
 	STONE_WALL = _db.id("stone_wall")
 
@@ -90,7 +96,7 @@ func _init(seed_value: int = 0) -> void:
 	_setup(_cavern, 2, FastNoiseLite.TYPE_SIMPLEX, 0.020, 2)
 	_setup(_copper, 3, FastNoiseLite.TYPE_SIMPLEX, 0.090, 1)
 	_setup(_iron, 4, FastNoiseLite.TYPE_SIMPLEX, 0.090, 1)
-	_setup(_shaft, 5, FastNoiseLite.TYPE_SIMPLEX, 0.010, 2)
+	_setup(_cross, 5, FastNoiseLite.TYPE_SIMPLEX, 0.021, 2)
 	_setup(_island, 6, FastNoiseLite.TYPE_SIMPLEX, 0.035, 2)
 
 
@@ -141,29 +147,74 @@ func surface_height(x: int) -> int:
 
 
 # ---------------------------------------------------------------------------
-# The Abyss
+# Depth
 # ---------------------------------------------------------------------------
-func shaft_center(y: int) -> int:
-	return ABYSS_CENTER_X + int(round(_shaft.get_noise_1d(float(y) * 1.5) * 14.0))
-
-
-func shaft_half_width(y: int) -> int:
-	return 10 + int(y / 90)
-
-
-## Which Abyss layer a depth belongs to. 0 means "not down there yet".
-## Milestone 6 gives each layer its own tiles and creatures; for now this is
-## what the HUD and the debug overlay read.
-func abyss_layer(y: int) -> int:
-	if y < ABYSS_TOP:
+## How deep you are, as a band: 0 surface, 1 underground, 2 caverns, 3 deep.
+## Replaced a single giant chasm, which made one column of the map the only
+## interesting place to go.
+func depth_band(y: int, surface: int) -> int:
+	if y < surface + 8:
 		return 0
-	return 1 + int(float(y - ABYSS_TOP) / float(HEIGHT - ABYSS_TOP) * 5.0)
+	if y < CAVERN_TOP:
+		return 1
+	if y < DEEP_TOP:
+		return 2
+	return 3
 
 
-func in_shaft(x: int, y: int) -> bool:
-	if y < 40:
+func band_name(y: int, surface: int) -> String:
+	return ["surface", "underground", "caverns", "deep"][depth_band(y, surface)]
+
+
+# ---------------------------------------------------------------------------
+# What is waiting in the caves
+#
+# One candidate per grid cell, decided by a hash of the cell, then kept only if
+# it lands somewhere a thing could actually sit. That keeps placement a pure
+# function of position, so the same seed puts the same chest in the same cave.
+# ---------------------------------------------------------------------------
+const CHEST_CELL := 60
+const CRYSTAL_CELL := 90
+
+
+func _candidate(cell_x: int, cell_y: int, cell: int, salt: int) -> Vector2i:
+	var h := _hash(cell_x * 7919 + cell_y * 104729, salt)
+	return Vector2i(cell_x * cell + h % cell, cell_y * cell + (h / cell) % cell)
+
+
+func is_chest_spot(x: int, y: int) -> bool:
+	if y < CAVERN_TOP - 70 or y > HEIGHT - 20:
 		return false
-	return absi(x - shaft_center(y)) <= shaft_half_width(y)
+	return _candidate(x / CHEST_CELL, y / CHEST_CELL, CHEST_CELL, 31) == Vector2i(x, y)
+
+
+func is_crystal_spot(x: int, y: int) -> bool:
+	if y < CAVERN_TOP + 40 or y > HEIGHT - 20:
+		return false
+	return _candidate(x / CRYSTAL_CELL, y / CRYSTAL_CELL, CRYSTAL_CELL, 57) == Vector2i(x, y)
+
+
+## What is inside the chest at this spot. Deterministic, and better the deeper
+## you went to find it.
+func chest_loot(x: int, y: int) -> Array:
+	var r := _hash(x * 13 + y, 91)
+	var deep := clampf(float(y) / float(HEIGHT), 0.0, 1.0)
+	var out: Array = [["torch", 5 + r % 8]]
+
+	var picks := ["wood_pick", "stone_pick", "copper_pick", "iron_pick"]
+	out.append([picks[mini(3, int(deep * 4.5))], 1])
+
+	match (r / 7) % 4:
+		0: out.append(["copper_ore", 8 + (r / 11) % 12])
+		1: out.append(["iron_ore", 6 + (r / 11) % 10])
+		2: out.append(["wood", 18 + (r / 11) % 20])
+		_: out.append(["stone", 20 + (r / 11) % 25])
+
+	if deep > 0.45 and (r / 3) % 3 == 0:
+		out.append([["copper_helm", "copper_greaves", "iron_helm"][(r / 5) % 3], 1])
+	if deep > 0.6:
+		out.append([["copper_bar", "iron_bar"][(r / 17) % 2], 3 + (r / 19) % 6])
+	return out
 
 
 # ---------------------------------------------------------------------------
@@ -178,8 +229,6 @@ func _hash(x: int, salt: int) -> int:
 func _is_tree(x: int) -> bool:
 	var b := biome_name(x)
 	if b != "forest" and b != "plains":
-		return false
-	if in_shaft(x, surface_height(x) + 1):
 		return false
 	return _hash(x, 7) % 9 == 0
 
@@ -223,16 +272,35 @@ func generate_chunk(chunk: Chunk) -> void:
 			chunk.bg[i] = _wall_at(wx, wy, h, fg)
 			chunk.water[i] = _water_at(wx, wy, h, fg)
 
+	_place_finds(chunk, x0, y0, heights, tree_h)
+
 	chunk.generated = true
 	chunk.dirty_render = true
 	chunk.dirty_light = true
 
 
-func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h: PackedInt32Array) -> int:
-	# The shaft cuts through everything, so it is tested first.
-	if in_shaft(x, y):
-		return AIR
+## Chests and life crystals, laid in after the rock so they can ask what is
+## underneath them without the rock having to know they exist.
+func _place_finds(chunk: Chunk, x0: int, y0: int,
+		heights: PackedInt32Array, tree_h: PackedInt32Array) -> void:
+	for ly in Chunk.SIZE:
+		var wy := y0 + ly
+		for lx in Chunk.SIZE:
+			var i := ly * Chunk.SIZE + lx
+			if chunk.fg[i] != AIR:
+				continue
+			var wx := x0 + lx
+			var chest := is_chest_spot(wx, wy)
+			if not chest and not is_crystal_spot(wx, wy):
+				continue
+			var h := heights[lx + 2]
+			# Only if there is a floor to stand it on.
+			if not _db.is_solid(_tile_at(wx, wy + 1, h, lx + 2, heights, tree_h)):
+				continue
+			chunk.fg[i] = CHEST if chest else CRYSTAL
 
+
+func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h: PackedInt32Array) -> int:
 	if y < h:
 		var canopy := _canopy_at(x, y, ci, heights, tree_h)
 		if canopy != AIR:
@@ -244,15 +312,29 @@ func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h
 	var b := biome_name(x)
 	var depth := y - h
 
-	# Caves. Tunnels first, then the big cavern voids further down.
-	if depth > 6:
-		var width := lerpf(0.035, 0.075, clampf(float(depth) / 420.0, 0.0, 1.0))
-		if absf(_cave.get_noise_2d(float(x), float(y) * 1.6)) < width:
-			return AIR
-		if y > CAVERN_TOP and _cavern.get_noise_2d(float(x) * 0.6, float(y) * 0.9) > 0.42:
+	# Caves you explore rather than rock you tunnel through.
+	#
+	# Three things overlapping: winding tunnels that widen with depth, big
+	# chambers once you are past the cavern line, and a second set of tunnels
+	# at a different frequency whose only job is to join the first two up.
+	# Without the third, the chambers are pockets and the tunnels never meet.
+	if depth > 4:
+		var deep_ratio := clampf(float(depth) / 380.0, 0.0, 1.0)
+
+		var tunnel := absf(_cave.get_noise_2d(float(x), float(y) * 1.5))
+		if tunnel < lerpf(0.055, 0.105, deep_ratio):
 			return AIR
 
-	if y >= ABYSS_TOP:
+		if y > CAVERN_TOP:
+			var chamber := _cavern.get_noise_2d(float(x) * 1.05, float(y) * 1.35)
+			var opens_at := lerpf(0.38, 0.34, clampf(float(y - CAVERN_TOP) / 380.0, 0.0, 1.0))
+			if chamber > opens_at:
+				return AIR
+
+		if depth > 16 and absf(_cross.get_noise_2d(float(x) * 0.7, float(y) * 2.2)) < 0.05:
+			return AIR
+
+	if y >= DEEP_TOP:
 		return ABYSS
 
 	# The top few tiles follow the biome, everything under them is rock.
@@ -304,14 +386,9 @@ func _is_sky_island(x: int, y: int) -> bool:
 
 
 func _wall_at(x: int, y: int, h: int, fg: int) -> int:
-	# The shaft keeps its rock wall. Leaving it empty let the daylight backdrop
-	# through, which made the mouth of the Abyss read as a cliff over open sky
-	# instead of a hole in the ground. Its darkness is the lighting's job.
-	if in_shaft(x, y):
-		return 0 if y <= h + 4 else STONE_WALL
 	if y <= h:
 		return 0
-	if y >= ABYSS_TOP:
+	if y >= DEEP_TOP:
 		return STONE_WALL
 	return DIRT_WALL if y <= h + 8 else STONE_WALL
 

@@ -74,6 +74,12 @@ func _ready() -> void:
 	lighting.setup(store)
 	mining.tile_changed.connect(func(_x: int, _y: int) -> void: lighting.mark_dirty())
 	mining.tile_broken.connect(_on_tile_broken)
+	mining.chest_opened.connect(func(x: int, y: int, loot: Array) -> void:
+		float_text(Vector2(x * TILE, y * TILE - 8), "%d finds" % loot.size(),
+			Color(1.0, 0.90, 0.55), 22.0))
+	mining.heart_gained.connect(func(x: int, y: int) -> void:
+		float_text(Vector2(x * TILE, y * TILE - 8), "a heart!",
+			Color(1.0, 0.45, 0.55), 24.0))
 	mining.tile_placed.connect(func(_x: int, _y: int, n: String) -> void: Goals.note_placed(n))
 	lighting.update_now(player_tile())
 
@@ -151,7 +157,8 @@ func _process(_delta: float) -> void:
 		lighting.mark_dirty()
 
 	lighting.update(tile)
-	Goals.note_depth(tile.y - store.gen.surface_height(tile.x), store.gen.abyss_layer(tile.y))
+	Goals.note_depth(tile.y - store.gen.surface_height(tile.x),
+		store.gen.depth_band(tile.y, store.gen.surface_height(tile.x)))
 	_publish_web_stats(tile)
 	var centre := store.chunk_coord(tile.x, tile.y)
 	if centre != _last_centre:
@@ -253,8 +260,8 @@ func _on_player_died() -> void:
 
 	await Ui.fade_out(0.4)
 
-	Game.health = Game.MAX_HEALTH
-	Game.health_changed.emit(Game.health, Game.MAX_HEALTH)
+	Game.health = Game.max_health
+	Game.health_changed.emit(Game.health, Game.max_health)
 	Ui.hide_message()
 
 	var x := clampi(_spawn_x, 8, WorldGen.WIDTH - 8)
