@@ -48,7 +48,7 @@ offset_top = 120.0
 offset_bottom = 134.0
 theme_override_colors/font_color = Color(0.75, 0.79, 0.84, 1)
 theme_override_font_sizes/font_size = 9
-text = "PRESS SPACE TO DESCEND"
+text = "PRESS SPACE OR CLICK TO DESCEND"
 horizontal_alignment = 1
 mouse_filter = 2
 
@@ -59,6 +59,6 @@ offset_top = -26.0
 offset_bottom = -8.0
 theme_override_colors/font_color = Color(0.45, 0.5, 0.58, 1)
 theme_override_font_sizes/font_size = 8
-text = "A / D move      SPACE jump      E tame      R restart"
+text = "A/D move    SPACE jump    F dig    G place    X swing    E open\nQ or 1-0 hotbar    C craft    I bag    F3 info"
 horizontal_alignment = 1
 mouse_filter = 2
