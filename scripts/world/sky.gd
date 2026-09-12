@@ -16,8 +16,9 @@ const WARM_TOP := Color(0.42, 0.26, 0.34)
 const WARM_BOTTOM := Color(0.95, 0.55, 0.32)
 const DEEP_TOP := Color(0.04, 0.05, 0.08)
 const DEEP_BOTTOM := Color(0.07, 0.08, 0.12)
-const ABYSS_TOP_C := Color(0.06, 0.03, 0.10)
-const ABYSS_BOTTOM_C := Color(0.10, 0.05, 0.16)
+## Deep rock. Cold rather than otherworldly: this is still a cave.
+const DEEP_ROCK_TOP := Color(0.04, 0.05, 0.09)
+const DEEP_ROCK_BOTTOM := Color(0.07, 0.09, 0.14)
 
 var _rect: TextureRect
 var _gradient: Gradient
@@ -61,13 +62,13 @@ func update_for_depth(depth_tile: int, daylight: float = 1.0) -> void:
 	if depth_tile < 140:
 		top = lit_top
 		bottom = lit_bottom
-	elif depth_tile < WorldGen.ABYSS_TOP:
+	elif depth_tile < WorldGen.DEEP_TOP:
 		var t := clampf(float(depth_tile - 140) / 120.0, 0.0, 1.0)
 		top = lit_top.lerp(DEEP_TOP, t)
 		bottom = lit_bottom.lerp(DEEP_BOTTOM, t)
 	else:
-		var t := clampf(float(depth_tile - WorldGen.ABYSS_TOP) / 240.0, 0.0, 1.0)
-		top = DEEP_TOP.lerp(ABYSS_TOP_C, t)
-		bottom = DEEP_BOTTOM.lerp(ABYSS_BOTTOM_C, t)
+		var t := clampf(float(depth_tile - WorldGen.DEEP_TOP) / 240.0, 0.0, 1.0)
+		top = DEEP_TOP.lerp(DEEP_ROCK_TOP, t)
+		bottom = DEEP_BOTTOM.lerp(DEEP_ROCK_BOTTOM, t)
 	_gradient.set_color(0, top)
 	_gradient.set_color(1, bottom)

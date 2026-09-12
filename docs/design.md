@@ -25,7 +25,24 @@ worse copy of something else:
 No asset, name, character or exact mechanic gets copied. The style, not the
 content.
 
-## The turn this took
+## The turns this took
+
+### Second turn: caves, not a chasm
+
+The Abyss was a single vast shaft near the middle of the map. Playing it, the
+problem was obvious: one column of a two thousand tile world was the only
+interesting place to go, and everywhere else was rock you tunnelled through
+because there was nothing else to do with it. That is Minecraft's underground,
+not Terraria's.
+
+So the chasm is gone. The underground is now caves: winding tunnels near the
+surface opening into chambers deeper down, all connected, with chests and life
+crystals waiting in them. **You find things by exploring rather than by
+grinding blocks**, which is the actual difference between the two games.
+
+The name stays. "The Abyss" now means the deep caves rather than one hole.
+
+### First turn: survival, not RPG
 
 The first version of this document called Aerenfall a sandbox RPG and put
 creature bonding at the centre, with combat as one option among several. Play
@@ -39,8 +56,8 @@ after both.
 
 What Aerenfall keeps that Terraria does not have is depth on top of that spine,
 not a replacement for it: creatures with real habits you can learn and bond
-with, and the Abyss. Those stay. They stop being the first thing the player
-meets.
+with, and a deep underground worth exploring. Those stay. They stop being the
+first thing the player meets.
 
 The class system and skill trees are the least Terraria-shaped thing in here.
 They move to last, and may not survive contact with the rest.
@@ -70,10 +87,11 @@ They live somewhere, they eat something, they keep hours. You learn a creature
 by watching it, and the reward for patience is information. Trust is built over
 in-game days, and it can be lost.
 
-**The Abyss is the long-term goal.** A vast vertical chasm through the world.
-Every layer down is stranger than the last. Nobody knows what is at the bottom.
-We are not going to decide what is at the bottom yet, and that is deliberate:
-the moment it is written down it stops being the reason to keep digging.
+**Down is where the game is.** Not one chasm, but caves: a connected
+underground you explore rather than a corridor you descend. The rock changes
+with depth, what lives there changes with depth, and what you find there is
+worth the walk. The long-term goal is not a place at the bottom, it is being
+the kind of person who can survive further down.
 
 ## The pivot
 
@@ -99,7 +117,7 @@ cannot work that way. World generation replaces it.
 
 The text map format. It does not survive as "a level", it survives as **a
 stamp**: a hand-authored structure the generator places into the world. Nests,
-ruins, huts, village buildings, an Abyss shrine. This keeps the rule that
+ruins, huts, village buildings, a shrine in a deep cave. This keeps the rule that
 matters from `ARCHITECTURE.md` alive, which is that hand-authored content is
 readable in a diff and editable in any text editor, while the bulk of the world
 comes from a seed.
@@ -128,7 +146,7 @@ is a tested property, not a hope.
 | World size | 2000 x 800 tiles to start, configurable |
 | Chunk size | 32 x 32 tiles |
 | Surface biomes | Forest, plains, desert, snowy mountains, ocean at both edges |
-| Vertical layers | Surface, underground, caverns, then the Abyss |
+| Depth bands | Surface, underground, caverns, deep. Rock and danger change with each |
 | Sky islands | High above the mountains. Empty for now, cities later |
 
 **Chunks are generated from the seed and their own coordinates, and from
@@ -137,7 +155,7 @@ the first chunk generated or the thousandth. This rules out any generator that
 walks the world in order, and it is what makes "same seed, same world" cheap to
 guarantee and cheap to test.
 
-Features larger than a chunk — caves, the Abyss shaft, trees, stamped
+Features larger than a chunk — caves, trees, chests, stamped
 structures — are placed by deciding them on a coarser grid. A chunk asks which
 structure cells overlap it, evaluates those deterministically, and draws its
 own slice of the result. The structure does not need to know it spans chunks.
@@ -189,7 +207,7 @@ companions, which gives the player a reason to go home that is not storage.
 ### 3. Materials, crafting and equipment
 
 Tiers: wood, stone, copper, iron, then two or three deeper tiers that exist
-only in the Abyss. The deep tiers are the reward for depth and cannot be
+only in the deep caves. The deep tiers are the reward for depth and cannot be
 reached any other way.
 
 Crafting needs the right station in range, Terraria-style: workbench, furnace,
@@ -273,25 +291,35 @@ preparation, never to a permission.
 | Deep ocean | You drown | Swimming companion plus oxygen kit |
 | Sky islands | Too high to reach | Flying companion |
 | Snowy peaks | Cold drains health | Warm coat, or a warm-blooded companion |
-| Abyss layers | Dark, pressure, stronger creatures | Light, pressure gear, better tier gear |
+| The deep caves | Dark, long way from home, stronger creatures | Light, better gear, somewhere safe to come back to |
 
-### 7. The Abyss
+### 7. Underground
 
-Numbered layers, 1 downward, with the current layer on the HUD. Each layer
-changes its tiles, its background, its light colour, its creatures and its
-danger.
+Four bands, each a different place to be rather than a different level:
 
-**Going down is easier than coming back up.** The climb costs real time and
-real supplies. This is what gives depth its weight — a descent is a decision,
-not a corridor.
+| Band | What it is |
+| --- | --- |
+| Surface | Grass and dirt, a few tiles deep |
+| Underground | Narrow winding tunnels through dirt and stone |
+| Caverns | Chambers you can lose your bearings in |
+| Deep | Darker, harder rock. Further from anywhere safe |
 
-**Outpost beacons** are the answer to that cost becoming tedium. The player
-crafts a beacon and places it in a layer; from the surface camp they can travel
-directly to any beacon they have placed. Deep progress becomes permanent
-without making the descent itself cheap.
+**It is all one cave system.** Not a set of floors with a lift between them.
+A tunnel found near the surface can lead, eventually, to the deep rock, and
+that continuity is the reason to follow one rather than dig your own shaft
+straight down.
 
-The deep layers will eventually hold societies that have never seen the sky.
-Leave room for them. Do not build them yet.
+**What is down there is found, not made.** Chests holding tools, torches,
+materials and sometimes armour, better the deeper they are. Life crystals that
+permanently add a heart. Ore visible in the walls as you walk past it. This is
+the answer to "how do you get resources": you go and look, and mining is what
+you do when you already know what you want.
+
+Going back up is the cost. Nothing stops you digging a straight shaft home, and
+it should stay that way, but it takes as long as it takes.
+
+Deep caves will eventually hold societies that have never seen the sky. Leave
+room for them. Do not build them yet.
 
 ### 8. Bosses
 
@@ -307,12 +335,12 @@ Rules for every boss here:
   prepared a space, which makes the building half of the game pay off in the
   fighting half.
 - **It drops the key to somewhere.** Materials for gear that opens a place that
-  was closed: deeper Abyss layers, the ocean floor, the sky.
-- **It belongs to a place.** A boss of the forest, of the desert, of an Abyss
-  layer. Aerenfall does not have a boss queue; it has dangerous residents.
+  was closed: the deepest caves, the ocean floor, the sky.
+- **It belongs to a place.** A boss of the forest, of the desert, of the deep
+  caves. Aerenfall does not have a boss queue; it has dangerous residents.
 
 First one to build: a surface boss summoned at night, beatable with the first
-tier of gear, dropping what is needed to survive Abyss layer 1.
+tier of gear, dropping what is needed to survive the deep caves.
 
 ### 8. NPCs, classes and combat
 
@@ -382,5 +410,5 @@ milestone 2, not after.
 assumes the placeholder's contact damage and stomping, plus one melee and one
 ranged weapon, and nothing more until milestone 7.
 
-**Nothing is decided about the bottom of the Abyss**, on purpose. Flagged only
-so it is clear that is a choice and not an omission.
+**Nothing is decided about what is at the very bottom**, on purpose. Flagged
+only so it is clear that is a choice and not an omission.

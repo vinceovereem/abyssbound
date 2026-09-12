@@ -554,6 +554,10 @@ def tiles():
         grid(WORKBENCH, "workbench"),
         grid(FURNACE, "furnace"),
         grid(ANVIL, "anvil"),
+        # 27 to 29: what you find in a cave rather than make.
+        grid(CHEST, "chest"),
+        grid(CHEST_OPEN, "chest_open"),
+        grid(LIFE_CRYSTAL, "life_crystal"),
     ]
     sheet(t, "tiles/tiles.png")
 
@@ -751,6 +755,63 @@ GREAVES = [
     "...KXXK..KXXK...",
     "...KXXK..KXXK...",
     "...KKK....KKK...",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+CHEST = [
+    "................",
+    "................",
+    "..KKKKKKKKKKKK..",
+    "..KAAAAAAAAAAK..",
+    "..KAnnnnnnnnAK..",
+    "..KKKKKKKKKKKK..",
+    "..KAAAAYYAAAAK..",
+    "..KAAAAYYAAAAK..",
+    "..KAnAAAAAAnAK..",
+    "..KAnAAAAAAnAK..",
+    "..KAAAAAAAAAAK..",
+    "..KKKKKKKKKKKK..",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+CHEST_OPEN = [
+    "................",
+    "..KKKKKKKKKKKK..",
+    "..KAnnnnnnnnAK..",
+    "..KKKKKKKKKKKK..",
+    "................",
+    "..KKKKKKKKKKKK..",
+    "..KkkkkkkkkkK...",
+    "..KkkkkkkkkkK...",
+    "..KAnAAAAAAnAK..",
+    "..KAnAAAAAAnAK..",
+    "..KAAAAAAAAAAK..",
+    "..KKKKKKKKKKKK..",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+LIFE_CRYSTAL = [
+    "................",
+    "................",
+    ".......KK.......",
+    "......KRRK......",
+    ".....KRRRRK.....",
+    "....KRRWWRRK....",
+    "....KRRWWRRK....",
+    ".....KRRRRK.....",
+    ".....KRRRRK.....",
+    "......KRRK......",
+    ".......KK.......",
     "................",
     "................",
     "................",

@@ -230,7 +230,7 @@ func _sunlight() -> void:
 	for lx in REGION_W:
 		var wx := _origin.x + lx
 		var sky := 0
-		if _origin.y <= store.gen.surface_height(wx) and not store.gen.in_shaft(wx, _origin.y):
+		if _origin.y <= store.gen.surface_height(wx):
 			sky = sky_light
 		var i := lx
 		for ly in REGION_H:

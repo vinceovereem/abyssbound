@@ -27,6 +27,8 @@ const PLACE_INTERVAL := 0.14
 signal tile_changed(x: int, y: int)
 signal tile_broken(x: int, y: int, drop: String)
 signal tile_placed(x: int, y: int, tile_name: String)
+signal chest_opened(x: int, y: int, loot: Array)
+signal heart_gained(x: int, y: int)
 
 var store: ChunkStore
 var renderer: ChunkRenderer
@@ -92,6 +94,9 @@ func target_tile() -> Vector2i:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact"):
+		_open_nearby_chest()
+		return
 	if event.is_action_pressed("cycle_place"):
 		Game.inventory.select((Game.inventory.selected + 1) % Inventory.HOTBAR)
 		return
@@ -124,6 +129,26 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+## Chests are opened by standing next to one and pressing interact, rather
+## than by breaking them: a chest you have to mine is a chest you can lose.
+func _open_nearby_chest() -> void:
+	if world == null or world.player == null:
+		return
+	var here: Vector2i = world.player_tile()
+	var chest := _db.id("chest")
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var at := here + Vector2i(dx, dy)
+			if store.get_fg(at.x, at.y) != chest:
+				continue
+			var loot: Array = store.gen.chest_loot(at.x, at.y)
+			for entry: Array in loot:
+				Game.collect(str(entry[0]), int(entry[1]))
+			_set_tile(at.x, at.y, _db.id("chest_open"))
+			chest_opened.emit(at.x, at.y, loot)
+			return
+
+
 func _dig(delta: float) -> void:
 	var id := store.get_fg(_target.x, _target.y)
 	if id == 0:
@@ -137,6 +162,14 @@ func _dig(delta: float) -> void:
 		return
 
 	_progress = 0.0
+
+	# A life crystal is not a material, it is a heart.
+	if id == _db.id("life_crystal"):
+		_set_tile(_target.x, _target.y, 0)
+		if Game.gain_heart():
+			heart_gained.emit(_target.x, _target.y)
+		return
+
 	var drop := _db.drop_of(id)
 	_set_tile(_target.x, _target.y, 0)
 	if drop.is_empty():

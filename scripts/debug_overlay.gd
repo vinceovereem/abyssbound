@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 
 	var tile: Vector2i = world.player_tile()
 	var chunk: Vector2i = world.store.chunk_coord(tile.x, tile.y)
-	var layer: int = world.store.gen.abyss_layer(tile.y)
+	var surface: int = world.store.gen.surface_height(tile.x)
 
 	_label.text = "\n".join([
 		"seed     %d" % world.store.world_seed(),
@@ -82,7 +82,8 @@ func _process(delta: float) -> void:
 		"tile     %d, %d" % [tile.x, tile.y],
 		"chunk    %d, %d   loaded %d" % [chunk.x, chunk.y, world.renderer.loaded_count()],
 		"biome    %s" % world.store.gen.biome_name(tile.x),
-		"abyss    %s" % ("layer %d" % layer if layer > 0 else "above"),
+		"depth    %s   %d below" % [world.store.gen.band_name(tile.y, surface),
+			maxi(0, tile.y - surface)],
 		"light    %d" % world.lighting.light_at(tile.x, tile.y),
 		"place    %s" % world.mining.selected_tile_name(),
 		"clock    %s  day %d  %s" % [DayClock.clock_text(), DayClock.day,

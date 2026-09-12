@@ -52,7 +52,7 @@ save and load, at 60 fps in the browser.
 2. **Chunk store.** The world as byte arrays, chunk lookup, dirty flags, the
    deterministic per-chunk generator entry point.
 3. **Generation.** Surface height by noise, biome bands across x, underground
-   and cavern layers, caves, ore placement, the Abyss shaft near the middle,
+   and cavern layers, caves, ore placement, the caves near the middle,
    sky islands above the mountains.
 4. **Structure stamps.** Load a text map from `levels/structures/` and stamp it
    into the world at a deterministically chosen site. Reuses the legend rules
@@ -137,7 +137,7 @@ terrain data whatsoever.
 ### What actually shipped
 
 Built: generation, chunks, streaming, biomes, caves, ore, trees, sky islands,
-the Abyss shaft, digging, placing, lighting, save and load, the F3 overlay,
+the caves, digging, placing, lighting, save and load, the F3 overlay,
 boot config, and the playtest harness. 63 world checks plus the original 39.
 
 Two items from the task list above did not land as written, both deliberately:
@@ -168,7 +168,7 @@ Bosses are new to the plan and come once there is gear to fight them with.
 | 5 | Survival meters | Pressure, once there is food and gear to answer it with |
 | 6 | The first boss | Needs gear from 4 and danger from 3 to be a wall worth climbing |
 | 7 | Gating: ocean, snow, sky | Companions and kit that open closed places |
-| 8 | The Abyss, layers 1 to 5 | The long goal, once the surface loop holds |
+| 8 | Deeper caves and what lives in them | The long goal, once the surface loop holds |
 | 9 | Town, NPCs, and maybe classes | Least Terraria-shaped. Last, and classes may be cut |
 
 ## Milestone 3 — the world is alive and dangerous
@@ -239,9 +239,12 @@ rather than stumbled into. The fight should reward having prepared a space.
 Ocean, water simulation, oxygen kit, a swimming companion. Snow and the warm
 coat. A hippogriff nest with an egg worth stealing, and flight to a sky island.
 
-## Milestone 8 — the Abyss, layers 1 to 5
+## Milestone 8 — deeper caves and what lives in them
 
-Distinct layers, a costly climb back, outpost beacons and travel.
+The single chasm is gone; the underground is caves. What this milestone adds is
+reasons to follow one a long way: creatures that only live at depth, rock that
+only appears down there, and somewhere to make a camp so a long trip does not
+mean walking all the way home. Outpost beacons and travel belong here.
 
 ## Milestone 9 — town, NPCs, and maybe classes
 

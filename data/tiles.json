@@ -201,6 +201,33 @@
       "opacity": 10,
       "emit": 0,
       "drop": "anvil"
+    },
+    {
+      "id": 27,
+      "name": "chest",
+      "solid": false,
+      "hardness": 0,
+      "opacity": 10,
+      "emit": 0,
+      "drop": ""
+    },
+    {
+      "id": 28,
+      "name": "chest_open",
+      "solid": false,
+      "hardness": 14,
+      "opacity": 10,
+      "emit": 0,
+      "drop": "wood"
+    },
+    {
+      "id": 29,
+      "name": "life_crystal",
+      "solid": false,
+      "hardness": 30,
+      "opacity": 6,
+      "emit": 120,
+      "drop": ""
     }
   ]
 }
