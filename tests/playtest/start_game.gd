@@ -42,6 +42,21 @@ func _ready() -> void:
 	for i in 10:
 		await get_tree().physics_frame
 
+	# Everything the title tells you has to actually be on the screen. The
+	# controls line sat at y = -44 for the whole life of the project, because
+	# it anchored its bottom to the bottom and left its top at zero.
+	var screen := Vector2(ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height"))
+	for label_name in ["Name", "Tagline", "Prompt", "Controls"]:
+		var label := title.get_node(label_name) as Label
+		var rect := label.get_global_rect()
+		_ok("the title's %s is on the screen" % label_name.to_lower(),
+			rect.position.y >= 0.0 and rect.end.y <= screen.y + 1.0
+				and rect.position.x >= 0.0 and not label.text.is_empty(),
+			"%s" % rect)
+	_ok("the controls line names the dig key",
+		(title.get_node("Controls") as Label).text.contains("F dig"))
+
 	var fade: ColorRect = Ui.get_node("Fade")
 	fade.color.a = 0.0
 
