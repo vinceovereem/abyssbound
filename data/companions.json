@@ -1,0 +1,17 @@
+{
+  "_comment": [
+    "Creatures that can be befriended, and what having them along does.",
+    "Design owns this file. jump and dig are multipliers applied while that",
+    "companion is with you. Most creatures are not in here: you can fight",
+    "those, but they will not come with you."
+  ],
+  "companions": [
+    {
+      "id": "rabbit",
+      "name": "Wild Rabbit",
+      "power": "Rides on your shoulder. Higher jump, quicker hands.",
+      "jump": 1.16,
+      "dig": 1.45
+    }
+  ]
+}

@@ -1,83 +1,69 @@
 {
   "_comment": [
-    "The list of things worth doing, in the order they are meant to happen.",
-    "Design owns this file. Adding one needs no code as long as its kind is",
-    "already understood by scripts/objectives.gd.",
+    "The game in stages. Design owns this file.",
+    "A stage is a handful of things to do; finishing them all moves you on.",
+    "They are still nudges rather than gates: nothing is locked behind them,",
+    "because deciding what to do is the point of the world. What a stage buys",
+    "you is knowing what this part of the game is about.",
     "kinds:",
-    "  collect  what=resource name, count=how many",
-    "  place    what=tile name, count=how many placed",
-    "  defeat   count=creatures driven off",
-    "  dawn     count=nights survived",
-    "  depth    count=tiles below the surface reached",
-    "  layer    count=Abyss layer reached",
-    "  craft    what=item id, count=how many made"
+    "  collect  what=item id        gather that many",
+    "  craft    what=item id        make that many",
+    "  place    what=tile name      put that many down",
+    "  defeat   creatures driven off",
+    "  dawn     nights survived",
+    "  depth    tiles below the surface reached",
+    "  layer    depth band reached: 1 underground, 2 caverns, 3 deep",
+    "  chest    chests opened",
+    "  heart    life crystals taken",
+    "  tame     creatures befriended"
   ],
-  "objectives": [
+  "stages": [
     {
-      "id": "wood",
-      "text": "Gather wood from the trees",
-      "kind": "collect",
-      "what": "wood",
-      "count": 10
+      "id": "first_day",
+      "name": "The First Day",
+      "blurb": "Wood, light, and somewhere to be when the sun goes down.",
+      "objectives": [
+        { "id": "wood",   "text": "Fell a tree for wood",        "kind": "collect", "what": "wood",      "count": 12 },
+        { "id": "torch",  "text": "Make a torch",                "kind": "craft",   "what": "torch",     "count": 1 },
+        { "id": "bench",  "text": "Build a workbench",           "kind": "craft",   "what": "workbench", "count": 1 },
+        { "id": "pick",   "text": "Make a pickaxe",              "kind": "craft",   "what": "wood_pick", "count": 1 },
+        { "id": "night",  "text": "Live to see the sun come up", "kind": "dawn",    "count": 1 }
+      ]
     },
     {
-      "id": "torch",
-      "text": "Make a torch from wood",
-      "kind": "craft",
-      "what": "torch",
-      "count": 1
+      "id": "into_caves",
+      "name": "Into the Caves",
+      "blurb": "The surface is the roof of somewhere much larger.",
+      "objectives": [
+        { "id": "down",   "text": "Follow a cave down 60 tiles", "kind": "depth",   "count": 60 },
+        { "id": "chest",  "text": "Open a chest you found",      "kind": "chest",   "count": 1 },
+        { "id": "copper", "text": "Mine copper ore",             "kind": "collect", "what": "copper_ore", "count": 8 },
+        { "id": "furnace","text": "Build a furnace",             "kind": "craft",   "what": "furnace",    "count": 1 },
+        { "id": "bar",    "text": "Smelt a copper bar",          "kind": "craft",   "what": "copper_bar", "count": 1 }
+      ]
     },
     {
-      "id": "bench",
-      "text": "Build a workbench",
-      "kind": "craft",
-      "what": "workbench",
-      "count": 1
+      "id": "deeper",
+      "name": "Deeper Still",
+      "blurb": "Harder rock, worse company, better reasons to go.",
+      "objectives": [
+        { "id": "caverns","text": "Reach the caverns",           "kind": "layer",   "count": 2 },
+        { "id": "heart",  "text": "Take a life crystal",         "kind": "heart",   "count": 1 },
+        { "id": "fight",  "text": "Drive off what comes at you", "kind": "defeat",  "count": 5 },
+        { "id": "armour", "text": "Make a piece of armour",      "kind": "craft",   "what": "copper_helm", "count": 1 },
+        { "id": "deep",   "text": "Stand on the deep rock",      "kind": "layer",   "count": 3 }
+      ]
     },
     {
-      "id": "pick",
-      "text": "Make a pickaxe",
-      "kind": "craft",
-      "what": "wood_pick",
-      "count": 1
-    },
-    {
-      "id": "stone",
-      "text": "Mine stone",
-      "kind": "collect",
-      "what": "stone",
-      "count": 25
-    },
-    {
-      "id": "fight",
-      "text": "Drive off what comes at night",
-      "kind": "defeat",
-      "count": 3
-    },
-    {
-      "id": "night",
-      "text": "Live to see the sun come up",
-      "kind": "dawn",
-      "count": 1
-    },
-    {
-      "id": "copper",
-      "text": "Find copper in the rock",
-      "kind": "collect",
-      "what": "copper_ore",
-      "count": 5
-    },
-    {
-      "id": "deep",
-      "text": "Find a cave and follow it down 150 tiles",
-      "kind": "depth",
-      "count": 150
-    },
-    {
-      "id": "deep_rock",
-      "text": "Reach the deep rock",
-      "kind": "layer",
-      "count": 3
+      "id": "company",
+      "name": "Not Alone Down Here",
+      "blurb": "Some of what lives here can be fought. Some can be befriended.",
+      "objectives": [
+        { "id": "tame",   "text": "Befriend a creature",         "kind": "tame",    "count": 1 },
+        { "id": "iron",   "text": "Smelt iron",                  "kind": "craft",   "what": "iron_bar",  "count": 3 },
+        { "id": "ironpick","text": "Make an iron pickaxe",       "kind": "craft",   "what": "iron_pick", "count": 1 },
+        { "id": "hearts", "text": "Carry four hearts or more",   "kind": "hearts",  "count": 6 }
+      ]
     }
   ]
 }

@@ -29,6 +29,7 @@ signal tile_broken(x: int, y: int, drop: String)
 signal tile_placed(x: int, y: int, tile_name: String)
 signal chest_opened(x: int, y: int, loot: Array)
 signal heart_gained(x: int, y: int)
+signal tree_felled(x: int, y: int, wood: int)
 
 var store: ChunkStore
 var renderer: ChunkRenderer
@@ -145,6 +146,7 @@ func _open_nearby_chest() -> void:
 			for entry: Array in loot:
 				Game.collect(str(entry[0]), int(entry[1]))
 			_set_tile(at.x, at.y, _db.id("chest_open"))
+			Goals.note_chest()
 			chest_opened.emit(at.x, at.y, loot)
 			return
 
@@ -163,10 +165,17 @@ func _dig(delta: float) -> void:
 
 	_progress = 0.0
 
+	# A tree comes down whole. Chopping one trunk tile at a time is Minecraft;
+	# in Terraria the trunk falls and you get the lot.
+	if id == _db.id("tree_trunk"):
+		_fell_tree(_target.x, _target.y)
+		return
+
 	# A life crystal is not a material, it is a heart.
 	if id == _db.id("life_crystal"):
 		_set_tile(_target.x, _target.y, 0)
 		if Game.gain_heart():
+			Goals.note_heart()
 			heart_gained.emit(_target.x, _target.y)
 		return
 
@@ -177,6 +186,36 @@ func _dig(delta: float) -> void:
 	# Breaking always succeeds. What comes out lies on the ground until it is
 	# picked up, so a full bag costs you nothing.
 	tile_broken.emit(_target.x, _target.y, drop)
+
+
+## Bring the whole tree down and hand over its wood.
+func _fell_tree(x: int, y: int) -> void:
+	var trunk := _db.id("tree_trunk")
+	var leaves := _db.id("leaves")
+
+	var lowest := y
+	while store.get_fg(x, lowest + 1) == trunk:
+		lowest += 1
+	var highest := y
+	while store.get_fg(x, highest - 1) == trunk:
+		highest -= 1
+
+	var trunks := 0
+	for ty in range(highest, lowest + 1):
+		_set_tile(x, ty, 0)
+		trunks += 1
+
+	# The canopy goes with it. Leaves themselves are worth nothing; the wood
+	# is counted from the trunk.
+	for dy in range(-4, 3):
+		for dx in range(-3, 4):
+			var lx := x + dx
+			var ly := highest + dy
+			if store.get_fg(lx, ly) == leaves:
+				_set_tile(lx, ly, 0)
+
+	var wood: int = maxi(4, trunks * 2)
+	tree_felled.emit(x, lowest, wood)
 
 
 func _place() -> void:

@@ -15,6 +15,8 @@ signal resource_collected(resource: String, amount: int, total: int)
 signal player_died
 ## Took a hit. The world floats the number where it happened.
 signal player_hurt(amount: int)
+## A creature agreed to come along. Most will not; those you fight instead.
+signal companion_changed(id: String, name: String)
 
 ## Hearts grow. Life crystals found in caves raise this permanently, which is
 ## the reason to go down rather than merely a reward for having gone.
@@ -31,11 +33,16 @@ var zone_name: String = "Surface"
 ## not reintroduce one alongside it, or the two will disagree.
 var inventory: Inventory
 
+## Who is with you, by species id, or "" for nobody.
+var companion := ""
+var _companions := {}
+
 var _changing_zone := false
 
 
 func _ready() -> void:
 	inventory = Inventory.new()
+	_load_companions()
 	# Autoloads start before the first scene, so announce the initial values
 	# on the next frame once listeners exist.
 	call_deferred("_broadcast")
@@ -50,6 +57,43 @@ func _broadcast() -> void:
 func add_crystals(amount: int) -> void:
 	crystals += amount
 	crystals_changed.emit(crystals)
+
+
+func _load_companions() -> void:
+	const PATH := "res://data/companions.json"
+	if not FileAccess.file_exists(PATH):
+		push_error("Companions: %s is missing. Add it to the export include_filter." % PATH)
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	for row: Dictionary in parsed.get("companions", []):
+		_companions[row["id"]] = row
+
+
+func can_befriend(species: String) -> bool:
+	return _companions.has(species)
+
+
+func befriend(species: String) -> bool:
+	if not can_befriend(species) or companion == species:
+		return false
+	companion = species
+	companion_changed.emit(species, companion_name())
+	return true
+
+
+func companion_name() -> String:
+	return str(_companions.get(companion, {}).get("name", ""))
+
+
+func companion_power() -> String:
+	return str(_companions.get(companion, {}).get("power", ""))
+
+
+## Multiplier from whoever is with you, 1.0 when nobody is.
+func companion_bonus(what: String) -> float:
+	return float(_companions.get(companion, {}).get(what, 1.0))
 
 
 ## A life crystal. Returns false when there is no more room for hearts.
@@ -107,6 +151,7 @@ func restart() -> void:
 	health = max_health
 	crystals = 0
 	inventory.clear()
+	companion = ""
 	max_health = STARTING_HEALTH
 	health = max_health
 	_broadcast()

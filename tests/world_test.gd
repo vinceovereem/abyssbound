@@ -30,6 +30,7 @@ func _ready() -> void:
 	await _check_traversal()
 	await _check_reach()
 	await _check_finds()
+	await _check_trees()
 	_check_clock()
 	await _check_night()
 	await _check_death()
@@ -813,59 +814,60 @@ func _check_death() -> void:
 ## The list of things worth doing. Nudges rather than quests: nothing gates on
 ## them, so the checks are about the counting being right and the data loading.
 func _check_goals() -> void:
-	print("\nobjectives")
+	print("\nstages")
 	Goals.reset()
 
-	_ok("objectives.json loads", Goals.objectives.size() > 0,
-		"%d objectives" % Goals.objectives.size())
-	_ok("only a few are shown at once", Goals.active().size() <= Goals.SHOWN,
-		"%d shown" % Goals.active().size())
+	_ok("objectives.json loads as stages", Goals.stages.size() >= 3,
+		"%d stages" % Goals.stages.size())
+	_ok("it starts on the first one", Goals.stage == 0, Goals.stage_name())
+	_ok("a stage has a handful of things to do",
+		Goals.active().size() >= 3 and Goals.active().size() <= 6,
+		"%d objectives" % Goals.active().size())
 
-	# Collecting counts toward the matching objective and nothing else.
+	# Gathering counts toward this stage and nothing else.
 	Game.collect("wood", 4)
 	_ok("gathering counts toward its objective", Goals.have("wood") == 4,
 		"%d" % Goals.have("wood"))
-	_ok("it does not count toward a different material", Goals.have("stone") == 0)
+	_ok("it does not count toward a different material", Goals.have("copper") == 0)
 
-	Game.collect("wood", 20)
+	Game.collect("wood", 40)
 	_ok("finishing one marks it done", Goals.is_done("wood"))
 	_ok("progress does not run past the target",
-		Goals.have("wood") == Goals.need(Goals.objectives[0]),
-		"%d" % Goals.have("wood"))
-	_ok("a finished one drops off the list",
+		Goals.have("wood") == Goals.need(Goals.active()[0]), "%d" % Goals.have("wood"))
+	_ok("a finished one stays on the list, ticked",
+		Goals.active().any(func(o: Dictionary) -> bool: return o["id"] == "wood"))
+
+	# Finishing the lot moves the stage on.
+	var was: int = Goals.stage
+	Goals.note_crafted("torch", 1)
+	Goals.note_crafted("workbench", 1)
+	Goals.note_crafted("wood_pick", 1)
+	_ok("the stage does not move on early", Goals.stage == was)
+	Goals._on_dawn(2)
+	_ok("finishing every objective moves the stage on", Goals.stage == was + 1,
+		"now on %s" % Goals.stage_name())
+	_ok("the new stage brings new objectives",
 		not Goals.active().any(func(o: Dictionary) -> bool: return o["id"] == "wood"))
 
-	# Placing and fighting.
-	Goals.note_crafted("torch", 1)
-	_ok("crafting a torch counts", Goals.is_done("torch"))
-	Goals.note_crafted("dirt", 1)
-	_ok("crafting something else does not count as a torch", Goals.have("torch") == 1)
-
-	Goals.note_defeat()
-	Goals.note_defeat()
-	_ok("driving something off counts", Goals.have("fight") == 2)
-
-	# Depth is reached, not accumulated: going up and down again must not add up.
-	Goals.note_depth(40, 0)
-	Goals.note_depth(10, 0)
-	_ok("depth remembers the deepest, not the total", Goals.have("deep") == 40,
-		"%d" % Goals.have("deep"))
-	Goals.note_depth(200, 0)
-	_ok("digging deep enough finishes it", Goals.is_done("deep"))
-
-	Goals.note_depth(500, 3)
-	_ok("reaching the deep rock counts", Goals.is_done("deep_rock"))
-
-	# A night survived.
-	var before := Goals.is_done("night")
-	Goals._on_dawn(2)
-	_ok("seeing the sun come up counts", Goals.is_done("night") and not before)
+	# Things only count while their stage is current.
+	Goals.note_chest()
+	_ok("a chest counts in the cave stage", Goals.have("chest") == 1)
 
 	Goals.reset()
-	_ok("resetting clears progress", Goals.have("wood") == 0 and not Goals.is_done("wood"))
+	_ok("resetting goes back to the first stage",
+		Goals.stage == 0 and Goals.have("wood") == 0)
+
+	# Depth and hearts are reached, not accumulated.
+	Goals.note_depth(40, 1)
+	Goals.note_depth(10, 1)
+	Goals.stage = 1
+	Goals.note_depth(40, 1)
+	Goals.note_depth(10, 1)
+	_ok("depth remembers the deepest, not the total", Goals.have("down") == 40,
+		"%d" % Goals.have("down"))
+	Goals.reset()
 
 
-# ---------------------------------------------------------------------------
 func _check_inventory() -> void:
 	print("\ncarrying things")
 	var db := ItemDB.get_db()
@@ -1217,3 +1219,76 @@ func _check_finds() -> void:
 		"%d" % Game.max_health)
 	Game.max_health = Game.STARTING_HEALTH
 	Game.health = Game.max_health
+
+
+# ---------------------------------------------------------------------------
+## A tree comes down whole, the way it does in the game this borrows from.
+## Chopping one trunk tile at a time is the other game.
+func _check_trees() -> void:
+	print("\nfelling a tree")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 30:
+		await get_tree().physics_frame
+
+	var store: ChunkStore = world.store
+	var db := TileDB.get_db()
+	var trunk := db.id("tree_trunk")
+
+	# Find a tree near spawn and remember how big it is.
+	var found := Vector2i(-1, -1)
+	for x in range(520, 640):
+		var h := store.gen.surface_height(x)
+		for y in range(h - 12, h):
+			if store.get_fg(x, y) == trunk:
+				found = Vector2i(x, y)
+				break
+		if found.x >= 0:
+			break
+	_ok("there is a tree to fell", found.x >= 0, "%s" % found)
+
+	var trunks := 0
+	for y in range(found.y - 12, found.y + 12):
+		if store.get_fg(found.x, y) == trunk:
+			trunks += 1
+	var leaves_before := 0
+	for dy in range(-12, 6):
+		for dx in range(-4, 5):
+			if store.get_fg(found.x + dx, found.y + dy) == db.id("leaves"):
+				leaves_before += 1
+	_ok("it is more than one tile tall", trunks > 2, "%d trunk tiles" % trunks)
+
+	Game.inventory.clear()
+	world.mining._target = found
+	world.mining._progress = 9999.0
+	world.mining._dig(0.001)
+	await get_tree().process_frame
+
+	var left := 0
+	for y in range(found.y - 12, found.y + 12):
+		if store.get_fg(found.x, y) == trunk:
+			left += 1
+	_ok("one chop takes the whole trunk", left == 0, "%d tiles left" % left)
+
+	var leaves_after := 0
+	for dy in range(-12, 6):
+		for dx in range(-4, 5):
+			if store.get_fg(found.x + dx, found.y + dy) == db.id("leaves"):
+				leaves_after += 1
+	_ok("the canopy goes with it", leaves_after < leaves_before / 2,
+		"%d -> %d leaves" % [leaves_before, leaves_after])
+
+	# The wood is on the ground in a few piles.
+	var wood_waiting := 0
+	for node in world.entities.get_children():
+		if node is ItemDrop and node.item_id == "wood":
+			wood_waiting += node.amount
+	_ok("a whole tree is worth a proper pile of wood", wood_waiting >= trunks * 2,
+		"%d wood from %d trunk tiles" % [wood_waiting, trunks])
+	_ok("more than a single block would give", wood_waiting >= 4)
+
+	Game.inventory.clear()
+	world.queue_free()
+	await get_tree().process_frame

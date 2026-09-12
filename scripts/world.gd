@@ -77,6 +77,15 @@ func _ready() -> void:
 	mining.chest_opened.connect(func(x: int, y: int, loot: Array) -> void:
 		float_text(Vector2(x * TILE, y * TILE - 8), "%d finds" % loot.size(),
 			Color(1.0, 0.90, 0.55), 22.0))
+	mining.tree_felled.connect(func(x: int, y: int, wood: int) -> void:
+		# All of it at the foot of the tree, in a few piles rather than one, so
+		# it reads as a tree coming down rather than a block breaking.
+		var piles: int = clampi(wood / 6, 2, 5)
+		for i in piles:
+			var share: int = wood / piles + (wood % piles if i == 0 else 0)
+			spawn_drop(Vector2(x * TILE + TILE * 0.5, y * TILE), "wood", share)
+		float_text(Vector2(x * TILE, y * TILE - 16), "+%d Wood" % wood,
+			Color(0.85, 1.0, 0.75), 22.0))
 	mining.heart_gained.connect(func(x: int, y: int) -> void:
 		float_text(Vector2(x * TILE, y * TILE - 8), "a heart!",
 			Color(1.0, 0.45, 0.55), 24.0))

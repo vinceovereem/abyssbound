@@ -1,23 +1,20 @@
 extends Node
-## What there is to do. Autoloaded as `Goals`.
+## The game in stages. Autoloaded as `Goals`.
 ##
-## Terraria never tells you what to do, and it works because the world is full
-## enough to suggest it. This world is not there yet, so until it is, a short
-## list of the next few things gives a new player somewhere to point themselves.
-## They are written as nudges, not quests: nothing gates on them and nothing is
-## lost by ignoring them.
-##
-## The list is data. Adding one needs no code as long as its kind already
-## exists here.
+## A stage is a handful of things to do; finishing them all moves you on and
+## says what the next part of the game is about. They stay **nudges rather than
+## gates**: nothing is locked behind them, because deciding what to do is the
+## point of the world. What a stage buys is a sense of where you are in it.
 
 signal completed(id: String, text: String)
 signal progressed(id: String, have: int, need: int)
+signal stage_finished(index: int, name: String)
+signal stage_started(index: int, name: String, blurb: String)
 
 const PATH := "res://data/objectives.json"
-## How many to show at once. A wall of them is a chore list, not a nudge.
-const SHOWN := 3
 
-var objectives: Array = []
+var stages: Array = []
+var stage := 0
 var progress := {}
 var done := {}
 
@@ -25,6 +22,7 @@ var done := {}
 func _ready() -> void:
 	_load()
 	Game.resource_collected.connect(_on_resource)
+	Game.health_changed.connect(_on_health)
 	DayClock.day_broke.connect(_on_dawn)
 
 
@@ -36,24 +34,40 @@ func _load() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("Objectives: %s is not the expected shape." % PATH)
 		return
-	objectives = parsed.get("objectives", [])
+	stages = parsed.get("stages", [])
 
 
 func reset() -> void:
 	progress.clear()
 	done.clear()
+	stage = 0
 
 
-## The next few unfinished ones, in order.
+# ---------------------------------------------------------------------------
+# Where you are
+# ---------------------------------------------------------------------------
+func current() -> Dictionary:
+	if stage < 0 or stage >= stages.size():
+		return {}
+	return stages[stage]
+
+
+func stage_name() -> String:
+	return str(current().get("name", ""))
+
+
+func stage_blurb() -> String:
+	return str(current().get("blurb", ""))
+
+
+func all_finished() -> bool:
+	return stage >= stages.size()
+
+
+## The objectives of the stage you are on, finished ones included so the list
+## does not jump about as you tick them off.
 func active() -> Array:
-	var out: Array = []
-	for objective: Dictionary in objectives:
-		if done.has(objective["id"]):
-			continue
-		out.append(objective)
-		if out.size() >= SHOWN:
-			break
-	return out
+	return current().get("objectives", [])
 
 
 func have(id: String) -> int:
@@ -68,10 +82,6 @@ func is_done(id: String) -> bool:
 	return done.has(id)
 
 
-func all_done() -> bool:
-	return done.size() >= objectives.size()
-
-
 # ---------------------------------------------------------------------------
 # Things happening in the world
 # ---------------------------------------------------------------------------
@@ -81,6 +91,10 @@ func _on_resource(resource: String, amount: int, _total: int) -> void:
 
 func _on_dawn(_day: int) -> void:
 	_advance("dawn", "", 1)
+
+
+func _on_health(_current: int, maximum: int) -> void:
+	_reach("hearts", maximum)
 
 
 func note_placed(tile_name: String) -> void:
@@ -95,15 +109,26 @@ func note_defeat() -> void:
 	_advance("defeat", "", 1)
 
 
-## Called with the player's depth below the surface, and their Abyss layer.
-## These are "reached" rather than counted, so they take the best seen.
-func note_depth(below_surface: int, abyss_layer: int) -> void:
+func note_chest() -> void:
+	_advance("chest", "", 1)
+
+
+func note_heart() -> void:
+	_advance("heart", "", 1)
+
+
+func note_tamed() -> void:
+	_advance("tame", "", 1)
+
+
+func note_depth(below_surface: int, band: int) -> void:
 	_reach("depth", below_surface)
-	_reach("layer", abyss_layer)
+	_reach("layer", band)
 
 
+# ---------------------------------------------------------------------------
 func _advance(kind: String, what: String, amount: int) -> void:
-	for objective: Dictionary in objectives:
+	for objective: Dictionary in active():
 		if objective["kind"] != kind or done.has(objective["id"]):
 			continue
 		if objective.has("what") and str(objective["what"]) != what:
@@ -112,7 +137,7 @@ func _advance(kind: String, what: String, amount: int) -> void:
 
 
 func _reach(kind: String, value: int) -> void:
-	for objective: Dictionary in objectives:
+	for objective: Dictionary in active():
 		if objective["kind"] != kind or done.has(objective["id"]):
 			continue
 		if value > have(objective["id"]):
@@ -124,6 +149,20 @@ func _bump(objective: Dictionary, value: int) -> void:
 	var target := need(objective)
 	progress[id] = mini(value, target)
 	progressed.emit(id, progress[id], target)
-	if progress[id] >= target:
-		done[id] = true
-		completed.emit(id, str(objective["text"]))
+	if progress[id] < target:
+		return
+	done[id] = true
+	completed.emit(id, str(objective["text"]))
+	_check_stage()
+
+
+func _check_stage() -> void:
+	for objective: Dictionary in active():
+		if not done.has(objective["id"]):
+			return
+	if all_finished():
+		return
+	stage_finished.emit(stage, stage_name())
+	stage += 1
+	if not all_finished():
+		stage_started.emit(stage, stage_name(), stage_blurb())
