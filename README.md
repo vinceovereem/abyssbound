@@ -59,8 +59,20 @@ software, so it can only prove the build runs, not how fast.
 
 **Nothing installed at all.** Download a build from
 [Releases](https://github.com/vinceovereem/bocciabound/releases). Windows is one
-`.exe`; Mac is a `.zip`, and the app inside needs **right-click, Open** the
-first time because it is not notarised.
+`.exe`: double-click it and choose **More info, Run anyway**.
+
+Mac is a `.zip`. Unzip it and then run one line in Terminal:
+
+```
+xattr -dr com.apple.quarantine ~/Downloads/BocciaBound.app
+```
+
+After that it opens by double-clicking. The app is not signed with an Apple
+developer certificate, and **on macOS 15 and later the old right-click and
+Open trick no longer works** — that advice used to be in this file and it was
+wrong for anything recent. The alternative without Terminal is to let macOS
+refuse once, then go to **System Settings, Privacy and Security**, scroll to
+Security, and press **Open Anyway**.
 
 ### What there is to do
 

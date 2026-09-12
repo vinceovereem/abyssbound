@@ -14,6 +14,8 @@ var store: ChunkStore
 var renderer: ChunkRenderer
 var sky: WorldSky
 var parallax: WorldParallax
+var glows: WorldGlows
+var grade: WorldGrade
 var mining: Mining
 var lighting: Lighting
 var combat: Combat
@@ -72,6 +74,15 @@ func _ready() -> void:
 	combat.name = "Combat"
 	add_child(combat)
 	combat.setup(self)
+
+	glows = WorldGlows.new()
+	glows.name = "Glows"
+	add_child(glows)
+	glows.setup(renderer)
+
+	grade = WorldGrade.new()
+	grade.name = "Grade"
+	add_child(grade)
 
 	lighting = Lighting.new()
 	lighting.name = "Lighting"
@@ -162,6 +173,7 @@ func _process(_delta: float) -> void:
 	sky.update_for_depth(tile.y, daylight)
 	if _camera and is_instance_valid(_camera):
 		parallax.update(_camera.get_screen_center_position(), tile.y, daylight)
+	grade.update(tile.y, store.gen.surface_height(tile.x), daylight)
 
 	# Night is dark because the sun stops giving light, not because a filter is
 	# drawn over the top. Only nudge the lighting when it has actually moved,

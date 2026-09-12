@@ -296,8 +296,8 @@ jobs:
       - name: Write the notes
         run: |
           cat > notes.md <<'EOF'
-          Download the file for your machine. The game data is inside the
-          download, so there is nothing else to install.
+          Download the file for your machine. The game is inside the download,
+          so there is nothing else to install.
 
           | Machine | File |
           | --- | --- |
@@ -308,16 +308,24 @@ jobs:
           recognise the app, because the build is not signed with a paid
           certificate. Click **More info**, then **Run anyway**.
 
-          **Mac.** Unzip, then **right-click** `BocciaBound.app` and choose
-          **Open**, then **Open** again. Do not double-click it the first time:
-          the build is not notarised, so double-clicking gives you a dead end
-          that says it cannot be opened. Right-click and Open gives you the
-          button that lets it through. You only have to do this once.
+          **Mac.** Unzip it, then **open Terminal and run this one line**,
+          replacing the path with wherever you put it:
 
-          Prefer no download at all? The browser build plays on the web with
-          nothing to install.
-          EOF
-          sed -i "s/VERSION/${GITHUB_REF_NAME}/g" notes.md
+          ```
+          xattr -dr com.apple.quarantine ~/Downloads/BocciaBound.app
+          ```
+
+          Then it opens normally by double-clicking.
+
+          You need that because the app is not signed with an Apple developer
+          certificate, and macOS refuses to run unsigned downloads. On macOS 15
+          and later the old trick of right-clicking and choosing Open **no
+          longer works** for this. If you would rather not use Terminal:
+          double-click the app, let macOS refuse, then go to **System Settings
+          → Privacy & Security**, scroll down to Security, and press **Open
+          Anyway** next to the message about BocciaBound.
+
+                    sed -i "s/VERSION/${GITHUB_REF_NAME}/g" notes.md
           cat notes.md
 
       - name: Create the release
