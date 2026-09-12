@@ -52,7 +52,7 @@ const ok = (label, cond, detail = '') => {
   if (!cond) failed++;
 };
 
-console.log('Abyssbound browser check');
+console.log('BocciaBound browser check');
 console.log('------------------------');
 
 await page.goto(`http://localhost:${PORT}/index.html?start&seed=${SEED}`, { waitUntil: 'load' });

@@ -6,7 +6,7 @@ check so they cannot come back quietly.
 
 Screenshots are written to `user://postcards/` and `user://playtest/` by the
 scripts in `tests/playtest/`. On macOS that is
-`~/Library/Application Support/Godot/app_userdata/Abyssbound/`.
+`~/Library/Application Support/Godot/app_userdata/BocciaBound/`.
 
 ---
 
@@ -326,7 +326,7 @@ corpse to notice.
 
 ## Round 9 — 2026-09-10 — the concept sheet
 
-**Given.** The Abyssbound concept sheet: a character about two tiles tall, a
+**Given.** The BocciaBound concept sheet: a character about two tiles tall, a
 tight camera, rich layer colours, and a UI with a minimap, damage numbers, an
 inventory grid and a bestiary.
 

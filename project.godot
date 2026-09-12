@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Abyssbound"
+config/name="BocciaBound"
 config/description="Descend. Tame. Discover."
 config/version="0.1.0"
 run/main_scene="res://scenes/main.tscn"

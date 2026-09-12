@@ -25,7 +25,7 @@ var _failed := 0
 
 func _ready() -> void:
 	await get_tree().process_frame
-	print("Abyssbound smoke test")
+	print("BocciaBound smoke test")
 	print("---------------------")
 
 	for zone_path in ZONES:

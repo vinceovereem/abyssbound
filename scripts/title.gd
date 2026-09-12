@@ -17,7 +17,7 @@ func _ready() -> void:
 	# Lets a built artifact be checked, not just the source tree. Three
 	# releases shipped with an input map that matched nothing, and running the
 	# game was the only way that would have shown up.
-	#   Abyssbound --check-input
+	#   BocciaBound --check-input
 	if BootConfig.has("check-input"):
 		var dead := InputCheck.dead_bindings()
 		if dead.is_empty():

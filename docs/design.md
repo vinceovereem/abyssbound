@@ -1,6 +1,6 @@
 # Aerenfall: the design
 
-This is the spec for what Abyssbound is becoming. `ARCHITECTURE.md` describes
+This is the spec for what BocciaBound is becoming. `ARCHITECTURE.md` describes
 how the placeholder is built today. This file describes where it is going and
 why. When the two disagree, this one is the intention and that one is the
 current fact.

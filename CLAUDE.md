@@ -1,4 +1,4 @@
-# Abyssbound: context for AI assistants
+# BocciaBound: context for AI assistants
 
 Read this before changing anything.
 

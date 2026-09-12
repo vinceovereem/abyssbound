@@ -19,7 +19,7 @@ func _ok(label: String, condition: bool, detail := "") -> void:
 
 
 func _ready() -> void:
-	print("Abyssbound start test")
+	print("BocciaBound start test")
 	print("---------------------")
 	await get_tree().process_frame
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Abyssbound placeholder art generator.
+BocciaBound placeholder art generator.
 
 Every sprite in assets/ is produced by this script. Nothing is hand-painted,
 so art is reproducible and reviewable in git as code.
@@ -8,7 +8,7 @@ so art is reproducible and reviewable in git as code.
 Run:  python3 tools/gen_art.py
 Needs: pillow  (pip install pillow)
 
-The palette below is lifted from the Abyssbound concept sheet. Change a hex
+The palette below is lifted from the BocciaBound concept sheet. Change a hex
 value here and every sprite updates together.
 """
 
@@ -884,7 +884,7 @@ def icon():
 
 
 if __name__ == "__main__":
-    print("Generating Abyssbound placeholder art...")
+    print("Generating BocciaBound placeholder art...")
     player()
     crawler()
     critter()

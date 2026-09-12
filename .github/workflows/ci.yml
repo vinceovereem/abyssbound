@@ -89,19 +89,19 @@ jobs:
         include:
           - preset: Web
             out: build/web/index.html
-            artifact: abyssbound-web
+            artifact: bocciabound-web
             dir: build/web
           - preset: Windows Desktop
-            out: build/windows/Abyssbound.exe
-            artifact: abyssbound-windows
+            out: build/windows/BocciaBound.exe
+            artifact: bocciabound-windows
             dir: build/windows
           - preset: macOS
-            out: build/macos/Abyssbound.zip
-            artifact: abyssbound-macos
+            out: build/macos/BocciaBound.zip
+            artifact: bocciabound-macos
             dir: build/macos
           - preset: Linux
-            out: build/linux/Abyssbound.x86_64
-            artifact: abyssbound-linux
+            out: build/linux/BocciaBound.x86_64
+            artifact: bocciabound-linux
             dir: build/linux
     steps:
       - uses: actions/checkout@v4
@@ -183,7 +183,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: abyssbound-web
+          name: bocciabound-web
           path: build/web
 
       - uses: actions/setup-node@v4
@@ -201,7 +201,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: abyssbound-browser-screenshot
+          name: bocciabound-browser-screenshot
           path: |
             build/browser_check.png
             build/browser_title.png
@@ -217,7 +217,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: abyssbound-web
+          name: bocciabound-web
           path: build/web
 
       - name: Deploy
@@ -253,7 +253,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: abyssbound-web
+          name: bocciabound-web
           path: web
 
       - uses: actions/configure-pages@v5
@@ -277,20 +277,20 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: abyssbound-windows
+          name: bocciabound-windows
           path: dist/windows
 
       - uses: actions/download-artifact@v4
         with:
-          name: abyssbound-macos
+          name: bocciabound-macos
           path: dist/macos
 
       - name: Name the files after the tag
         run: |
           set -eux
           mkdir -p release
-          cp dist/windows/Abyssbound.exe "release/Abyssbound-${GITHUB_REF_NAME}-Windows.exe"
-          cp dist/macos/Abyssbound.zip "release/Abyssbound-${GITHUB_REF_NAME}-macOS.zip"
+          cp dist/windows/BocciaBound.exe "release/BocciaBound-${GITHUB_REF_NAME}-Windows.exe"
+          cp dist/macos/BocciaBound.zip "release/BocciaBound-${GITHUB_REF_NAME}-macOS.zip"
           ls -la release
 
       - name: Write the notes
@@ -301,14 +301,14 @@ jobs:
 
           | Machine | File |
           | --- | --- |
-          | Windows | `Abyssbound-VERSION-Windows.exe` |
-          | Mac (Intel and Apple Silicon) | `Abyssbound-VERSION-macOS.zip` |
+          | Windows | `BocciaBound-VERSION-Windows.exe` |
+          | Mac (Intel and Apple Silicon) | `BocciaBound-VERSION-macOS.zip` |
 
           **Windows.** Double-click the `.exe`. Windows will say it does not
           recognise the app, because the build is not signed with a paid
           certificate. Click **More info**, then **Run anyway**.
 
-          **Mac.** Unzip, then **right-click** `Abyssbound.app` and choose
+          **Mac.** Unzip, then **right-click** `BocciaBound.app` and choose
           **Open**, then **Open** again. Do not double-click it the first time:
           the build is not notarised, so double-clicking gives you a dead end
           that says it cannot be opened. Right-click and Open gives you the
@@ -326,5 +326,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" release/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Abyssbound $GITHUB_REF_NAME" \
+            --title "BocciaBound $GITHUB_REF_NAME" \
             --notes-file notes.md

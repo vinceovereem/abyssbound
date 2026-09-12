@@ -1,4 +1,4 @@
-# Working on Abyssbound
+# Working on BocciaBound
 
 Two people and an AI assistant work in this repo. These rules exist so the three of you do not overwrite each other.
 

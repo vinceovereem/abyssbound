@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Abyssbound level generator.
+BocciaBound level generator.
 
 Writes the plain text maps in levels/. The maps are committed, so you can edit
 them by hand in any text editor. This script is here for rebuilding a zone or
@@ -256,7 +256,7 @@ def abyss():
 
 
 if __name__ == "__main__":
-    print("Generating Abyssbound level maps...")
+    print("Generating BocciaBound level maps...")
     results = [surface().save("surface.txt"),
                caverns().save("caverns.txt"),
                abyss().save("abyss.txt")]

@@ -20,7 +20,7 @@ var world: Node2D
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(_dir)
-	print("Abyssbound first run")
+	print("BocciaBound first run")
 	print("--------------------")
 
 	world = WorldScene.instantiate()

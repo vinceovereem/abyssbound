@@ -13,7 +13,7 @@ var _failed := 0
 
 func _ready() -> void:
 	await get_tree().process_frame
-	print("Abyssbound world test")
+	print("BocciaBound world test")
 	print("---------------------")
 
 	_check_tile_db()
