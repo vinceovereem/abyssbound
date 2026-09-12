@@ -595,6 +595,95 @@ def backdrop(name, top, bottom, silhouette, seed, glow=None):
     print(f"  bg/{name}.png  {w}x{h}")
 
 
+# --------------------------------------------------------------------------
+# Parallax layers.
+#
+# Four per zone, each 640x360 and tiling horizontally, drawn back to front:
+# a far ridge, mid hills, a near treeline and a fog sheet. The sky itself is a
+# gradient drawn by the engine, so these are silhouettes with holes in them.
+#
+# The point is depth. The target's surfaces read as layers of distance with
+# light coming through them, which one flat backdrop cannot do.
+# --------------------------------------------------------------------------
+PARALLAX_W, PARALLAX_H = 640, 360
+
+
+def _ridge(seed, base_y, height, roughness, steps):
+    """A horizon line that meets itself at both ends, so it can tile."""
+    rnd = random.Random(seed)
+    points = [rnd.uniform(0.0, 1.0) for _ in range(steps)]
+    points.append(points[0])
+    out = []
+    for x in range(PARALLAX_W):
+        t = x / PARALLAX_W * steps
+        i = int(t)
+        f = t - i
+        f = f * f * (3 - 2 * f)
+        a, b = points[i], points[i + 1]
+        out.append(int(base_y - (a + (b - a) * f) * height + rnd.random() * roughness))
+    return out
+
+
+def parallax_layer(name, seed, colour, base_y, height, roughness, steps, alpha=255,
+                   tufts=None):
+    img = Image.new("RGBA", (PARALLAX_W, PARALLAX_H), (0, 0, 0, 0))
+    px = img.load()
+    line = _ridge(seed, base_y, height, roughness, steps)
+    rnd = random.Random(seed + 7)
+    for x in range(PARALLAX_W):
+        top = max(0, min(PARALLAX_H - 1, line[x]))
+        for y in range(top, PARALLAX_H):
+            # A gentle vertical ramp so a silhouette is not a flat slab.
+            depth = (y - top) / max(1, PARALLAX_H - top)
+            shade = 1.0 - depth * 0.25
+            px[x, y] = (int(colour[0] * shade), int(colour[1] * shade),
+                        int(colour[2] * shade), alpha)
+        if tufts and rnd.random() < 0.06:
+            h = rnd.randint(3, 9)
+            for y in range(max(0, top - h), top):
+                px[x, y] = (*tufts, alpha)
+    sheet([img], "bg/%s.png" % name)
+
+
+def fog_layer(name, colour, peak, centre=196, spread=70):
+    """Haze as a band at the horizon.
+
+    A top-to-bottom ramp was invisible: the bottom of the screen is covered by
+    the ground, so all the fog ended up behind the terrain.
+    """
+    img = Image.new("RGBA", (PARALLAX_W, PARALLAX_H), (0, 0, 0, 0))
+    px = img.load()
+    for y in range(PARALLAX_H):
+        d = abs(y - centre) / spread
+        a = int(peak * max(0.0, 1.0 - d * d))
+        if a <= 0:
+            continue
+        for x in range(PARALLAX_W):
+            px[x, y] = (*colour, a)
+    sheet([img], "bg/%s.png" % name)
+
+
+def parallax():
+    # Surface: golden hour. Far ridge hazed toward the sky, near trees darkest.
+    parallax_layer("surface_far", 11, (132, 152, 184), 198, 84, 3, 7)
+    parallax_layer("surface_mid", 23, (96, 120, 134), 218, 58, 3, 11)
+    parallax_layer("surface_near", 37, (56, 78, 64), 236, 42, 2, 17,
+                   tufts=(44, 64, 52))
+    fog_layer("surface_fog", (250, 222, 176), 64)
+
+    # Caverns: cold blue, closer in, no sky to haze toward.
+    parallax_layer("cavern_far", 51, (48, 66, 98), 196, 80, 3, 6)
+    parallax_layer("cavern_mid", 63, (36, 50, 76), 220, 56, 3, 10)
+    parallax_layer("cavern_near", 71, (24, 34, 54), 240, 38, 2, 15)
+    fog_layer("cavern_fog", (110, 170, 220), 40)
+
+    # The Abyss: purple, and the fog glows rather than hazes.
+    parallax_layer("abyss_far", 83, (64, 42, 92), 194, 84, 3, 6)
+    parallax_layer("abyss_mid", 91, (46, 28, 70), 218, 58, 3, 9)
+    parallax_layer("abyss_near", 97, (28, 16, 44), 240, 36, 2, 14)
+    fog_layer("abyss_fog", (176, 100, 230), 54)
+
+
 def backdrops():
     backdrop("bg_surface", (96, 148, 176), (188, 208, 196), (32, 46, 44), 11)
     backdrop("bg_caverns", (14, 22, 34), (24, 40, 56), (10, 16, 26), 12, glow=PAL["t"])
@@ -893,5 +982,6 @@ if __name__ == "__main__":
     tiles()
     items()
     backdrops()
+    parallax()
     icon()
     print("Done.")

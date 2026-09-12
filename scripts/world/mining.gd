@@ -81,17 +81,28 @@ func stations_in_reach() -> Dictionary:
 	return out
 
 
-## The one tile within arm's reach, chosen by which direction is held.
+## The one tile within arm's reach, chosen by which directions are held.
+##
+## All eight, not three: holding down and right aims at the corner, which is
+## what you want when cutting a staircase down into the rock rather than a
+## shaft. With nothing held it aims at whatever you are facing.
 func target_tile() -> Vector2i:
 	if world == null or world.player == null or not is_instance_valid(world.player):
 		return Vector2i(-9999, -9999)
-	var here: Vector2i = world.player_tile()
-	if Input.is_action_pressed("move_down"):
-		return here + Vector2i(0, 1)
+
+	var step := Vector2i.ZERO
+	if Input.is_action_pressed("move_left"):
+		step.x -= 1
+	if Input.is_action_pressed("move_right"):
+		step.x += 1
 	if Input.is_action_pressed("move_up"):
-		return here + Vector2i(0, -1)
-	var facing: int = world.player.facing()
-	return here + Vector2i(facing, 0)
+		step.y -= 1
+	if Input.is_action_pressed("move_down"):
+		step.y += 1
+	if step == Vector2i.ZERO:
+		step.x = world.player.facing()
+
+	return world.player_tile() + step
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -235,7 +246,7 @@ func _place() -> void:
 		return
 	if not _has_support(_target.x, _target.y):
 		return
-	if _db.is_solid(id) and _overlaps_player(_target):
+	if _db.is_solid(id) and _overlaps_player(_target) and not _pillaring():
 		return
 	if not Game.inventory.remove(held, 1):
 		return   # not actually carrying one
@@ -250,6 +261,16 @@ func _has_support(x: int, y: int) -> bool:
 		if store.get_fg(x + d.x, y + d.y) != 0:
 			return true
 	return false
+
+
+## Putting a block under your own feet while off the ground, and landing on
+## it. Standing still and sealing yourself inside one is still refused; this is
+## only ever the tile you are about to fall onto.
+func _pillaring() -> bool:
+	if world.player.is_on_floor():
+		return false
+	var feet: float = world.player.global_position.y + 8.0
+	return float(_target.y * TILE) >= feet - 2.0
 
 
 func _overlaps_player(tile: Vector2i) -> bool:

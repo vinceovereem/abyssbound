@@ -639,6 +639,26 @@ func _check_reach() -> void:
 	Input.action_release("move_up")
 	await get_tree().physics_frame
 
+	# All eight, so a staircase can be cut rather than only a shaft.
+	Input.action_press("move_down")
+	Input.action_press("move_right")
+	await get_tree().physics_frame
+	_ok("down and right aims at the corner",
+		mining.target_tile() == here + Vector2i(1, 1), "%s" % mining.target_tile())
+	Input.action_release("move_right")
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	_ok("down and left aims at the other corner",
+		mining.target_tile() == here + Vector2i(-1, 1))
+	Input.action_release("move_down")
+	Input.action_press("move_up")
+	await get_tree().physics_frame
+	_ok("up and left aims above and behind",
+		mining.target_tile() == here + Vector2i(-1, -1))
+	Input.action_release("move_up")
+	Input.action_release("move_left")
+	await get_tree().physics_frame
+
 	# Whatever is held, the aim never leaves the tiles you could touch.
 	var far := 0
 	for combo in [[], ["move_down"], ["move_up"], ["move_left"], ["move_right"]]:
@@ -1078,6 +1098,33 @@ func _check_stations_and_tools() -> void:
 	_ok("a pickaxe is not a block and does not get placed",
 		world.store.get_fg(spot.x, spot.y) == 0)
 	_ok("and is still in the bag", Game.inventory.count_of("wood_pick") == 1)
+
+	# Pillar jumping: a block under your own feet while off the ground. Refused
+	# while standing, because sealing yourself inside one is not the same move.
+	Game.inventory.clear()
+	Game.inventory.add("stone", 5)
+	Game.inventory.select(0)
+	var under: Vector2i = world.player_tile() + Vector2i(0, 1)
+	world.store.set_fg(under.x, under.y, 0)
+
+	mining._target = under
+	mining._place()
+	var while_standing: int = world.store.get_fg(under.x, under.y)
+
+	world.player.velocity.y = -180.0
+	for i in 3:
+		await get_tree().physics_frame
+	var airborne: bool = not world.player.is_on_floor()
+	mining._target = world.player_tile() + Vector2i(0, 1)
+	world.store.set_fg(mining._target.x, mining._target.y, 0)
+	mining._place()
+	var while_jumping: int = world.store.get_fg(mining._target.x, mining._target.y)
+
+	_ok("the player really did leave the ground", airborne)
+	_ok("a block goes down under you while jumping", while_jumping != 0,
+		tiles.name_of.get(while_jumping, "nothing"))
+	_ok("but not while you are stood on that very tile", while_standing == 0,
+		tiles.name_of.get(while_standing, "nothing"))
 
 	# Breaking leaves the material on the ground rather than teleporting it in.
 	Game.inventory.clear()

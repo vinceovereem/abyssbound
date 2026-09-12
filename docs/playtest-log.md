@@ -530,3 +530,56 @@ attempts. First the player had teleported directly onto it and was standing in
 front of it. Then my crop was simply below where the chest was. The tile data
 and the renderer had been right the whole time, which asking the running world
 directly established in one go.
+
+
+---
+
+## Round 14 — 2026-09-11 — first comparison against the target
+
+`docs/art/compare-round1.png`. Target's title panel on the left, the build's
+surface on the right, same kind of scene.
+
+### Score: 8 of 25
+
+| | Score | The gap, in one sentence |
+| --- | --- | --- |
+| Mood | **2** | The target is golden hour with light bleeding through everything; this is flat midday blue with no time of day in it at all. |
+| Colour | **2** | The target works in gold, peach and deep teal; this has one blue, one green and one brown, none of them lit by anything. |
+| Detail | **1** | The target has strata in the cliffs, waterfalls, a village, clustered foliage; this has rectangles of grass and an empty sky. |
+| Character charm | **2** | The target's boy has a silhouette that tells you who he is and a wolf beside him; mine reads as a person but stands stiff, unshaded, alone. |
+| UI | **1** | The target has a serif logo, spacing and warm beige on dark; mine is the engine's default font with no panel behind it. |
+
+### What this round did
+
+Four parallax layers per zone, scrolling at different rates, with the haze as a
+band at the horizon rather than a top-to-bottom ramp. The first attempt put the
+ridgelines too low and the terrain simply covered them, which a screenshot
+showed immediately and a test never would.
+
+It buys depth, which was entirely absent. It buys nothing else.
+
+### What the score says to do next, in order
+
+1. **Warm light.** Mood and colour are both 2 and both for the same reason:
+   nothing is lit. A golden-hour tint over the surface, warm rim light on tiles
+   facing the sun, and coloured light from torches would move two scores at
+   once. Highest value by a distance.
+2. **Colour ramps on tiles.** Every tile is a flat noise fill. Four or five
+   steps with light from the top left is what makes the target's rock look like
+   rock.
+3. **Terrain blending.** Grass is stamped squares. Corners and edges are the
+   difference between a tile map and a landscape.
+4. **UI.** A panel, a border and a real font would take UI from 1 to 3 in one
+   pass, and it is the cheapest of the four.
+
+Detail at 1 is the hardest and the least urgent: it is mostly hand-drawn art,
+which is what `docs/art/spec.md` is for.
+
+### Also this round, from playing rather than looking
+
+- **Diagonals could not be dug.** Aiming was three directions; it is now all
+  eight, so a staircase can be cut into rock instead of only a shaft.
+- **A block could not be placed under you mid-jump.** Pillar jumping is a
+  Terraria staple and it was refused because the tile overlapped the player. It
+  is allowed now while airborne, and still refused while stood on that tile,
+  which is a different move.
