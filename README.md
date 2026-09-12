@@ -30,6 +30,11 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 
 ## Play it
 
+**In a browser, nothing to install: [bocciabound.vercel.app](https://bocciabound.vercel.app)**
+
+That is the current `main`, redeployed by CI on every push.
+
+
 **Fastest, and what the screenshots come from.** Godot 4.6 is needed once, from
 [godotengine.org/download](https://godotengine.org/download), the standard
 build and not .NET. Then:
@@ -101,9 +106,9 @@ adding to it needs no code.
 
 ### Hosting the web build
 
-`.github/workflows/ci.yml` will deploy the browser build to Vercel on every
-push to `main`, but only once three secrets exist. Until then the step prints
-a note and exits without failing, which is why there is no public link yet.
+`.github/workflows/ci.yml` deploys the browser build to Vercel on every push to
+`main`, and on a manual run of the workflow. The three secrets it needs are
+set. If you ever need to recreate them:
 
 | Secret | Where to get it |
 | --- | --- |

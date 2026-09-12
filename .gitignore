@@ -23,3 +23,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+
+# Vercel link, holds project ids
+.vercel/
+.vercel

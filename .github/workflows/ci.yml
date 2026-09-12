@@ -210,7 +210,9 @@ jobs:
   vercel:
     name: Deploy playable build to Vercel
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Also on a manual run, so the site can be pushed without inventing a
+    # commit to push it with.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
