@@ -178,5 +178,6 @@ func change_zone(scene_path: String, new_zone_name: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart"):
 		restart()
-	elif event.is_action_pressed("ui_cancel"):
-		get_tree().quit()
+	# Escape used to quit on the spot, with no warning and no save. The pause
+	# menu owns it now; this is only the fallback for the archived zones, which
+	# have no menu in them.

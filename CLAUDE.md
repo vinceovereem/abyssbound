@@ -105,6 +105,15 @@ stops being reproducible, which breaks saves and every seeded test.
 archived zones and are frozen: renumbering them silently repaints
 `levels/legacy/`. Append, never reorder.
 
+## The pause menu
+
+Escape opens `scenes/ui/pause_menu.tscn`. It used to **quit the game outright**,
+with no warning and no save, which is the worst thing a key can do.
+
+The menu runs with `PROCESS_MODE_ALWAYS` because it pauses the tree, and it
+holds the only complete list of the controls anywhere in the game. **If you add
+or change a key, change that list**: it is what a player reads.
+
 ## Underground
 
 There is no chasm. The underground is caves, in four depth bands (surface,

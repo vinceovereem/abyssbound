@@ -100,7 +100,13 @@ func _try_spawn() -> void:
 		return  # somebody lit this place; nothing comes here
 
 	var creature: Node2D
-	if hostile:
+	if hostile and underground and _rng.randf() < 0.42:
+		# Underground, some of what comes at you flies. A threat that ignores
+		# the floor asks a different question of the player than one that does
+		# not, which is the point of having more than one kind.
+		creature = Bat.new()
+		creature.name = "Bat"
+	elif hostile:
 		creature = CrawlerScene.instantiate()
 		creature.hunts = true
 	else:
