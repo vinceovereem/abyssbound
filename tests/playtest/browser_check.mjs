@@ -15,7 +15,11 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 
-const ROOT = resolve(process.argv[2] ?? 'build/web');
+// Either a folder to serve, or a live URL to point at. Testing the deployed
+// site is the only way to know the deployed site works.
+const ARG = process.argv[2] ?? 'build/web';
+const REMOTE = ARG.startsWith('http') ? ARG.replace(/\/$/, '') : null;
+const ROOT = REMOTE ? null : resolve(ARG);
 const PORT = Number(process.env.PORT ?? 8060);
 const SEED = 20260910;
 const BOOT_TIMEOUT_MS = 180_000;
@@ -25,7 +29,7 @@ const MIME = {
   '.pck': 'application/octet-stream', '.png': 'image/png', '.json': 'application/json',
 };
 
-const server = createServer(async (req, res) => {
+const server = REMOTE ? null : createServer(async (req, res) => {
   try {
     const path = join(ROOT, decodeURIComponent(req.url.split('?')[0]));
     const body = await readFile(path);
@@ -35,7 +39,9 @@ const server = createServer(async (req, res) => {
     res.writeHead(404).end('not found');
   }
 });
-await new Promise((r) => server.listen(PORT, r));
+if (server) await new Promise((r) => server.listen(PORT, r));
+const BASE = REMOTE ?? `http://localhost:${PORT}`;
+console.log(`checking ${BASE}`);
 
 const browser = await chromium.launch({
   args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--use-angle=swiftshader'],
@@ -55,7 +61,7 @@ const ok = (label, cond, detail = '') => {
 console.log('BocciaBound browser check');
 console.log('------------------------');
 
-await page.goto(`http://localhost:${PORT}/index.html?start&seed=${SEED}`, { waitUntil: 'load' });
+await page.goto(`${BASE}/index.html?start&seed=${SEED}`, { waitUntil: 'load' });
 
 // The build is loaded with ?start, which skips the title screen. Getting a
 // key press into a Godot canvas from an automated browser turned out to be
@@ -102,10 +108,38 @@ ok('nothing threw in the console', errors.length === 0,
   errors.slice(0, 3).join(' | ') || 'clean');
 
 await page.screenshot({ path: 'build/browser_check.png' });
+
+// The path a tester takes: open the page, click, press space. No ?start.
+// Getting a keystroke into a Godot canvas needs a click first, which is why
+// the title also accepts the click itself.
+const fresh = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const freshErrors = [];
+fresh.on('pageerror', (e) => freshErrors.push(String(e)));
+await fresh.goto(`${BASE}/index.html`, { waitUntil: 'load' });
+const freshCanvas = fresh.locator('canvas');
+await freshCanvas.waitFor({ state: 'visible', timeout: BOOT_TIMEOUT_MS });
+await fresh.waitForTimeout(6000);
+await fresh.screenshot({ path: 'build/browser_title.png' });
+
+let started = null;
+for (let attempt = 0; attempt < 10 && started === null; attempt++) {
+  await freshCanvas.click({ position: { x: 640, y: 400 } }).catch(() => {});
+  await fresh.keyboard.press('Space');
+  try {
+    await fresh.waitForFunction(() => window.__abyss?.ready === true, null,
+      { timeout: 8000, polling: 250 });
+    started = await fresh.evaluate(() => window.__abyss);
+  } catch { /* still on the title */ }
+}
+ok('a player can start it from the title screen, as a player would', started !== null,
+  started === null ? 'clicking and pressing space never left the title' : `in ${started.biome}`);
+await fresh.screenshot({ path: 'build/browser_started.png' });
+ok('nothing threw on that path', freshErrors.length === 0,
+  freshErrors.slice(0, 2).join(' | ') || 'clean');
 console.log('\n  screenshots: build/browser_title.png, build/browser_check.png');
 
 await browser.close();
-server.close();
+if (server) server.close();
 console.log('------------------------');
 console.log(failed === 0 ? 'browser build is healthy' : `${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

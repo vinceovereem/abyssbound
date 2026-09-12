@@ -6,6 +6,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Check this deployed site instead of the build from this run"
+        required: false
+        default: ""
 
 env:
   GODOT_VERSION: 4.6
@@ -196,7 +201,7 @@ jobs:
           npx playwright install --with-deps chromium
 
       - name: Run the browser check
-        run: node tests/playtest/browser_check.mjs
+        run: node tests/playtest/browser_check.mjs "${{ inputs.site_url || 'build/web' }}"
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -205,6 +210,7 @@ jobs:
           path: |
             build/browser_check.png
             build/browser_title.png
+            build/browser_started.png
           if-no-files-found: warn
 
   vercel:

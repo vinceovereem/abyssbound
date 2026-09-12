@@ -40,6 +40,12 @@ func _begin() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("jump") or event.is_action_pressed("interact"):
+	# A click counts as well as a key. In a browser the canvas often does not
+	# receive keystrokes until it has been clicked once, so a player who loads
+	# the page and presses space gets nothing and assumes it is broken.
+	var pressed_key: bool = event.is_action_pressed("jump") or event.is_action_pressed("interact")
+	var pressed_pointer: bool = (event is InputEventMouseButton and event.pressed) \
+		or (event is InputEventScreenTouch and event.pressed)
+	if pressed_key or pressed_pointer:
 		get_viewport().set_input_as_handled()
 		_begin()
