@@ -210,7 +210,52 @@ func _check_caves() -> void:
 	_ok("the deep rock is its own stone", other == 0 and deep_rock > 40,
 		"%d deep, %d other" % [deep_rock, other])
 
-	_ok("there is no chasm any more", not store.gen.has_method("in_shaft"))
+	# The Abyss came back, but only on the condition that it is a hub and not a
+	# corridor. These check the condition, not just that a hole exists.
+	var blocked := 0
+	for y in range(WorldGen.ABYSS_RIM + 10, WorldGen.HEIGHT, 7):
+		if store.is_solid(store.gen.abyss_centre(y), y):
+			blocked += 1
+	_ok("the Abyss is open from the rim to the bottom", blocked == 0,
+		"%d blocked samples" % blocked)
+
+	_ok("it widens as it goes down",
+		store.gen.abyss_half_width(WorldGen.HEIGHT - 40)
+			> store.gen.abyss_half_width(WorldGen.ABYSS_RIM + 10) * 2,
+		"%d at the rim, %d at the bottom" % [
+			store.gen.abyss_half_width(WorldGen.ABYSS_RIM + 10),
+			store.gen.abyss_half_width(WorldGen.HEIGHT - 40)])
+
+	var walled := 0
+	var sampled := 0
+	for y in range(WorldGen.ABYSS_RIM + 40, 760, 23):
+		sampled += 1
+		if store.get_bg(store.gen.abyss_centre(y), y) != 0:
+			walled += 1
+	_ok("it has rock behind it, not sky", walled == sampled,
+		"%d of %d" % [walled, sampled])
+
+	# The reason it is allowed back: caves open onto it, so it is somewhere the
+	# underground leads rather than the only way down.
+	var openings := 0
+	for y in range(WorldGen.ABYSS_RIM + 30, 740, 6):
+		var edge: int = store.gen.abyss_centre(y) + store.gen.abyss_half_width(y) + 4
+		if not store.is_solid(edge, y):
+			openings += 1
+	_ok("caves open onto the chasm wall", openings > 20,
+		"%d openings down one side" % openings)
+
+	# Somewhere to stand and look down, which is the shot on the concept sheet.
+	var rim_centre: int = store.gen.abyss_centre(WorldGen.ABYSS_RIM)
+	var rim: int = rim_centre - store.gen.abyss_half_width(WorldGen.ABYSS_RIM) - 3
+	var rim_ground := store.gen.surface_height(rim)
+	_ok("the rim can be stood on", store.is_solid(rim, rim_ground)
+		and not store.is_solid(rim, rim_ground - 1), "x=%d" % rim)
+	_ok("and the drop beside it is a drop",
+		not store.is_solid(store.gen.abyss_centre(rim_ground + 20), rim_ground + 20))
+
+	_ok("the Abyss has layers to name",
+		store.gen.abyss_layer(WorldGen.HEIGHT - 30) > store.gen.abyss_layer(WorldGen.ABYSS_RIM + 5))
 
 
 ## How many air tiles connect to this one. Bounded so a runaway cannot hang.

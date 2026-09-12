@@ -60,8 +60,11 @@ func stage_blurb() -> String:
 	return str(current().get("blurb", ""))
 
 
+## An empty list means the data has not loaded, not that the game is over.
+## The HUD used to ask this before the autoload had read its file and was told
+## every stage was done, in a brand new world.
 func all_finished() -> bool:
-	return stage >= stages.size()
+	return not stages.is_empty() and stage >= stages.size()
 
 
 ## The objectives of the stage you are on, finished ones included so the list

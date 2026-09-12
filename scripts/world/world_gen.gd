@@ -21,6 +21,19 @@ const SEA_LEVEL := 130
 const CAVERN_TOP := 200
 ## Darker, harder rock. Depth for its own sake, not a separate place.
 const DEEP_TOP := 460
+
+## The Abyss itself: one enormous chasm through the middle of the world.
+##
+## It came out once, because when it was the *only* interesting place to go the
+## rest of the underground was just rock you tunnelled through. It is back now
+## that the caves stand on their own, and the two work on each other: cave
+## systems open onto the chasm wall at every depth, so it is a hub rather than
+## a corridor, and the rim is somewhere to stand and look down.
+const ABYSS_CENTRE := 1000
+const ABYSS_RIM := 118
+## Half width at the rim, and how much wider it gets per tile of depth.
+const ABYSS_MOUTH := 15
+const ABYSS_FLARE := 0.030
 const SKY_ISLAND_X0 := 1100
 const SKY_ISLAND_X1 := 1450
 
@@ -48,6 +61,7 @@ var _cavern := FastNoiseLite.new()
 var _copper := FastNoiseLite.new()
 var _iron := FastNoiseLite.new()
 var _cross := FastNoiseLite.new()
+var _chasm := FastNoiseLite.new()
 var _island := FastNoiseLite.new()
 
 # Tile ids, resolved once so the inner loops compare integers.
@@ -97,6 +111,7 @@ func _init(seed_value: int = 0) -> void:
 	_setup(_copper, 3, FastNoiseLite.TYPE_SIMPLEX, 0.090, 1)
 	_setup(_iron, 4, FastNoiseLite.TYPE_SIMPLEX, 0.090, 1)
 	_setup(_cross, 5, FastNoiseLite.TYPE_SIMPLEX, 0.021, 2)
+	_setup(_chasm, 8, FastNoiseLite.TYPE_SIMPLEX, 0.008, 2)
 	_setup(_island, 6, FastNoiseLite.TYPE_SIMPLEX, 0.035, 2)
 
 
@@ -160,6 +175,38 @@ func depth_band(y: int, surface: int) -> int:
 	if y < DEEP_TOP:
 		return 2
 	return 3
+
+
+## The chasm wanders as it descends rather than falling in a straight line.
+func abyss_centre(y: int) -> int:
+	return ABYSS_CENTRE + int(round(_chasm.get_noise_1d(float(y) * 1.4) * 26.0))
+
+
+func abyss_half_width(y: int) -> int:
+	if y < ABYSS_RIM:
+		return 0
+	return ABYSS_MOUTH + int(float(y - ABYSS_RIM) * ABYSS_FLARE)
+
+
+func in_abyss(x: int, y: int) -> bool:
+	if y < ABYSS_RIM:
+		return false
+	return absi(x - abyss_centre(y)) <= abyss_half_width(y)
+
+
+## How far into the chasm's wall a tile is, in tiles. Negative means inside the
+## open air of it. Used to put a lip of harder rock along the edge.
+func abyss_wall_depth(x: int, y: int) -> int:
+	if y < ABYSS_RIM:
+		return 9999
+	return absi(x - abyss_centre(y)) - abyss_half_width(y)
+
+
+## Which Abyss layer a depth belongs to, 0 meaning not down there.
+func abyss_layer(y: int) -> int:
+	if y < ABYSS_RIM:
+		return 0
+	return 1 + mini(4, int(float(y - ABYSS_RIM) / float(HEIGHT - ABYSS_RIM) * 5.0))
 
 
 func band_name(y: int, surface: int) -> String:
@@ -229,6 +276,8 @@ func _hash(x: int, salt: int) -> int:
 func _is_tree(x: int) -> bool:
 	var b := biome_name(x)
 	if b != "forest" and b != "plains":
+		return false
+	if in_abyss(x, surface_height(x) + 2):
 		return false
 	return _hash(x, 7) % 9 == 0
 
@@ -312,6 +361,11 @@ func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h
 	var b := biome_name(x)
 	var depth := y - h
 
+	# The chasm cuts through everything. Caves meet it at every depth, which is
+	# what makes it a hub instead of a corridor.
+	if in_abyss(x, y):
+		return AIR
+
 	# Caves you explore rather than rock you tunnel through.
 	#
 	# Three things overlapping: winding tunnels that widen with depth, big
@@ -333,6 +387,10 @@ func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h
 
 		if depth > 16 and absf(_cross.get_noise_2d(float(x) * 0.7, float(y) * 2.2)) < 0.05:
 			return AIR
+
+	# A lip of harder rock along the chasm wall, so the edge reads as an edge.
+	if abyss_wall_depth(x, y) <= 2:
+		return ABYSS
 
 	if y >= DEEP_TOP:
 		return ABYSS
@@ -386,6 +444,11 @@ func _is_sky_island(x: int, y: int) -> bool:
 
 
 func _wall_at(x: int, y: int, h: int, fg: int) -> int:
+	# The chasm keeps rock behind it below the rim. Leaving it empty lets the
+	# sky show through and the mouth reads as a cliff over open air instead of
+	# a hole in the ground; that was a real bug once.
+	if in_abyss(x, y):
+		return 0 if y <= ABYSS_RIM + 3 else STONE_WALL
 	if y <= h:
 		return 0
 	if y >= DEEP_TOP:

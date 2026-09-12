@@ -27,7 +27,20 @@ content.
 
 ## The turns this took
 
-### Second turn: caves, not a chasm
+### Third turn: both
+
+The chasm is back, and the caves stay. Taking it out was right about the
+symptom and wrong about the cause: the problem was never that a chasm existed,
+it was that it was the **only** interesting place to go. Now that the caves
+stand on their own, the two work on each other. Cave systems open onto the
+chasm wall at every depth, so the Abyss is a hub the underground leads to
+rather than a corridor you are funnelled down, and the rim is somewhere to
+stand and look.
+
+Beiral sits on that rim. The Rise climbs out of it. The story needs a hole in
+the world, and now there is one worth having.
+
+### Second turn: caves, not a chasm (superseded above)
 
 The Abyss was a single vast shaft near the middle of the map. Playing it, the
 problem was obvious: one column of a two thousand tile world was the only
@@ -87,8 +100,9 @@ They live somewhere, they eat something, they keep hours. You learn a creature
 by watching it, and the reward for patience is information. Trust is built over
 in-game days, and it can be lost.
 
-**Down is where the game is.** Not one chasm, but caves: a connected
-underground you explore rather than a corridor you descend. The rock changes
+**Down is where the game is.** A chasm *and* caves: a connected underground you
+explore, and one enormous hole through the middle of it that the caves open
+onto at every depth. The rock changes
 with depth, what lives there changes with depth, and what you find there is
 worth the walk. The long-term goal is not a place at the bottom, it is being
 the kind of person who can survive further down.
@@ -299,10 +313,15 @@ Four bands, each a different place to be rather than a different level:
 
 | Band | What it is |
 | --- | --- |
-| Surface | Grass and dirt, a few tiles deep |
+| Surface | Grass and dirt, a few tiles deep. The rim of the Abyss is here |
 | Underground | Narrow winding tunnels through dirt and stone |
 | Caverns | Chambers you can lose your bearings in |
 | Deep | Darker, harder rock. Further from anywhere safe |
+
+Cutting through all of them is **the Abyss**: one chasm near the middle of the
+map, widening as it falls, with a lip of harder rock along its wall. Caves open
+onto it at every depth. It is numbered in layers for the story's sake, and the
+rim is where Beiral stands.
 
 **It is all one cave system.** Not a set of floors with a lift between them.
 A tunnel found near the surface can lead, eventually, to the deep rock, and
