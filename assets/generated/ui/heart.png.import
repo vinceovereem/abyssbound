@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d1evhshss8xwy"
-path="res://.godot/imported/bg_caverns.png-b882d57af747a7877eef8d54da8306e0.ctex"
+uid="uid://iwrfrhq5g4jt"
+path="res://.godot/imported/heart.png-dad0045531eba5e5d624675b8502c8e5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/bg/bg_caverns.png"
-dest_files=["res://.godot/imported/bg_caverns.png-b882d57af747a7877eef8d54da8306e0.ctex"]
+source_file="res://assets/generated/ui/heart.png"
+dest_files=["res://.godot/imported/heart.png-dad0045531eba5e5d624675b8502c8e5.ctex"]
 
 [params]
 

@@ -27,6 +27,7 @@ var _player: Node2D = null
 
 
 func _ready() -> void:
+	ArtManifest.dress(sprite, "critter")
 	add_to_group("critter")
 	trust_bar.visible = false
 	heart.visible = false

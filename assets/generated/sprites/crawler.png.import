@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dtofvntofpjdi"
-path="res://.godot/imported/crawler.png-371ae139026c8afd51c61dc3a7adc3ea.ctex"
+path="res://.godot/imported/crawler.png-cfed8748e75f91c3f7a69a7c0801d8fb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/crawler.png"
-dest_files=["res://.godot/imported/crawler.png-371ae139026c8afd51c61dc3a7adc3ea.ctex"]
+source_file="res://assets/generated/sprites/crawler.png"
+dest_files=["res://.godot/imported/crawler.png-cfed8748e75f91c3f7a69a7c0801d8fb.ctex"]
 
 [params]
 

@@ -14,7 +14,7 @@ import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data", "tiles.json")
-OUT = os.path.join(ROOT, "assets", "tiles", "tileset.tres")
+OUT = os.path.join(ROOT, "assets", "generated", "tiles", "tileset.tres")
 
 # Ids 0 to 5 are the archived placeholder zones in levels/legacy/. They predate
 # data/tiles.json and are not part of the generated world, so their collision
@@ -38,7 +38,7 @@ def main():
     out = [
         '[gd_resource type="TileSet" load_steps=3 format=3]',
         "",
-        '[ext_resource type="Texture2D" path="res://assets/tiles/tiles.png" id="1_tiles"]',
+        '[ext_resource type="Texture2D" path="res://assets/generated/tiles/tiles.png" id="1_tiles"]',
         "",
         '[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_main"]',
         'texture = ExtResource("1_tiles")',

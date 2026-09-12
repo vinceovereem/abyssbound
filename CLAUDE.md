@@ -28,9 +28,22 @@ Two people work on it. One handles code and tooling. One handles design and art.
 
 **Never hand-edit `.tscn` node structure unless you have to.** It works, but it is easy to produce a file Godot silently drops nodes from. If you do edit one, run the smoke test afterwards. It catches missing nodes.
 
-**Art is generated, not drawn.** Everything in `assets/` comes out of `tools/`: sprites and tiles from `gen_art.py`, the tile set resource from `gen_tileset.py`, level maps from `gen_levels.py`. Change the ASCII grid or the tile data and re-run. Do not write PNG bytes directly and do not commit an asset the generator did not produce.
+**Art comes from two places, and both are allowed.**
 
-`tools/verify_generated.py` is what CI runs, and it compares **pixels, not file bytes**. Pillow versions encode the same image differently, so a byte comparison fails on any machine whose Pillow differs from the one that committed the art while telling you nothing about whether the art is right.
+- `assets/generated/` is made by `tools/`: `gen_art.py` for sprites and tiles,
+  `gen_tileset.py` for the tile set resource. CI checks it still matches the
+  generators, comparing **pixels rather than file bytes**, because Pillow
+  versions encode the same image differently.
+- `assets/art/` is hand-drawn, AI-assisted or licensed PNGs. Any source is fine
+  if the licence allows it. **Every file needs a row in `CREDITS.md`**; one
+  without a row does not ship.
+
+**Nothing in the code knows a filename.** Sprites load through `data/art.json`
+via `ArtManifest`. An actor asks for "player" and gets whatever that file
+points at, sliced into the animations it describes. Replacing a placeholder
+with real art is an edit to that json and nothing else. A missing or broken
+entry leaves the scene's own frames alone, so a bad manifest degrades to the
+old look rather than to an invisible character.
 
 **Levels are text.** Everything in `levels/` comes out of `tools/gen_levels.py` and is also editable by hand. Same CI check applies. The legend lives in the header of each map file and in `scripts/level.gd`.
 

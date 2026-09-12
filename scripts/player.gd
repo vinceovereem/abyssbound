@@ -40,6 +40,7 @@ var _facing := 1
 
 
 func _ready() -> void:
+	ArtManifest.dress(sprite, "player")
 	add_to_group("player")
 
 
