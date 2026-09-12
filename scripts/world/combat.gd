@@ -54,7 +54,10 @@ func _swing() -> void:
 	_last_hit_rect = Rect2(centre - Vector2(REACH, REACH) * 0.5, Vector2(REACH, REACH))
 	queue_redraw()
 
-	for enemy in get_tree().get_nodes_in_group("enemy"):
+	var targets: Array[Node] = []
+	targets.append_array(get_tree().get_nodes_in_group("enemy"))
+	targets.append_array(get_tree().get_nodes_in_group("critter"))
+	for enemy in targets:
 		if not is_instance_valid(enemy) or not enemy.has_method("hurt"):
 			continue
 		if not _last_hit_rect.has_point(enemy.global_position):

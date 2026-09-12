@@ -28,7 +28,6 @@ var _player: Node2D = null
 
 func _ready() -> void:
 	add_to_group("critter")
-	add_to_group("enemy")   # so a swing can hit it; being killable is the point
 	trust_bar.visible = false
 	heart.visible = false
 
