@@ -244,6 +244,41 @@ CRAWLER_FEET = {
 }
 
 
+BAT_UP = [
+    "................",
+    "..K..........K..",
+    ".KvK........KvK.",
+    ".KvvK......KvvK.",
+    "..KvvK....KvvK..",
+    "...KvvKKKKvvK...",
+    "....KvVVVVvK....",
+    ".....KvRRvK.....",
+    "......KvvK......",
+    ".......KK.......",
+    "................",
+    "................",
+]
+
+BAT_DOWN = [
+    "................",
+    "................",
+    "................",
+    "...KKK....KKK...",
+    "..KvvvK..KvvvK..",
+    "...KvvKKKKvvK...",
+    "....KvVVVVvK....",
+    ".....KvRRvK.....",
+    "......KvvK......",
+    ".......KK.......",
+    "................",
+    "................",
+]
+
+
+def bat():
+    sheet([grid(BAT_UP, "bat-up"), grid(BAT_DOWN, "bat-down")], "sprites/bat.png")
+
+
 def crawler():
     sheet([grid(CRAWLER_BODY + CRAWLER_FEET[k], "crawler-%s" % k) for k in ("a", "b")],
           "sprites/crawler.png")
@@ -1000,6 +1035,7 @@ if __name__ == "__main__":
     player()
     crawler()
     critter()
+    bat()
     crystal()
     hearts()
     tiles()

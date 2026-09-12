@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _check_reach()
 	await _check_finds()
 	await _check_trees()
+	await _check_bats()
 	_check_art_manifest()
 	_check_clock()
 	await _check_night()
@@ -213,11 +214,42 @@ func _check_caves() -> void:
 	# The Abyss came back, but only on the condition that it is a hub and not a
 	# corridor. These check the condition, not just that a hole exists.
 	var blocked := 0
-	for y in range(WorldGen.ABYSS_RIM + 10, WorldGen.HEIGHT, 7):
+	# The player's question is not "is anything open" but "how far do I fall".
+	# Drop down several lines through the chasm and measure the worst one.
+	var worst_fall := 0
+	for offset in [-10, -5, 0, 5, 10]:
+		var fell := 0
+		var y := WorldGen.ABYSS_RIM + 2
+		while y < WorldGen.HEIGHT - 2:
+			var x: int = store.gen.abyss_centre(y) + offset
+			if store.is_solid(x, y):
+				fell = 0
+			else:
+				fell += 1
+				worst_fall = maxi(worst_fall, fell)
+			y += 1
+	_ok("the Abyss is a climb down, not one long fall", worst_fall < 40,
+		"worst unbroken drop %d tiles" % worst_fall)
+
+	var shelves := 0
+	for y in range(WorldGen.ABYSS_RIM, WorldGen.HEIGHT):
 		if store.is_solid(store.gen.abyss_centre(y), y):
-			blocked += 1
-	_ok("the Abyss is open from the rim to the bottom", blocked == 0,
-		"%d blocked samples" % blocked)
+			shelves += 1
+	_ok("there are shelves to land on", shelves > 40, "%d shelf rows" % shelves)
+
+	# And a way past every one of them, or it is a floor and not a shelf.
+	var sealed := 0
+	for y in range(WorldGen.ABYSS_RIM, WorldGen.HEIGHT):
+		var centre := store.gen.abyss_centre(y)
+		var half := store.gen.abyss_half_width(y)
+		var open_here := false
+		for x in range(centre - half, centre + half + 1):
+			if not store.is_solid(x, y):
+				open_here = true
+				break
+		if not open_here:
+			sealed += 1
+	_ok("no shelf seals the chasm off", sealed == 0, "%d sealed rows" % sealed)
 
 	_ok("it widens as it goes down",
 		store.gen.abyss_half_width(WorldGen.HEIGHT - 40)
@@ -1429,3 +1461,50 @@ func _check_art_manifest() -> void:
 	ArtManifest.dress(sprite, "player")
 	_ok("a known name replaces it", sprite.sprite_frames == frames)
 	player.free()
+
+
+# ---------------------------------------------------------------------------
+## Everything else in the world walks. A thing that does not asks a different
+## question of the player, which is the whole reason it exists.
+func _check_bats() -> void:
+	print("\nsomething that flies")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 25:
+		await get_tree().physics_frame
+
+	var bat := Bat.new()
+	bat.position = world.player.global_position + Vector2(0, -90)
+	world.entities.add_child(bat)
+	var started: float = bat.global_position.y
+	for i in 40:
+		await get_tree().physics_frame
+
+	_ok("it does not fall out of the air", bat.global_position.y < started + 80.0,
+		"dropped %.0f px" % (bat.global_position.y - started))
+	_ok("it does not hover perfectly still",
+		bat.global_position.distance_to(Vector2(world.player.global_position.x,
+			started)) > 1.0)
+	_ok("it counts as something to fight", bat.is_in_group("enemy"))
+	_ok("and as something that comes out at night", bat.is_in_group("hostile"))
+
+	# It comes at you rather than wandering off.
+	var gap_before: float = bat.global_position.distance_to(world.player.global_position)
+	for i in 60:
+		await get_tree().physics_frame
+	var gap_after: float = bat.global_position.distance_to(world.player.global_position)
+	_ok("it hunts rather than drifts", gap_after < gap_before + 40.0,
+		"%.0f px -> %.0f px" % [gap_before, gap_after])
+
+	var killed: bool = bat.hurt(5, 1)
+	_ok("a swing kills it", killed)
+	for i in 20:
+		await get_tree().physics_frame
+	_ok("and it leaves something behind",
+		world.entities.get_children().any(func(n: Node) -> bool:
+			return n is ItemDrop and n.item_id == "hide"))
+
+	world.queue_free()
+	await get_tree().process_frame

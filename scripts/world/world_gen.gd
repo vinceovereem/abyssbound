@@ -34,6 +34,11 @@ const ABYSS_RIM := 118
 ## Half width at the rim, and how much wider it gets per tile of depth.
 const ABYSS_MOUTH := 15
 const ABYSS_FLARE := 0.030
+## Rock shelves across the chasm, alternating sides, so going down it is a
+## climb rather than one long fall onto the bottom. Without these the Abyss is
+## a hole you drop through, which is not somewhere to go.
+const LEDGE_EVERY := 13
+const LEDGE_THICK := 2
 const SKY_ISLAND_X0 := 1100
 const SKY_ISLAND_X1 := 1450
 
@@ -192,6 +197,22 @@ func in_abyss(x: int, y: int) -> bool:
 	if y < ABYSS_RIM:
 		return false
 	return absi(x - abyss_centre(y)) <= abyss_half_width(y)
+
+
+## A shelf reaching out from one wall, leaving a gap at the other end to drop
+## through. Which wall alternates as you descend, so the way down zig-zags.
+func abyss_ledge(x: int, y: int) -> bool:
+	if y < ABYSS_RIM + LEDGE_EVERY:
+		return false
+	if (y - ABYSS_RIM) % LEDGE_EVERY >= LEDGE_THICK:
+		return false
+	var centre := abyss_centre(y)
+	var half := abyss_half_width(y)
+	# A little jitter so the gaps do not line up into a straight chute.
+	var reach := int(float(half) * 1.45) + int(_chasm.get_noise_1d(float(y) * 6.0) * 4.0)
+	if ((y - ABYSS_RIM) / LEDGE_EVERY) % 2 == 0:
+		return x <= centre - half + reach
+	return x >= centre + half - reach
 
 
 ## How far into the chasm's wall a tile is, in tiles. Negative means inside the
@@ -364,7 +385,7 @@ func _tile_at(x: int, y: int, h: int, ci: int, heights: PackedInt32Array, tree_h
 	# The chasm cuts through everything. Caves meet it at every depth, which is
 	# what makes it a hub instead of a corridor.
 	if in_abyss(x, y):
-		return AIR
+		return ABYSS if abyss_ledge(x, y) else AIR
 
 	# Caves you explore rather than rock you tunnel through.
 	#

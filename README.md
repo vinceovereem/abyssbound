@@ -12,6 +12,10 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 - One enemy, the crawler. Walk into it and you lose a heart. Land on its head and it dies
 - Crystals to pick up, hearts to lose, both shown in the HUD
 - A critter you can tame. Stand near it and hold **E** until the trust bar fills, then it follows you
+- A pause menu on Esc with every key listed and a save button
+- The Abyss descends in shelves rather than one long drop, so going down it is
+  a climb
+- Bats in the caves, which fly and swoop rather than walking at you
 - Caves worth exploring: winding tunnels near the surface opening into
   chambers deeper down, all connected
 - Chests waiting in them with tools, torches and materials, better the deeper
@@ -139,7 +143,7 @@ variable `ENABLE_PAGES` set to `true`.
 | F3 | Debug overlay: seed, fps, light cost, biome, depth |
 | E | Tame a critter (the archived zones only, for now) |
 | R | Restart |
-| Esc | Quit |
+| Esc | Pause menu: the full key list, save, quit |
 
 A gamepad works too.
 

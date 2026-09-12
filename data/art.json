@@ -11,27 +11,101 @@
   "sprites": {
     "player": {
       "file": "res://assets/generated/sprites/player.png",
-      "frame": [20, 30],
+      "frame": [
+        20,
+        30
+      ],
       "animations": {
-        "idle": { "frames": [0, 1], "fps": 3, "loop": true },
-        "run":  { "frames": [2, 3, 4, 5], "fps": 11, "loop": true },
-        "jump": { "frames": [6], "fps": 5, "loop": true },
-        "fall": { "frames": [7], "fps": 5, "loop": true }
+        "idle": {
+          "frames": [
+            0,
+            1
+          ],
+          "fps": 3,
+          "loop": true
+        },
+        "run": {
+          "frames": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "fps": 11,
+          "loop": true
+        },
+        "jump": {
+          "frames": [
+            6
+          ],
+          "fps": 5,
+          "loop": true
+        },
+        "fall": {
+          "frames": [
+            7
+          ],
+          "fps": 5,
+          "loop": true
+        }
       }
     },
     "crawler": {
       "file": "res://assets/generated/sprites/crawler.png",
-      "frame": [24, 18],
+      "frame": [
+        24,
+        18
+      ],
       "animations": {
-        "walk": { "frames": [0, 1], "fps": 6, "loop": true }
+        "walk": {
+          "frames": [
+            0,
+            1
+          ],
+          "fps": 6,
+          "loop": true
+        }
       }
     },
     "critter": {
       "file": "res://assets/generated/sprites/critter.png",
-      "frame": [20, 16],
+      "frame": [
+        20,
+        16
+      ],
       "animations": {
-        "idle": { "frames": [0], "fps": 2, "loop": true },
-        "walk": { "frames": [0, 1], "fps": 7, "loop": true }
+        "idle": {
+          "frames": [
+            0
+          ],
+          "fps": 2,
+          "loop": true
+        },
+        "walk": {
+          "frames": [
+            0,
+            1
+          ],
+          "fps": 7,
+          "loop": true
+        }
+      }
+    },
+    "bat": {
+      "file": "res://assets/generated/sprites/bat.png",
+      "frame": [
+        16,
+        12
+      ],
+      "animations": {
+        "fly": {
+          "frames": [
+            0,
+            1
+          ],
+          "fps": 9,
+          "loop": true
+        }
       }
     }
   }
