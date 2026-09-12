@@ -196,7 +196,7 @@
       "slot": "head",
       "defence": 1,
       "stack": 1,
-      "icon": 12
+      "icon": 15
     },
     {
       "id": "copper_mail",
@@ -205,7 +205,7 @@
       "slot": "body",
       "defence": 2,
       "stack": 1,
-      "icon": 13
+      "icon": 16
     },
     {
       "id": "copper_greaves",
@@ -214,7 +214,7 @@
       "slot": "legs",
       "defence": 1,
       "stack": 1,
-      "icon": 14
+      "icon": 17
     },
     {
       "id": "iron_helm",
@@ -223,7 +223,7 @@
       "slot": "head",
       "defence": 2,
       "stack": 1,
-      "icon": 15
+      "icon": 18
     },
     {
       "id": "iron_mail",
@@ -232,7 +232,7 @@
       "slot": "body",
       "defence": 3,
       "stack": 1,
-      "icon": 16
+      "icon": 19
     },
     {
       "id": "iron_greaves",
@@ -241,7 +241,62 @@
       "slot": "legs",
       "defence": 2,
       "stack": 1,
-      "icon": 17
+      "icon": 20
+    },
+    {
+      "id": "plank",
+      "name": "Wood Plank",
+      "kind": "block",
+      "tile": "plank",
+      "stack": 99
+    },
+    {
+      "id": "platform",
+      "name": "Wood Platform",
+      "kind": "block",
+      "tile": "platform",
+      "stack": 99
+    },
+    {
+      "id": "door",
+      "name": "Door",
+      "kind": "block",
+      "tile": "door_shut",
+      "stack": 99
+    },
+    {
+      "id": "wood_wall",
+      "name": "Wood Wall",
+      "kind": "block",
+      "tile": "wood_wall",
+      "stack": 99
+    },
+    {
+      "id": "leather_cap",
+      "name": "Leather Cap",
+      "kind": "armour",
+      "slot": "head",
+      "defence": 1,
+      "stack": 1,
+      "icon": 12
+    },
+    {
+      "id": "leather_jerkin",
+      "name": "Leather Jerkin",
+      "kind": "armour",
+      "slot": "body",
+      "defence": 1,
+      "stack": 1,
+      "icon": 13
+    },
+    {
+      "id": "leather_boots",
+      "name": "Leather Boots",
+      "kind": "armour",
+      "slot": "legs",
+      "defence": 1,
+      "stack": 1,
+      "icon": 14
     }
   ]
 }

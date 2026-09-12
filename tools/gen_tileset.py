@@ -30,6 +30,9 @@ TOP = "PackedVector2Array(-8, -8, 8, -8, 8, -3, -8, -3)"
 def main():
     tiles = json.load(open(DATA))["tiles"]
     solid = {int(t["id"]) for t in tiles if t.get("solid")}
+    # A platform is not solid, but you can stand on it: collision on the top
+    # edge only, so you walk up through it from below.
+    platforms = {int(t["id"]) for t in tiles if t.get("platform")}
     highest = max(int(t["id"]) for t in tiles)
     # 22 is the edge overlay: drawn, never collided with, so it is not in the
     # tile data. Make sure the sheet is still covered up to the last column.
@@ -54,6 +57,9 @@ def main():
                 out.append(f"{i}:0/0/physics_layer_0/polygon_0/one_way = true")
         elif i in solid:
             out.append(f"{i}:0/0/physics_layer_0/polygon_0/points = {FULL}")
+        elif i in platforms:
+            out.append(f"{i}:0/0/physics_layer_0/polygon_0/points = {TOP}")
+            out.append(f"{i}:0/0/physics_layer_0/polygon_0/one_way = true")
     out += [
         "",
         "[resource]",

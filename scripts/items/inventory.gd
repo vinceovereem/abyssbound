@@ -156,6 +156,19 @@ func defence() -> int:
 	return total
 
 
+## Swap two slots. How something gets from the backpack into your hand.
+func swap(a: int, b: int) -> void:
+	if a == b or a < 0 or b < 0 or a >= SLOTS or b >= SLOTS:
+		return
+	var id := ids[a]
+	var count := counts[a]
+	ids[a] = ids[b]
+	counts[a] = counts[b]
+	ids[b] = id
+	counts[b] = count
+	changed.emit()
+
+
 ## Everything held, as id -> total. For saving and for the crafting list.
 func totals() -> Dictionary:
 	var out := {}

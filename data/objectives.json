@@ -21,13 +21,63 @@
     {
       "id": "first_day",
       "name": "The First Day",
-      "blurb": "Wood, light, and somewhere to be when the sun goes down.",
+      "blurb": "Wood, light, a weapon, and four walls to put between you and the dark.",
       "objectives": [
-        { "id": "wood",   "text": "Fell a tree for wood",        "kind": "collect", "what": "wood",      "count": 12 },
-        { "id": "torch",  "text": "Make a torch",                "kind": "craft",   "what": "torch",     "count": 1 },
-        { "id": "bench",  "text": "Build a workbench",           "kind": "craft",   "what": "workbench", "count": 1 },
-        { "id": "pick",   "text": "Make a pickaxe",              "kind": "craft",   "what": "wood_pick", "count": 1 },
-        { "id": "night",  "text": "Live to see the sun come up", "kind": "dawn",    "count": 1 }
+        {
+          "id": "wood",
+          "text": "Fell a tree for wood",
+          "kind": "collect",
+          "what": "wood",
+          "count": 12
+        },
+        {
+          "id": "torch",
+          "text": "Make a torch",
+          "kind": "craft",
+          "what": "torch",
+          "count": 1
+        },
+        {
+          "id": "bench",
+          "text": "Build a workbench",
+          "kind": "craft",
+          "what": "workbench",
+          "count": 1
+        },
+        {
+          "id": "pick",
+          "text": "Make a pickaxe",
+          "kind": "craft",
+          "what": "wood_pick",
+          "count": 1
+        },
+        {
+          "id": "hide",
+          "text": "Hunt something for its hide",
+          "kind": "collect",
+          "what": "hide",
+          "count": 4
+        },
+        {
+          "id": "armour",
+          "text": "Make leather armour",
+          "kind": "craft",
+          "what": "leather_cap",
+          "count": 1
+        },
+        {
+          "id": "door",
+          "text": "Dig yourself a shelter and put a door on it",
+          "kind": "place",
+          "what": "door_shut",
+          "count": 1
+        },
+        {
+          "id": "night",
+          "text": "Live to see the sun come up",
+          "kind": "dawn",
+          "count": 1
+        }
       ]
     },
     {
@@ -35,11 +85,39 @@
       "name": "Into the Caves",
       "blurb": "The surface is the roof of somewhere much larger.",
       "objectives": [
-        { "id": "down",   "text": "Follow a cave down 60 tiles", "kind": "depth",   "count": 60 },
-        { "id": "chest",  "text": "Open a chest you found",      "kind": "chest",   "count": 1 },
-        { "id": "copper", "text": "Mine copper ore",             "kind": "collect", "what": "copper_ore", "count": 8 },
-        { "id": "furnace","text": "Build a furnace",             "kind": "craft",   "what": "furnace",    "count": 1 },
-        { "id": "bar",    "text": "Smelt a copper bar",          "kind": "craft",   "what": "copper_bar", "count": 1 }
+        {
+          "id": "down",
+          "text": "Follow a cave down 60 tiles",
+          "kind": "depth",
+          "count": 60
+        },
+        {
+          "id": "chest",
+          "text": "Open a chest you found",
+          "kind": "chest",
+          "count": 1
+        },
+        {
+          "id": "copper",
+          "text": "Mine copper ore",
+          "kind": "collect",
+          "what": "copper_ore",
+          "count": 8
+        },
+        {
+          "id": "furnace",
+          "text": "Build a furnace",
+          "kind": "craft",
+          "what": "furnace",
+          "count": 1
+        },
+        {
+          "id": "bar",
+          "text": "Smelt a copper bar",
+          "kind": "craft",
+          "what": "copper_bar",
+          "count": 1
+        }
       ]
     },
     {
@@ -47,11 +125,37 @@
       "name": "Deeper Still",
       "blurb": "Harder rock, worse company, better reasons to go.",
       "objectives": [
-        { "id": "caverns","text": "Reach the caverns",           "kind": "layer",   "count": 2 },
-        { "id": "heart",  "text": "Take a life crystal",         "kind": "heart",   "count": 1 },
-        { "id": "fight",  "text": "Drive off what comes at you", "kind": "defeat",  "count": 5 },
-        { "id": "armour", "text": "Make a piece of armour",      "kind": "craft",   "what": "copper_helm", "count": 1 },
-        { "id": "deep",   "text": "Stand on the deep rock",      "kind": "layer",   "count": 3 }
+        {
+          "id": "caverns",
+          "text": "Reach the caverns",
+          "kind": "layer",
+          "count": 2
+        },
+        {
+          "id": "heart",
+          "text": "Take a life crystal",
+          "kind": "heart",
+          "count": 1
+        },
+        {
+          "id": "fight",
+          "text": "Drive off what comes at you",
+          "kind": "defeat",
+          "count": 5
+        },
+        {
+          "id": "armour",
+          "text": "Make a piece of armour",
+          "kind": "craft",
+          "what": "copper_helm",
+          "count": 1
+        },
+        {
+          "id": "deep",
+          "text": "Stand on the deep rock",
+          "kind": "layer",
+          "count": 3
+        }
       ]
     },
     {
@@ -59,10 +163,32 @@
       "name": "Not Alone Down Here",
       "blurb": "Some of what lives here can be fought. Some can be befriended.",
       "objectives": [
-        { "id": "tame",   "text": "Befriend a creature",         "kind": "tame",    "count": 1 },
-        { "id": "iron",   "text": "Smelt iron",                  "kind": "craft",   "what": "iron_bar",  "count": 3 },
-        { "id": "ironpick","text": "Make an iron pickaxe",       "kind": "craft",   "what": "iron_pick", "count": 1 },
-        { "id": "hearts", "text": "Carry four hearts or more",   "kind": "hearts",  "count": 6 }
+        {
+          "id": "tame",
+          "text": "Befriend a creature",
+          "kind": "tame",
+          "count": 1
+        },
+        {
+          "id": "iron",
+          "text": "Smelt iron",
+          "kind": "craft",
+          "what": "iron_bar",
+          "count": 3
+        },
+        {
+          "id": "ironpick",
+          "text": "Make an iron pickaxe",
+          "kind": "craft",
+          "what": "iron_pick",
+          "count": 1
+        },
+        {
+          "id": "hearts",
+          "text": "Carry four hearts or more",
+          "kind": "hearts",
+          "count": 6
+        }
       ]
     }
   ]

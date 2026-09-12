@@ -12,6 +12,9 @@ This repo is the placeholder. The engine, the build pipeline and the tests are r
 - One enemy, the crawler. Walk into it and you lose a heart. Land on its head and it dies
 - Crystals to pick up, hearts to lose, both shown in the HUD
 - A critter you can tame. Stand near it and hold **E** until the trust bar fills, then it follows you
+- Building: planks, platforms you climb through, doors that open, and walls
+  that go up behind you, so a shelter is something you make
+- Leather armour from what you hunt, makeable on the first day
 - A pause menu on Esc with every key listed and a save button
 - The Abyss descends in shelves rather than one long drop, so going down it is
   a climb
@@ -135,7 +138,9 @@ variable `ENABLE_PAGES` set to `true`.
 | Up + F | Dig the block over your head |
 | G | Use what you are holding: place a block, or put armour on |
 | X | Swing. Aimed the same way as digging |
+| Up arrow | Jumps, and aims the dig upward |
 | 1 to 0 | Pick a hotbar slot. What is in it is what you place |
+| Arrows in the bag | Move between items. Enter brings one to hand |
 | Q | Next hotbar slot |
 | E | Open a chest you are standing next to |
 | I | Backpack. Shows what you are wearing and your defence |

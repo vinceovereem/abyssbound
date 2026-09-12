@@ -161,6 +161,65 @@
         "iron_bar": 9
       },
       "station": "anvil"
+    },
+    {
+      "out": "plank",
+      "count": 4,
+      "needs": {
+        "wood": 2
+      },
+      "station": ""
+    },
+    {
+      "out": "platform",
+      "count": 4,
+      "needs": {
+        "wood": 1
+      },
+      "station": ""
+    },
+    {
+      "out": "door",
+      "count": 1,
+      "needs": {
+        "wood": 6
+      },
+      "station": "workbench"
+    },
+    {
+      "out": "wood_wall",
+      "count": 8,
+      "needs": {
+        "wood": 2
+      },
+      "station": "workbench"
+    },
+    {
+      "out": "leather_cap",
+      "count": 1,
+      "needs": {
+        "hide": 4,
+        "wood": 2
+      },
+      "station": "workbench"
+    },
+    {
+      "out": "leather_jerkin",
+      "count": 1,
+      "needs": {
+        "hide": 7,
+        "wood": 3
+      },
+      "station": "workbench"
+    },
+    {
+      "out": "leather_boots",
+      "count": 1,
+      "needs": {
+        "hide": 5,
+        "wood": 2
+      },
+      "station": "workbench"
     }
   ]
 }

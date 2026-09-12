@@ -9,7 +9,8 @@
     "emit:    how much light this tile gives off, 0 to 255.",
     "wall:    true means it only ever draws to the background layer.",
     "drop: what breaking this tile gives you. Empty means nothing.",
-    "light_colour: [r,g,b] of the glow this tile casts, if it emits at all."
+    "light_colour: [r,g,b] of the glow this tile casts, if it emits at all.",
+    "platform: stand on it from above, walk up through it from below."
   ],
   "tiles": [
     {
@@ -249,6 +250,53 @@
         110,
         140
       ]
+    },
+    {
+      "id": 30,
+      "name": "plank",
+      "solid": true,
+      "hardness": 14,
+      "opacity": 58,
+      "emit": 0,
+      "drop": "plank"
+    },
+    {
+      "id": 31,
+      "name": "platform",
+      "solid": false,
+      "hardness": 10,
+      "opacity": 8,
+      "emit": 0,
+      "drop": "platform",
+      "platform": true
+    },
+    {
+      "id": 32,
+      "name": "door_shut",
+      "solid": true,
+      "hardness": 16,
+      "opacity": 50,
+      "emit": 0,
+      "drop": "door"
+    },
+    {
+      "id": 33,
+      "name": "door_open",
+      "solid": false,
+      "hardness": 16,
+      "opacity": 8,
+      "emit": 0,
+      "drop": "door"
+    },
+    {
+      "id": 34,
+      "name": "wood_wall",
+      "solid": false,
+      "hardness": 8,
+      "opacity": 20,
+      "emit": 0,
+      "drop": "wood_wall",
+      "wall": true
     }
   ]
 }
