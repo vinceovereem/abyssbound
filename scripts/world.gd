@@ -13,6 +13,7 @@ const PlayerScene := preload("res://scenes/actors/player.tscn")
 var store: ChunkStore
 var renderer: ChunkRenderer
 var sky: WorldSky
+var parallax: WorldParallax
 var mining: Mining
 var lighting: Lighting
 var combat: Combat
@@ -46,6 +47,10 @@ func _ready() -> void:
 	sky = WorldSky.new()
 	sky.name = "Sky"
 	add_child(sky)
+
+	parallax = WorldParallax.new()
+	parallax.name = "Parallax"
+	add_child(parallax)
 
 	renderer = ChunkRenderer.new()
 	renderer.name = "Renderer"
@@ -155,6 +160,8 @@ func _process(_delta: float) -> void:
 	var tile := player_tile()
 	var daylight := DayClock.daylight()
 	sky.update_for_depth(tile.y, daylight)
+	if _camera and is_instance_valid(_camera):
+		parallax.update(_camera.get_screen_center_position(), tile.y, daylight)
 
 	# Night is dark because the sun stops giving light, not because a filter is
 	# drawn over the top. Only nudge the lighting when it has actually moved,
