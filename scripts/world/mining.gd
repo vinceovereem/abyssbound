@@ -148,6 +148,19 @@ func _open_nearby_chest() -> void:
 		return
 	var here: Vector2i = world.player_tile()
 	var chest := _db.id("chest")
+	var shut := _db.id("door_shut")
+	var open := _db.id("door_open")
+
+	# A door first, since you are more likely to be stood in one.
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var at := here + Vector2i(dx, dy)
+			var what := store.get_fg(at.x, at.y)
+			if what != shut and what != open:
+				continue
+			_set_tile(at.x, at.y, open if what == shut else shut)
+			return
+
 	for dy in range(-2, 3):
 		for dx in range(-2, 3):
 			var at := here + Vector2i(dx, dy)
@@ -243,6 +256,19 @@ func _place() -> void:
 		return   # nothing selected, or what is selected is not a block
 	var id := _db.id(tile_name)
 	if id == 0:
+		return
+
+	# Walls go behind everything, which is what makes them a wall. They can be
+	# put up where there is already something standing.
+	if _db.wall[id] == 1:
+		if store.get_bg(_target.x, _target.y) != 0:
+			return
+		if not Game.inventory.remove(held, 1):
+			return
+		store.set_bg(_target.x, _target.y, id)
+		renderer.update_tile(_target.x, _target.y)
+		tile_changed.emit(_target.x, _target.y)
+		tile_placed.emit(_target.x, _target.y, tile_name)
 		return
 	if not _has_support(_target.x, _target.y):
 		return

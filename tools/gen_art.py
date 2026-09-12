@@ -12,6 +12,7 @@ The palette below is lifted from the BocciaBound concept sheet. Change a hex
 value here and every sprite updates together.
 """
 
+import json
 import os
 import random
 from PIL import Image
@@ -434,6 +435,82 @@ def top_edge_overlay():
     return img
 
 
+PLANK = [
+    "KKKKKKKKKKKKKKKK",
+    "KAAAAAAAAAAAAAAK",
+    "KAnAAAAAAAAAnAAK",
+    "KAAAAAAAAAAAAAAK",
+    "KKKKKKKKKKKKKKKK",
+    "KAAAAAAAAAAAAAAK",
+    "KAAAAnAAAAAAAAAK",
+    "KAAAAAAAAAAAAAAK",
+    "KKKKKKKKKKKKKKKK",
+    "KAAAAAAAAAAAAAAK",
+    "KAAAAAAAAnAAAAAK",
+    "KAAAAAAAAAAAAAAK",
+    "KKKKKKKKKKKKKKKK",
+    "KAAAAAAAAAAAAAAK",
+    "KAAnAAAAAAAAAAAK",
+    "KKKKKKKKKKKKKKKK",
+]
+
+PLATFORM = [
+    "KKKKKKKKKKKKKKKK",
+    "KAAAAAAAAAAAAAAK",
+    "KAnAAAAAAAAnAAAK",
+    "KKKKKKKKKKKKKKKK",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+DOOR_SHUT = [
+    ".KKKKKKKKKKKKKK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAnAAAAAAAAnAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAAAAAAAAAAYAK.",
+    ".KAAAAAAAAAAYAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAnAAAAAAAAnAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KAnAAAAAAAAnAK.",
+    ".KAAAAAAAAAAAAK.",
+    ".KKKKKKKKKKKKKK.",
+]
+
+DOOR_OPEN = [
+    ".KKKK...........",
+    ".KAAK...........",
+    ".KAnK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAnK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAAK...........",
+    ".KAnK...........",
+    ".KAAK...........",
+    ".KKKK...........",
+]
+
 WORKBENCH = [
     "................",
     "................",
@@ -593,6 +670,12 @@ def tiles():
         grid(CHEST, "chest"),
         grid(CHEST_OPEN, "chest_open"),
         grid(LIFE_CRYSTAL, "life_crystal"),
+        # 30 to 34: what a fort is made of.
+        grid(PLANK, "plank"),
+        grid(PLATFORM, "platform"),
+        grid(DOOR_SHUT, "door_shut"),
+        grid(DOOR_OPEN, "door_open"),
+        tile_noise(40, (62, 44, 30), (78, 56, 38), (44, 30, 20)),
     ]
     sheet(t, "tiles/tiles.png")
 
@@ -967,6 +1050,7 @@ LIFE_CRYSTAL = [
 ]
 
 TIER = {
+    "leather": (150, 106, 68),
     "wood": (146, 108, 66),
     "stone": (108, 116, 130),
     "copper": (198, 118, 62),
@@ -987,6 +1071,9 @@ ICONS = [
     ("copper_sword", SWORD, "copper"),
     ("iron_sword", SWORD, "iron"),
     ("hide", HIDE, "wood"),
+    ("leather_cap", HELM, "leather"),
+    ("leather_jerkin", MAIL, "leather"),
+    ("leather_boots", GREAVES, "leather"),
     ("copper_helm", HELM, "copper"),
     ("copper_mail", MAIL, "copper"),
     ("copper_greaves", GREAVES, "copper"),
@@ -1013,6 +1100,26 @@ def tinted(rows, colour, name):
 def items():
     frames = [tinted(rows, TIER[tier], name) for name, rows, tier in ICONS]
     sheet(frames, "sprites/items.png")
+    _write_icon_indices()
+
+
+def _write_icon_indices():
+    """Tell data/items.json which column each icon ended up in.
+
+    The sheet's order lives here, so this file owns the numbers. Maintaining
+    them by hand meant inserting one icon silently renumbered every icon after
+    it, and every affected item drew the wrong picture with nothing failing.
+    """
+    path = os.path.join(ROOT, "data", "items.json")
+    data = json.load(open(path))
+    order = {name: i for i, (name, _, _) in enumerate(ICONS)}
+    changed = 0
+    for item in data["items"]:
+        if item["id"] in order and item.get("icon") != order[item["id"]]:
+            item["icon"] = order[item["id"]]
+            changed += 1
+    open(path, "w").write(json.dumps(data, indent=2) + "\n")
+    print(f"  data/items.json  {changed} icon index/indices corrected")
 
 
 def icon():

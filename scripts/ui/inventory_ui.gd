@@ -24,6 +24,8 @@ var _defence: Label
 var _craft: PanelContainer
 var _craft_rows: VBoxContainer
 var _available: Array[int] = []
+## Where the arrow keys are pointing while the backpack is open.
+var _cursor := 0
 
 
 func _ready() -> void:
@@ -71,18 +73,20 @@ func _make_slot() -> Panel:
 	return slot
 
 
-func _style(selected: bool) -> StyleBoxFlat:
+func _style(selected: bool, cursor := false) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
-	box.bg_color = Color(0.06, 0.07, 0.11, 0.82)
+	box.bg_color = Color(0.14, 0.13, 0.09, 0.9) if cursor else Color(0.06, 0.07, 0.11, 0.82)
 	box.border_color = Color(1.0, 0.86, 0.5) if selected else Color(0.36, 0.40, 0.5)
-	box.set_border_width_all(1)
+	if cursor:
+		box.border_color = Color(1.0, 0.98, 0.86)
+	box.set_border_width_all(2 if cursor else 1)
 	return box
 
 
-func _fill_slot(slot: Panel, index: int, selected: bool) -> void:
+func _fill_slot(slot: Panel, index: int, selected: bool, cursor := false) -> void:
 	var inv := Game.inventory
 	var id: String = "" if inv.is_empty_slot(index) else inv.ids[index]
-	slot.add_theme_stylebox_override("panel", _style(selected))
+	slot.add_theme_stylebox_override("panel", _style(selected, cursor))
 	(slot.get_node("Art") as TextureRect).texture = icon_for(id)
 	var count := slot.get_node("Count") as Label
 	count.text = str(inv.counts[index]) if inv.counts[index] > 1 else ""
@@ -166,7 +170,8 @@ func _build_bag() -> void:
 	for i in Inventory.SLOTS:
 		_bag_grid.add_child(_make_slot())
 	column.add_child(_bag_grid)
-	_bag = _framed("CARRYING   (I to close, G wears armour)", column, 250, 132)
+	_bag = _framed("CARRYING   (arrows to move, enter to hold, I to close)",
+		column, 250, 132)
 
 
 func _build_craft() -> void:
@@ -189,6 +194,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_bag.visible = false
 		_refresh()
 		get_viewport().set_input_as_handled()
+	elif _bag.visible and _move_cursor(event):
+		get_viewport().set_input_as_handled()
 	elif _craft.visible:
 		# While the list is open the number keys make things instead of
 		# choosing a hotbar slot.
@@ -197,6 +204,30 @@ func _unhandled_input(event: InputEvent) -> void:
 				_make(_available[i])
 				get_viewport().set_input_as_handled()
 				return
+
+
+## Arrows walk the grid, enter brings that item to hand. Consumed while the
+## backpack is open so the player does not wander off while choosing.
+func _move_cursor(event: InputEvent) -> bool:
+	var columns := Inventory.HOTBAR
+	if event.is_action_pressed("ui_left"):
+		_cursor = posmod(_cursor - 1, Inventory.SLOTS)
+	elif event.is_action_pressed("ui_right"):
+		_cursor = posmod(_cursor + 1, Inventory.SLOTS)
+	elif event.is_action_pressed("ui_up"):
+		_cursor = posmod(_cursor - columns, Inventory.SLOTS)
+	elif event.is_action_pressed("ui_down"):
+		_cursor = posmod(_cursor + columns, Inventory.SLOTS)
+	elif event.is_action_pressed("ui_accept"):
+		# Into the hand. If the cursor is already on the hotbar, just hold it.
+		if _cursor < Inventory.HOTBAR:
+			Game.inventory.select(_cursor)
+		else:
+			Game.inventory.swap(_cursor, Game.inventory.selected)
+	else:
+		return false
+	_refresh()
+	return true
 
 
 func _make(index: int) -> void:
@@ -216,7 +247,8 @@ func _refresh() -> void:
 		_fill_slot(_hotbar.get_child(i), i, i == Game.inventory.selected)
 	if _bag.visible:
 		for i in Inventory.SLOTS:
-			_fill_slot(_bag_grid.get_child(i), i, i == Game.inventory.selected)
+			_fill_slot(_bag_grid.get_child(i), i, i == Game.inventory.selected,
+				i == _cursor)
 		var slots := ["head", "body", "legs"]
 		for i in slots.size():
 			var worn: String = str(Game.inventory.equipped[slots[i]])

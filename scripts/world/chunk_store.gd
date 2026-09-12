@@ -90,6 +90,19 @@ func set_fg(x: int, y: int, id: int) -> void:
 	chunk.set_fg(x & 31, y & 31, id)
 
 
+func set_bg(x: int, y: int, id: int) -> void:
+	if not in_bounds(x, y):
+		return
+	var chunk := get_chunk(x >> 5, y >> 5)
+	var i := (y & 31) * Chunk.SIZE + (x & 31)
+	if chunk.bg[i] == id:
+		return
+	chunk.bg[i] = id
+	chunk.edited[i] = true
+	chunk.dirty_render = true
+	chunk.dirty_light = true
+
+
 func is_solid(x: int, y: int) -> bool:
 	return TileDB.get_db().is_solid(get_fg(x, y))
 

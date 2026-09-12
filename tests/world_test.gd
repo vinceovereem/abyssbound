@@ -32,6 +32,7 @@ func _ready() -> void:
 	await _check_finds()
 	await _check_trees()
 	await _check_bats()
+	await _check_building()
 	_check_art_manifest()
 	_check_clock()
 	await _check_night()
@@ -919,7 +920,7 @@ func _check_goals() -> void:
 		"%d stages" % Goals.stages.size())
 	_ok("it starts on the first one", Goals.stage == 0, Goals.stage_name())
 	_ok("a stage has a handful of things to do",
-		Goals.active().size() >= 3 and Goals.active().size() <= 6,
+		Goals.active().size() >= 3 and Goals.active().size() <= 9,
 		"%d objectives" % Goals.active().size())
 
 	# Gathering counts toward this stage and nothing else.
@@ -940,6 +941,9 @@ func _check_goals() -> void:
 	Goals.note_crafted("torch", 1)
 	Goals.note_crafted("workbench", 1)
 	Goals.note_crafted("wood_pick", 1)
+	Game.collect("hide", 6)
+	Goals.note_crafted("leather_cap", 1)
+	Goals.note_placed("door_shut")
 	_ok("the stage does not move on early", Goals.stage == was)
 	Goals._on_dawn(2)
 	_ok("finishing every objective moves the stage on", Goals.stage == was + 1,
@@ -1025,8 +1029,14 @@ func _check_crafting() -> void:
 
 	inv.add("wood", 10)
 	var by_hand := book.available(inv, nowhere)
-	_ok("wood alone makes a torch and a workbench", by_hand.size() == 2,
-		"%d recipes" % by_hand.size())
+	var by_hand_names: Array = []
+	for i: int in by_hand:
+		by_hand_names.append(str(book.recipes[i]["out"]))
+	_ok("wood alone makes light and somewhere to work",
+		by_hand_names.has("torch") and by_hand_names.has("workbench"),
+		", ".join(by_hand_names))
+	_ok("and the makings of a shelter",
+		by_hand_names.has("plank") and by_hand_names.has("platform"))
 
 	var pick_index := -1
 	for i in book.recipes.size():
@@ -1506,5 +1516,76 @@ func _check_bats() -> void:
 		world.entities.get_children().any(func(n: Node) -> bool:
 			return n is ItemDrop and n.item_id == "hide"))
 
+	world.queue_free()
+	await get_tree().process_frame
+
+
+# ---------------------------------------------------------------------------
+## Somewhere to hide is the answer to a night, so the parts of one have to
+## behave: a door that opens, a platform you can climb through, a wall that
+## goes behind rather than in front.
+func _check_building() -> void:
+	print("\nbuilding a shelter")
+	var world: Node2D = load("res://scenes/world.tscn").instantiate()
+	world.seed_override = 20260910
+	world.spawn_override_x = 560
+	add_child(world)
+	for i in 25:
+		await get_tree().physics_frame
+
+	var tiles := TileDB.get_db()
+	var items := ItemDB.get_db()
+	var mining = world.mining
+	var here: Vector2i = world.player_tile()
+	Game.inventory.clear()
+
+	_ok("a plank is something to build with", tiles.is_solid(tiles.id("plank")))
+	_ok("a platform is not a wall", not tiles.is_solid(tiles.id("platform")))
+	_ok("a shut door blocks the way", tiles.is_solid(tiles.id("door_shut")))
+	_ok("an open one does not", not tiles.is_solid(tiles.id("door_open")))
+
+	# A door opens and shuts on the same key that opens a chest.
+	var spot := here + Vector2i(2, 0)
+	world.store.set_fg(spot.x, spot.y, tiles.id("door_shut"))
+	mining._open_nearby_chest()
+	_ok("standing by a door and pressing open, opens it",
+		world.store.get_fg(spot.x, spot.y) == tiles.id("door_open"))
+	mining._open_nearby_chest()
+	_ok("and again shuts it",
+		world.store.get_fg(spot.x, spot.y) == tiles.id("door_shut"))
+	world.store.set_fg(spot.x, spot.y, 0)
+
+	# A wall goes behind whatever is there, not in front of it.
+	var wall_at := here + Vector2i(-2, 0)
+	world.store.set_bg(wall_at.x, wall_at.y, 0)
+	Game.inventory.add("wood_wall", 3)
+	Game.inventory.select(0)
+	mining._target = wall_at
+	mining._place()
+	_ok("a wall goes up behind you",
+		world.store.get_bg(wall_at.x, wall_at.y) == tiles.id("wood_wall"))
+	_ok("and does not block the space",
+		world.store.get_fg(wall_at.x, wall_at.y) == 0)
+	_ok("putting it up costs one", Game.inventory.count_of("wood_wall") == 2)
+
+	# Leather is armour you can make on the first day, out of what you hunted.
+	_ok("leather is armour", items.kind("leather_jerkin") == "armour")
+	var book := RecipeBook.get_book()
+	var bench := { "workbench": true }
+	Game.inventory.clear()
+	Game.inventory.add("hide", 7)
+	Game.inventory.add("wood", 3)
+	var jerkin := -1
+	for i in book.recipes.size():
+		if book.recipes[i]["out"] == "leather_jerkin":
+			jerkin = i
+	_ok("a jerkin can be made from hide and wood at a bench",
+		book.can_make(jerkin, Game.inventory, bench))
+	_ok("but not out of thin air", not book.can_make(jerkin, Inventory.new(), bench))
+	_ok("making it works and it can be worn",
+		book.make(jerkin, Game.inventory, bench) and Game.inventory.equip("leather_jerkin")
+			and Game.inventory.defence() > 0)
+
+	Game.inventory.clear()
 	world.queue_free()
 	await get_tree().process_frame
