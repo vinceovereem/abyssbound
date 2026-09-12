@@ -17,6 +17,8 @@ var solid := PackedByteArray()
 var hardness := PackedInt32Array()
 var opacity := PackedByteArray()
 var emit := PackedByteArray()
+## What colour the light from this tile is. White when it says nothing.
+var light_colour := {}
 var wall := PackedByteArray()
 var drop := {}       ## id -> what breaking it gives you, "" for nothing
 var id_of := {}      ## name -> id
@@ -62,6 +64,9 @@ func _load() -> void:
 		hardness[id] = int(row.get("hardness", 0))
 		opacity[id] = int(row.get("opacity", 0))
 		emit[id] = int(row.get("emit", 0))
+		if row.has("light_colour"):
+			var c: Array = row["light_colour"]
+			light_colour[id] = Color(c[0] / 255.0, c[1] / 255.0, c[2] / 255.0)
 		wall[id] = 1 if row.get("wall", false) else 0
 		var tile_name: String = row["name"]
 		# Unstated means it gives back itself, which is true of most rock.
@@ -72,6 +77,10 @@ func _load() -> void:
 
 func is_solid(id: int) -> bool:
 	return id > 0 and id < solid.size() and solid[id] == 1
+
+
+func colour_of_light(id: int) -> Color:
+	return light_colour.get(id, Color.WHITE)
 
 
 func drop_of(id: int) -> String:

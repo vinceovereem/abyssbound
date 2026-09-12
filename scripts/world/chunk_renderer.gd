@@ -18,6 +18,9 @@ var fg_layer: TileMapLayer
 var edge_layer: TileMapLayer
 
 var _loaded := {}
+## Vector2i -> tile id, for everything on screen that gives off light.
+var emitters := {}
+var emitters_changed := true
 var _db: TileDB
 var _grass := 0
 
@@ -76,6 +79,7 @@ func _draw_chunk(key: Vector2i, chunk: Chunk) -> void:
 			_put(fg_layer, cell, chunk.fg[i])
 			_put(bg_layer, cell, chunk.bg[i])
 			_edge(cell.x, cell.y, chunk.fg[i])
+			_note_emitter(cell, chunk.fg[i])
 			if chunk.water[i] > 0:
 				water_layer.set_cell(cell, SOURCE_ID, Vector2i(WATER_ATLAS, 0))
 			else:
@@ -91,6 +95,16 @@ func _put(layer: TileMapLayer, cell: Vector2i, id: int) -> void:
 		layer.set_cell(cell, SOURCE_ID, Vector2i(id, 0))
 
 
+func _note_emitter(cell: Vector2i, id: int) -> void:
+	var glows: bool = id > 0 and _db.emit[id] > 0
+	if glows:
+		if emitters.get(cell, -1) != id:
+			emitters[cell] = id
+			emitters_changed = true
+	elif emitters.erase(cell):
+		emitters_changed = true
+
+
 func _unload(key: Vector2i) -> void:
 	var ox := key.x * Chunk.SIZE
 	var oy := key.y * Chunk.SIZE
@@ -101,6 +115,8 @@ func _unload(key: Vector2i) -> void:
 			bg_layer.erase_cell(cell)
 			water_layer.erase_cell(cell)
 			edge_layer.erase_cell(cell)
+			if emitters.erase(cell):
+				emitters_changed = true
 	_loaded.erase(key)
 
 
@@ -122,3 +138,4 @@ func update_tile(x: int, y: int) -> void:
 	_put(bg_layer, cell, store.get_bg(x, y))
 	_edge(x, y, store.get_fg(x, y))
 	_edge(x, y + 1, store.get_fg(x, y + 1))
+	_note_emitter(cell, store.get_fg(x, y))

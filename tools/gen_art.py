@@ -663,6 +663,29 @@ def fog_layer(name, colour, peak, centre=196, spread=70):
     sheet([img], "bg/%s.png" % name)
 
 
+def glow(size=96):
+    """A soft round falloff, drawn additively under a light source.
+
+    White, so the colour comes from the tile that owns it. Squared falloff
+    because linear reads as a hard disc rather than as light.
+    """
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = img.load()
+    r = size / 2.0
+    for y in range(size):
+        for x in range(size):
+            d = (((x - r + 0.5) ** 2 + (y - r + 0.5) ** 2) ** 0.5) / r
+            if d >= 1.0:
+                continue
+            a = (1.0 - d) ** 2.2
+            px[x, y] = (255, 255, 255, int(a * 235))
+    sheet([img], "fx/glow.png")
+
+
+def glows():
+    glow()
+
+
 def parallax():
     # Surface: golden hour. Far ridge hazed toward the sky, near trees darkest.
     parallax_layer("surface_far", 11, (132, 152, 184), 198, 84, 3, 7)
@@ -983,5 +1006,6 @@ if __name__ == "__main__":
     items()
     backdrops()
     parallax()
+    glows()
     icon()
     print("Done.")

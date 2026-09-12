@@ -37,6 +37,8 @@ func _ready() -> void:
 		for dx in range(-6, 7):
 			for dy in range(-4, 3):
 				world.store.set_fg(t.x + dx, t.y + dy, 0)
+		world.store.set_fg(t.x + 3, t.y, TileDB.get_db().id("torch"))
+		world.store.set_fg(t.x - 4, t.y, TileDB.get_db().id("glowstone"))
 		world.renderer.refresh(world.store.chunk_coord(t.x, t.y), 2)
 		world.lighting.mark_dirty()
 		world.lighting.update_now(t)
